@@ -1,0 +1,6 @@
+# SHF Trading System v5.6 — Python Dependencies
+numpy>=1.24.0
+numba>=0.57.0
+# pyzmq no longer needed — using native TCP sockets
+scikit-learn>=1.2.0
+hmmlearn>=0.3.0

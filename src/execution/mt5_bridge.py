@@ -1,42 +1,41 @@
 """
-MetaTrader 5 ZeroMQ Bridge
-==========================
+MetaTrader 5 Native TCP Socket Bridge
+======================================
 
 Provides bidirectional communication between Python trading logic and MT5.
 
 Architecture:
-    Python (Strategy/Risk) <--ZeroMQ--> MT5 Expert Advisor
+    Python (TCP Server on :5555)  <--TCP-->  MT5 EA (TCP Client)
 
-Message Protocol:
-    - REQ/REP for commands (orders, account info)
-    - PUB/SUB for market data streaming
-    - JSON message format
+Protocol:
+    Length-prefixed JSON over TCP:
+    [4 bytes big-endian length][JSON payload]
 
-This bridge enables:
-    1. Receiving real-time tick/bar data from MT5
-    2. Sending trade orders (market, limit, stop)
-    3. Managing positions (modify SL/TP, close)
-    4. Querying account state
+    EA pushes DATA messages (quotes, account, positions, server_time)
+    Python sends COMMAND messages (orders, queries)
+    EA responds with RESULT messages
+
+Zero external dependencies — uses only Python stdlib `socket` module.
 """
 
-import zmq
+import socket
+import struct
 import json
 import logging
 import time
+import threading
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Callable, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
-from threading import Thread, Event
 from queue import Queue, Empty
 from concurrent.futures import ThreadPoolExecutor
-import asyncio
 
 logger = logging.getLogger(__name__)
 
 
 class BridgeTimeoutError(Exception):
-    """Raised when MT5 ZMQ communication times out (MT5 likely frozen)."""
+    """Raised when MT5 communication times out."""
     pass
 
 
@@ -51,8 +50,7 @@ class OrderType(Enum):
 
 
 class MessageType(Enum):
-    """ZeroMQ message types."""
-    # Commands
+    """Message types."""
     PING = "PING"
     ORDER_SEND = "ORDER_SEND"
     ORDER_MODIFY = "ORDER_MODIFY"
@@ -64,12 +62,8 @@ class MessageType(Enum):
     GET_SERVER_TIME = "GET_SERVER_TIME"
     SUBSCRIBE = "SUBSCRIBE"
     UNSUBSCRIBE = "UNSUBSCRIBE"
-    
-    # Responses
     RESPONSE = "RESPONSE"
     ERROR = "ERROR"
-    
-    # Data
     TICK = "TICK"
     BAR = "BAR"
 
@@ -83,11 +77,11 @@ class TickData:
     last: float
     volume: float
     time: datetime
-    
+
     @property
     def spread(self) -> float:
         return self.ask - self.bid
-    
+
     @property
     def mid(self) -> float:
         return (self.bid + self.ask) / 2
@@ -104,11 +98,11 @@ class BarData:
     low: float
     close: float
     volume: float
-    
+
     @property
     def range(self) -> float:
         return self.high - self.low
-    
+
     @property
     def body(self) -> float:
         return abs(self.close - self.open)
@@ -150,28 +144,28 @@ class AccountInfo:
 @dataclass
 class ServerTimeInfo:
     """Broker server time information for time-sync."""
-    datetime_str: str       # "YYYY.MM.DD HH:MM:SS" (broker local)
-    timestamp: int          # Unix epoch seconds (broker local)
-    gmt_offset_seconds: int # Broker offset from GMT (e.g. +7200 = UTC+2)
+    datetime_str: str
+    timestamp: int
+    gmt_offset_seconds: int
     year: int
     month: int
     day: int
     hour: int
     minute: int
     second: int
-    day_of_week: int        # 0=Sunday .. 6=Saturday
+    day_of_week: int
 
 
-@dataclass 
+@dataclass
 class OrderRequest:
     """Order request structure."""
     symbol: str
     order_type: OrderType
     lots: float
-    price: float = 0.0  # For market orders, use 0
+    price: float = 0.0
     sl: float = 0.0
     tp: float = 0.0
-    deviation: int = 20  # Max slippage in points
+    deviation: int = 20
     magic: int = 12345
     comment: str = "SHF_ALGO"
 
@@ -192,281 +186,312 @@ class OrderResult:
 
 class MT5Bridge:
     """
-    ZeroMQ bridge for MT5 communication.
-    
-    Manages connection lifecycle, message serialization, and async data handling.
+    Native TCP Socket bridge for MT5 communication.
+
+    Runs a TCP server. The MT5 EA connects as a client.
+    EA continuously pushes market data; Python sends commands when needed.
     """
-    
+
     def __init__(
         self,
         req_port: int = 5555,
-        sub_port: int = 5556,
-        host: str = "localhost",
+        sub_port: int = 5556,   # Kept for API compat, not used
+        host: str = "0.0.0.0",
         recv_timeout_ms: int = 5000,
         send_timeout_ms: int = 1000
     ):
-        self.req_port = req_port
-        self.sub_port = sub_port
+        self.port = req_port
         self.host = host
         self.recv_timeout_ms = recv_timeout_ms
         self.send_timeout_ms = send_timeout_ms
-        
-        # ZeroMQ context and sockets
-        self._context: Optional[zmq.Context] = None
-        self._req_socket: Optional[zmq.Socket] = None
-        self._sub_socket: Optional[zmq.Socket] = None
-        
-        # Data handlers
-        self._tick_handlers: Dict[str, List[Callable]] = {}
-        self._bar_handlers: Dict[str, List[Callable]] = {}
-        
-        # Subscription management
-        self._subscribed_symbols: set = set()
-        
-        # Background thread for data streaming
-        self._data_thread: Optional[Thread] = None
-        self._stop_event = Event()
-        self._data_queue: Queue = Queue()
-        
+
+        # TCP server
+        self._server_socket: Optional[socket.socket] = None
+        self._client_socket: Optional[socket.socket] = None
+        self._client_lock = threading.Lock()
+
+        # Cached data from EA pushes
+        self._quotes: Dict[str, dict] = {}
+        self._account: dict = {}
+        self._positions: list = []
+        self._server_time: dict = {}
+        self._data_lock = threading.RLock()
+        self._last_data_time: float = 0.0
+
+        # Command response queue
+        self._response_queue: Queue = Queue()
+
+        # Background threads
+        self._accept_thread: Optional[threading.Thread] = None
+        self._recv_thread: Optional[threading.Thread] = None
+        self._stop_event = threading.Event()
+
         # Connection state
         self._connected = False
         self._last_heartbeat: Optional[datetime] = None
-    
+
+        # Tick/bar handlers (for compatibility)
+        self._tick_handlers: Dict[str, List[Callable]] = {}
+        self._bar_handlers: Dict[str, List[Callable]] = {}
+        self._subscribed_symbols: set = set()
+
     def connect(self) -> bool:
         """
-        Establish ZeroMQ connections to MT5.
-        
+        Start TCP server and wait for EA connection.
+
         Returns:
-            True if connection successful
+            True if EA connected successfully
         """
         try:
-            self._context = zmq.Context()
-            
-            # REQ socket for commands
-            self._req_socket = self._context.socket(zmq.REQ)
-            self._req_socket.setsockopt(zmq.RCVTIMEO, self.recv_timeout_ms)
-            self._req_socket.setsockopt(zmq.SNDTIMEO, self.send_timeout_ms)
-            self._req_socket.setsockopt(zmq.LINGER, 0)
-            self._req_socket.connect(f"tcp://{self.host}:{self.req_port}")
-            
-            # SUB socket for market data
-            self._sub_socket = self._context.socket(zmq.SUB)
-            self._sub_socket.setsockopt(zmq.RCVTIMEO, 100)  # Short timeout for polling
-            self._sub_socket.connect(f"tcp://{self.host}:{self.sub_port}")
-            
-            # Test connection with ping
-            if self._ping():
+            self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self._server_socket.settimeout(1.0)
+            self._server_socket.bind((self.host, self.port))
+            self._server_socket.listen(1)
+
+            logger.info(f"MT5 Bridge TCP server listening on {self.host}:{self.port}")
+            logger.info("Waiting for MT5 EA to connect...")
+
+            # Wait for EA connection (up to 60 seconds)
+            self._server_socket.settimeout(60.0)
+            try:
+                self._client_socket, addr = self._server_socket.accept()
+                self._client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                self._client_socket.settimeout(self.recv_timeout_ms / 1000.0)
+                logger.info(f"MT5 EA connected from {addr}")
+            except socket.timeout:
+                logger.error("No EA connection within 60s")
+                return False
+
+            # Start receiver thread
+            self._stop_event.clear()
+            self._recv_thread = threading.Thread(target=self._receiver_loop, daemon=True)
+            self._recv_thread.start()
+
+            # Wait for first DATA push to confirm it works
+            deadline = time.time() + 5.0
+            while time.time() < deadline:
+                if self._last_data_time > 0:
+                    break
+                time.sleep(0.05)
+
+            if self._last_data_time > 0:
                 self._connected = True
-                self._start_data_thread()
-                logger.info(f"MT5 Bridge connected | REQ:{self.req_port} SUB:{self.sub_port}")
+                self._last_heartbeat = datetime.utcnow()
+                logger.info("MT5 Bridge connected — receiving live data")
                 return True
             else:
-                logger.error("MT5 Bridge connection failed - no response to ping")
+                logger.error("Connected but no DATA received within 5s")
                 return False
-                
+
         except Exception as e:
             logger.error(f"MT5 Bridge connection error: {e}")
             return False
-    
+
     def disconnect(self) -> None:
-        """Disconnect from MT5 and cleanup resources."""
+        """Disconnect and cleanup."""
         self._stop_event.set()
-        
-        if self._data_thread and self._data_thread.is_alive():
-            self._data_thread.join(timeout=2.0)
-        
-        if self._req_socket:
-            self._req_socket.close()
-        if self._sub_socket:
-            self._sub_socket.close()
-        if self._context:
-            self._context.term()
-        
         self._connected = False
+
+        if self._recv_thread and self._recv_thread.is_alive():
+            self._recv_thread.join(timeout=2.0)
+
+        if self._client_socket:
+            try:
+                self._client_socket.close()
+            except:
+                pass
+            self._client_socket = None
+
+        if self._server_socket:
+            try:
+                self._server_socket.close()
+            except:
+                pass
+            self._server_socket = None
+
         logger.info("MT5 Bridge disconnected")
-    
-    def _ping(self) -> bool:
-        """Send ping to verify connection."""
+
+    # === TCP Protocol ===
+
+    def _send_msg(self, data: dict) -> bool:
+        """Send length-prefixed JSON message."""
+        with self._client_lock:
+            if not self._client_socket:
+                return False
+            try:
+                payload = json.dumps(data).encode('utf-8')
+                header = struct.pack('>I', len(payload))
+                self._client_socket.sendall(header + payload)
+                return True
+            except Exception as e:
+                logger.error(f"Send error: {e}")
+                return False
+
+    def _recv_msg(self, sock: socket.socket, timeout: float = 5.0) -> Optional[dict]:
+        """Receive length-prefixed JSON message."""
         try:
-            response = self._send_command(MessageType.PING, {})
-            return response.get('status') == 'PONG'
-        except:
-            return False
-    
-    def _send_command(self, msg_type: MessageType, data: dict) -> dict:
-        """
-        Send command to MT5 and wait for response.
-        
-        Args:
-            msg_type: Type of message
-            data: Message payload
-            
-        Returns:
-            Response dictionary
-        """
-        if not self._req_socket:
-            raise ConnectionError("Not connected to MT5")
-        
-        message = {
-            'type': msg_type.value,
-            'data': data,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        
-        try:
-            self._req_socket.send_json(message)
-            response = self._req_socket.recv_json()
-            return response
-        except zmq.Again:
-            raise BridgeTimeoutError(
-                f"MT5 ZMQ timeout after {self.recv_timeout_ms}ms "
-                f"(command={msg_type.value}). MT5 terminal may be frozen."
-            )
+            old_timeout = sock.gettimeout()
+            sock.settimeout(timeout)
+
+            # Read 4-byte header
+            header = self._recv_exact(sock, 4)
+            if not header:
+                sock.settimeout(old_timeout)
+                return None
+
+            msg_len = struct.unpack('>I', header)[0]
+            if msg_len <= 0 or msg_len > 1_000_000:
+                sock.settimeout(old_timeout)
+                return None
+
+            # Read payload
+            payload = self._recv_exact(sock, msg_len)
+            sock.settimeout(old_timeout)
+
+            if not payload:
+                return None
+
+            return json.loads(payload.decode('utf-8'))
+
+        except socket.timeout:
+            return None
         except Exception as e:
-            raise ConnectionError(f"MT5 communication error: {e}")
-    
-    def _start_data_thread(self) -> None:
-        """Start background thread for receiving market data."""
-        self._stop_event.clear()
-        self._data_thread = Thread(target=self._data_receiver, daemon=True)
-        self._data_thread.start()
-    
-    def _data_receiver(self) -> None:
-        """Background thread for receiving SUB messages."""
+            logger.debug(f"Recv error: {e}")
+            return None
+
+    def _recv_exact(self, sock: socket.socket, n: int) -> Optional[bytes]:
+        """Read exactly n bytes from socket."""
+        data = b''
+        while len(data) < n:
+            try:
+                chunk = sock.recv(n - len(data))
+                if not chunk:
+                    return None  # Connection closed
+                data += chunk
+            except socket.timeout:
+                return None
+            except Exception:
+                return None
+        return data
+
+    # === Receiver Thread ===
+
+    def _receiver_loop(self) -> None:
+        """Background thread: reads all messages from EA."""
         while not self._stop_event.is_set():
-            try:
-                if self._sub_socket.poll(100):
-                    message = self._sub_socket.recv_json()
-                    self._process_data_message(message)
-            except zmq.Again:
-                continue
-            except Exception as e:
-                logger.error(f"Data receiver error: {e}")
+            if not self._client_socket:
                 time.sleep(0.1)
-    
-    def _process_data_message(self, message: dict) -> None:
-        """Process incoming market data message."""
-        msg_type = message.get('type')
-        data = message.get('data', {})
-        
-        if msg_type == MessageType.TICK.value:
-            tick = TickData(
-                symbol=data['symbol'],
-                bid=data['bid'],
-                ask=data['ask'],
-                last=data.get('last', data['bid']),
-                volume=data.get('volume', 0),
-                time=datetime.fromisoformat(data['time'])
-            )
-            self._dispatch_tick(tick)
-            
-        elif msg_type == MessageType.BAR.value:
-            bar = BarData(
-                symbol=data['symbol'],
-                timeframe=data['timeframe'],
-                time=datetime.fromisoformat(data['time']),
-                open=data['open'],
-                high=data['high'],
-                low=data['low'],
-                close=data['close'],
-                volume=data['volume']
-            )
-            self._dispatch_bar(bar)
-    
-    def _dispatch_tick(self, tick: TickData) -> None:
-        """Dispatch tick to registered handlers."""
-        handlers = self._tick_handlers.get(tick.symbol, [])
-        for handler in handlers:
+                continue
+
+            msg = self._recv_msg(self._client_socket, timeout=0.5)
+            if msg is None:
+                continue
+
+            mt = msg.get('mt', '')
+
+            if mt == 'DATA':
+                # Update cached state from EA data push
+                with self._data_lock:
+                    if 'q' in msg:
+                        self._quotes = msg['q']
+                    if 'a' in msg:
+                        self._account = msg['a']
+                    if 'p' in msg:
+                        self._positions = msg['p']
+                    if 't' in msg:
+                        self._server_time = msg['t']
+                    self._last_data_time = time.time()
+                    self._last_heartbeat = datetime.utcnow()
+
+                # Dispatch tick handlers
+                for symbol, qdata in msg.get('q', {}).items():
+                    if symbol in self._tick_handlers:
+                        try:
+                            tick = TickData(
+                                symbol=symbol,
+                                bid=qdata.get('bid', 0),
+                                ask=qdata.get('ask', 0),
+                                last=qdata.get('last', 0),
+                                volume=qdata.get('vol', 0),
+                                time=datetime.utcnow()
+                            )
+                            for handler in self._tick_handlers[symbol]:
+                                handler(tick)
+                        except Exception as e:
+                            logger.error(f"Tick handler error: {e}")
+            else:
+                # This is a command response — put in queue
+                self._response_queue.put(msg)
+
+    # === Command Interface ===
+
+    def _send_command(self, msg_type: MessageType, data: dict) -> dict:
+        """Send command and wait for response."""
+        if not self._connected and msg_type != MessageType.PING:
+            raise ConnectionError("Not connected to MT5")
+
+        # Drain any stale responses
+        while not self._response_queue.empty():
             try:
-                handler(tick)
-            except Exception as e:
-                logger.error(f"Tick handler error for {tick.symbol}: {e}")
-    
-    def _dispatch_bar(self, bar: BarData) -> None:
-        """Dispatch bar to registered handlers."""
-        key = f"{bar.symbol}_{bar.timeframe}"
-        handlers = self._bar_handlers.get(key, [])
-        for handler in handlers:
-            try:
-                handler(bar)
-            except Exception as e:
-                logger.error(f"Bar handler error for {key}: {e}")
-    
-    # === Public API ===
-    
+                self._response_queue.get_nowait()
+            except Empty:
+                break
+
+        # Build and send command
+        cmd = {'type': msg_type.value}
+        cmd.update(data)
+
+        if not self._send_msg(cmd):
+            raise ConnectionError("Failed to send command to MT5")
+
+        # Wait for response
+        try:
+            response = self._response_queue.get(timeout=self.recv_timeout_ms / 1000.0)
+            return response
+        except Empty:
+            raise BridgeTimeoutError(
+                f"MT5 timeout after {self.recv_timeout_ms}ms "
+                f"(command={msg_type.value}). EA may not be responding."
+            )
+
+    def _ping(self) -> bool:
+        """Check EA is alive via cached data freshness."""
+        with self._data_lock:
+            # If we received data in the last 2 seconds, EA is alive
+            if self._last_data_time > 0 and (time.time() - self._last_data_time) < 2.0:
+                return True
+        return False
+
+    # === Public API (same interface as before) ===
+
     def subscribe_ticks(self, symbol: str, handler: Callable[[TickData], None]) -> None:
-        """
-        Subscribe to tick data for a symbol.
-        
-        Args:
-            symbol: Instrument symbol (e.g., "DE40")
-            handler: Callback function for tick data
-        """
+        """Subscribe to tick data for a symbol."""
         if symbol not in self._tick_handlers:
             self._tick_handlers[symbol] = []
-            # Subscribe on ZMQ socket
-            if self._sub_socket:
-                self._sub_socket.setsockopt_string(zmq.SUBSCRIBE, f"TICK_{symbol}")
-        
         self._tick_handlers[symbol].append(handler)
         self._subscribed_symbols.add(symbol)
-        
-        # Notify MT5 to start streaming
-        self._send_command(MessageType.SUBSCRIBE, {'symbol': symbol, 'type': 'tick'})
         logger.info(f"Subscribed to ticks: {symbol}")
-    
-    def subscribe_bars(
-        self, 
-        symbol: str, 
-        timeframe: str, 
-        handler: Callable[[BarData], None]
-    ) -> None:
-        """
-        Subscribe to bar data for a symbol/timeframe.
-        
-        Args:
-            symbol: Instrument symbol
-            timeframe: Timeframe (e.g., "M5", "H1")
-            handler: Callback function for bar data
-        """
+
+    def subscribe_bars(self, symbol: str, timeframe: str, handler: Callable) -> None:
+        """Subscribe to bar data."""
         key = f"{symbol}_{timeframe}"
         if key not in self._bar_handlers:
             self._bar_handlers[key] = []
-            if self._sub_socket:
-                self._sub_socket.setsockopt_string(zmq.SUBSCRIBE, f"BAR_{key}")
-        
         self._bar_handlers[key].append(handler)
-        
-        self._send_command(MessageType.SUBSCRIBE, {
-            'symbol': symbol, 
-            'type': 'bar',
-            'timeframe': timeframe
-        })
         logger.info(f"Subscribed to bars: {key}")
-    
+
     def unsubscribe(self, symbol: str) -> None:
-        """Unsubscribe from all data for a symbol."""
+        """Unsubscribe from symbol data."""
         self._tick_handlers.pop(symbol, None)
         self._subscribed_symbols.discard(symbol)
-        
-        # Remove bar handlers for this symbol
         keys_to_remove = [k for k in self._bar_handlers if k.startswith(symbol)]
         for key in keys_to_remove:
             del self._bar_handlers[key]
-        
-        self._send_command(MessageType.UNSUBSCRIBE, {'symbol': symbol})
         logger.info(f"Unsubscribed: {symbol}")
-    
+
     def send_order(self, request: OrderRequest) -> OrderResult:
-        """
-        Send order to MT5.
-        
-        Args:
-            request: Order parameters
-            
-        Returns:
-            OrderResult with execution details
-        """
+        """Send order to MT5."""
         data = {
             'symbol': request.symbol,
             'order_type': request.order_type.value,
@@ -478,12 +503,12 @@ class MT5Bridge:
             'magic': request.magic,
             'comment': request.comment
         }
-        
+
         logger.info(f"Sending order: {request.symbol} {request.order_type.value} {request.lots} lots")
-        
+
         try:
             response = self._send_command(MessageType.ORDER_SEND, data)
-            
+
             result = OrderResult(
                 success=response.get('success', False),
                 ticket=response.get('ticket', 0),
@@ -495,193 +520,140 @@ class MT5Bridge:
                 error_code=response.get('error_code', 0),
                 error_message=response.get('error_message', '')
             )
-            
+
             if result.success:
                 logger.info(f"Order executed: ticket={result.ticket} price={result.price}")
             else:
                 logger.error(f"Order failed: {result.error_message}")
-            
+
             return result
-            
+
         except BridgeTimeoutError:
-            # Let timeout propagate — engine needs this for reconciliation
             raise
         except Exception as e:
             logger.error(f"Order error: {e}")
             return OrderResult(
-                success=False,
-                ticket=0,
-                order_type='',
-                lots=0,
-                price=0,
-                sl=0,
-                tp=0,
-                error_code=-1,
-                error_message=str(e)
+                success=False, ticket=0, order_type='', lots=0,
+                price=0, sl=0, tp=0, error_code=-1, error_message=str(e)
             )
-    
+
     def execute_spread(
         self,
         request_a: OrderRequest,
         request_b: OrderRequest
     ) -> Tuple[OrderResult, OrderResult]:
-        """
-        Execute both legs of a spread trade concurrently.
-        
-        Uses ThreadPoolExecutor to fire both orders simultaneously,
-        reducing inter-leg gap from ~100-400ms (sequential) to ~5-20ms.
-        
-        Args:
-            request_a: First leg order
-            request_b: Second leg order
-            
-        Returns:
-            Tuple of (result_a, result_b)
-        """
+        """Execute both legs of a spread trade."""
         logger.info(
             f"Spread execution: {request_a.symbol} {request_a.order_type.value} + "
             f"{request_b.symbol} {request_b.order_type.value}"
         )
-        
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            future_a = executor.submit(self.send_order, request_a)
-            future_b = executor.submit(self.send_order, request_b)
-            
-            result_a = future_a.result(timeout=10)
-            result_b = future_b.result(timeout=10)
-        
-        # Check for leg imbalance
+
+        # For TCP single-connection, execute sequentially (still fast — ~5ms per leg)
+        result_a = self.send_order(request_a)
+        result_b = self.send_order(request_b)
+
         if result_a.success != result_b.success:
             failed = "A" if not result_a.success else "B"
             succeeded = "B" if not result_a.success else "A"
             logger.error(
                 f"SPREAD LEG IMBALANCE: Leg {failed} failed, Leg {succeeded} succeeded. "
-                f"Manual intervention may be required."
+                f"Auto-closing orphaned leg..."
             )
-        
+            # Auto-close the orphaned leg to prevent widowmaker
+            orphan_ticket = result_a.ticket if result_a.success else result_b.ticket
+            if orphan_ticket:
+                try:
+                    closed = self.close_position(orphan_ticket)
+                    if closed:
+                        logger.info(f"ORPHAN CLOSED: ticket={orphan_ticket} — widowmaker prevented")
+                    else:
+                        logger.error(f"ORPHAN CLOSE FAILED: ticket={orphan_ticket} — MANUAL CLOSE REQUIRED")
+                except Exception as e:
+                    logger.error(f"ORPHAN CLOSE ERROR: ticket={orphan_ticket} — {e}")
+
         return result_a, result_b
-    
-    def modify_position(
-        self,
-        ticket: int,
-        sl: Optional[float] = None,
-        tp: Optional[float] = None
-    ) -> bool:
-        """
-        Modify stop loss and/or take profit of a position.
-        
-        Args:
-            ticket: Position ticket number
-            sl: New stop loss (None to keep current)
-            tp: New take profit (None to keep current)
-            
-        Returns:
-            True if modification successful
-        """
+
+    def modify_position(self, ticket: int, sl: Optional[float] = None,
+                        tp: Optional[float] = None) -> bool:
+        """Modify SL/TP of a position."""
         data = {'ticket': ticket}
         if sl is not None:
             data['sl'] = sl
         if tp is not None:
             data['tp'] = tp
-        
+
         response = self._send_command(MessageType.ORDER_MODIFY, data)
         success = response.get('success', False)
-        
+
         if success:
             logger.info(f"Position {ticket} modified: SL={sl} TP={tp}")
         else:
             logger.error(f"Position modify failed: {response.get('error_message')}")
-        
         return success
-    
+
     def close_position(self, ticket: int, lots: Optional[float] = None) -> bool:
-        """
-        Close a position (full or partial).
-        
-        Args:
-            ticket: Position ticket number
-            lots: Lots to close (None for full close)
-            
-        Returns:
-            True if close successful
-        """
+        """Close a position."""
         data = {'ticket': ticket}
         if lots is not None:
             data['lots'] = lots
-        
+
         response = self._send_command(MessageType.ORDER_CLOSE, data)
         success = response.get('success', False)
-        
+
         if success:
             logger.info(f"Position {ticket} closed")
         else:
             logger.error(f"Position close failed: {response.get('error_message')}")
-        
         return success
-    
+
     def close_all_positions(self, symbol: Optional[str] = None) -> int:
-        """
-        Close all positions (optionally filtered by symbol).
-        
-        Args:
-            symbol: Symbol to filter (None for all)
-            
-        Returns:
-            Number of positions closed
-        """
+        """Close all positions."""
         data = {}
         if symbol:
             data['symbol'] = symbol
-        
+
         response = self._send_command(MessageType.CLOSE_ALL, data)
         closed = response.get('closed_count', 0)
-        
         logger.warning(f"Close all positions: {closed} closed")
         return closed
-    
+
     def get_positions(self, symbol: Optional[str] = None) -> List[Position]:
-        """
-        Get open positions.
-        
-        Args:
-            symbol: Filter by symbol (None for all)
-            
-        Returns:
-            List of Position objects
-        """
-        data = {}
-        if symbol:
-            data['symbol'] = symbol
-        
-        response = self._send_command(MessageType.GET_POSITIONS, data)
-        positions_data = response.get('positions', [])
-        
+        """Get open positions from cached data."""
+        with self._data_lock:
+            positions_data = self._positions
+
         positions = []
         for p in positions_data:
-            positions.append(Position(
-                ticket=p['ticket'],
-                symbol=p['symbol'],
-                type=p['type'],
-                lots=p['lots'],
-                open_price=p['open_price'],
-                current_price=p['current_price'],
-                sl=p['sl'],
-                tp=p['tp'],
-                profit=p['profit'],
-                swap=p.get('swap', 0),
-                commission=p.get('commission', 0),
-                open_time=datetime.fromisoformat(p['open_time']),
-                magic=p.get('magic', 0),
-                comment=p.get('comment', '')
-            ))
-        
+            if symbol and p.get('symbol') != symbol:
+                continue
+            try:
+                positions.append(Position(
+                    ticket=p['ticket'],
+                    symbol=p['symbol'],
+                    type=p['type'],
+                    lots=p['lots'],
+                    open_price=p['open_price'],
+                    current_price=p['current_price'],
+                    sl=p['sl'],
+                    tp=p['tp'],
+                    profit=p['profit'],
+                    swap=p.get('swap', 0),
+                    commission=p.get('commission', 0),
+                    open_time=datetime.strptime(p['open_time'], "%Y.%m.%d %H:%M:%S")
+                             if isinstance(p.get('open_time'), str) else datetime.utcnow(),
+                    magic=p.get('magic', 0),
+                    comment=p.get('comment', '')
+                ))
+            except Exception as e:
+                logger.error(f"Position parse error: {e}")
+
         return positions
-    
+
     def get_account_info(self) -> AccountInfo:
-        """Get current account information."""
-        response = self._send_command(MessageType.GET_ACCOUNT, {})
-        data = response.get('account', {})
-        
+        """Get account info from cached data."""
+        with self._data_lock:
+            data = self._account
+
         return AccountInfo(
             balance=data.get('balance', 0),
             equity=data.get('equity', 0),
@@ -693,25 +665,12 @@ class MT5Bridge:
             leverage=data.get('leverage', 100),
             server=data.get('server', '')
         )
-    
+
     def get_server_time(self) -> Optional[ServerTimeInfo]:
-        """
-        Get broker server time, GMT offset, and day-of-week.
+        """Get server time from cached data."""
+        with self._data_lock:
+            data = self._server_time
 
-        Returns ServerTimeInfo or None if the EA doesn't support GET_SERVER_TIME
-        (e.g. older EA version without the handler).
-        """
-        try:
-            response = self._send_command(MessageType.GET_SERVER_TIME, {})
-        except (BridgeTimeoutError, ConnectionError) as e:
-            logger.warning(f"get_server_time failed: {e}")
-            return None
-
-        if 'error' in response:
-            logger.warning(f"Server time error: {response['error']}")
-            return None
-
-        data = response.get('server_time', {})
         if not data:
             return None
 
@@ -729,19 +688,17 @@ class MT5Bridge:
         )
 
     def get_quote(self, symbol: str) -> Optional[TickData]:
-        """Get current quote for a symbol. Returns None on error or invalid data."""
-        response = self._send_command(MessageType.GET_QUOTE, {'symbol': symbol})
+        """Get current quote from cached data (updated every 100ms by EA)."""
+        with self._data_lock:
+            qdata = self._quotes.get(symbol)
 
-        # Check for error response from MT5
-        if 'error' in response:
-            logger.warning(f"Quote error for {symbol}: {response['error']}")
+        if not qdata:
+            logger.warning(f"No cached quote for {symbol}")
             return None
 
-        data = response.get('quote', {})
-        bid = data.get('bid', 0)
-        ask = data.get('ask', 0)
+        bid = qdata.get('bid', 0)
+        ask = qdata.get('ask', 0)
 
-        # Guard against zero/invalid prices (error responses return bid=0, ask=0)
         if bid <= 0 or ask <= 0:
             logger.warning(f"Invalid quote for {symbol}: bid={bid}, ask={ask}")
             return None
@@ -750,74 +707,96 @@ class MT5Bridge:
             symbol=symbol,
             bid=bid,
             ask=ask,
-            last=data.get('last', bid),
-            volume=data.get('volume', 0),
-            time=datetime.fromisoformat(data.get('time', datetime.utcnow().isoformat()))
+            last=qdata.get('last', bid),
+            volume=qdata.get('vol', 0),
+            time=datetime.utcnow()
         )
-    
+
+    def get_available_symbols(self) -> list:
+        """Return list of symbols the EA is currently streaming quotes for."""
+        with self._data_lock:
+            return list(self._quotes.keys())
+
+    def resolve_symbol(self, wanted: str, aliases: list = None) -> Optional[str]:
+        """
+        Find the actual broker symbol name for a wanted symbol.
+        Checks cached quotes for exact match first, then tries aliases.
+        Returns the actual broker name or None if not found.
+        """
+        with self._data_lock:
+            available = set(self._quotes.keys())
+
+        # Exact match
+        if wanted in available:
+            return wanted
+
+        # Try aliases
+        if aliases:
+            for alias in aliases:
+                if alias in available:
+                    return alias
+
+        return None
+
     @property
     def is_connected(self) -> bool:
-        """Check if bridge is connected."""
-        return self._connected
-    
+        """Check if bridge is connected and receiving data."""
+        if not self._connected:
+            return False
+        with self._data_lock:
+            # Connected if data received in last 5 seconds
+            return (time.time() - self._last_data_time) < 5.0
+
     def heartbeat(self) -> bool:
-        """Send heartbeat to verify connection is alive."""
-        try:
-            if self._ping():
-                self._last_heartbeat = datetime.utcnow()
-                return True
-            return False
-        except:
-            return False
+        """Check connection health via data freshness."""
+        alive = self._ping()
+        if alive:
+            self._last_heartbeat = datetime.utcnow()
+        return alive
 
 
 class MT5BridgeAsync:
-    """
-    Async wrapper for MT5Bridge.
-    
-    Provides asyncio-compatible interface for use with async trading loops.
-    """
-    
+    """Async wrapper for MT5Bridge."""
+
     def __init__(self, bridge: MT5Bridge):
         self._bridge = bridge
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
-    
+
     async def connect(self) -> bool:
-        """Async connect."""
+        import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._bridge.connect)
-    
+
     async def disconnect(self) -> None:
-        """Async disconnect."""
+        import asyncio
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._bridge.disconnect)
-    
+
     async def send_order(self, request: OrderRequest) -> OrderResult:
-        """Async order send."""
+        import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._bridge.send_order, request)
-    
+
     async def close_position(self, ticket: int, lots: Optional[float] = None) -> bool:
-        """Async position close."""
+        import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._bridge.close_position, ticket, lots)
-    
+
     async def close_all_positions(self, symbol: Optional[str] = None) -> int:
-        """Async close all."""
+        import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._bridge.close_all_positions, symbol)
-    
+
     async def get_positions(self, symbol: Optional[str] = None) -> List[Position]:
-        """Async get positions."""
+        import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._bridge.get_positions, symbol)
-    
+
     async def get_account_info(self) -> AccountInfo:
-        """Async get account info."""
+        import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._bridge.get_account_info)
-    
+
     async def get_quote(self, symbol: str) -> TickData:
-        """Async get quote."""
+        import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._bridge.get_quote, symbol)

@@ -90,7 +90,7 @@ class DynamicAKAD:
             self._results.append(0)
 
         logger.info(
-            f"Dynamic AKAD initialized | λ={dd_lambda}, P_ruin={p_ruin:.0e}, "
+            f"Dynamic AKAD initialized | lam={dd_lambda}, P_ruin={p_ruin:.0e}, "
             f"DD_ceiling={daily_dd_ceiling*100:.1f}%, window={result_window}"
         )
 
@@ -181,7 +181,7 @@ class AKADRiskManager:
 
         logger.info(
             f"AKAD Python fallback (LEGACY) | base={base_risk*100:.2f}%, "
-            f"λ={dd_lambda}, fast={fast_window}, slow={slow_window}"
+            f"lam={dd_lambda}, fast={fast_window}, slow={slow_window}"
         )
 
     def calculate_risk(

@@ -69,13 +69,18 @@ logger = logging.getLogger(__name__)
 class PairConfig:
     """Configuration for a trading pair."""
     name: str
-    symbol_a: str       # Long leg
-    symbol_b: str       # Short leg
+    symbol_a: str       # Long leg (preferred name)
+    symbol_b: str       # Short leg (preferred name)
+    aliases_a: tuple = ()  # Alternative broker names for symbol A
+    aliases_b: tuple = ()  # Alternative broker names for symbol B
     static_beta: float = 1.0
     beta_tolerance: float = 0.15
     pair_index: int = 0  # For CorrelationRiskMonitor
     max_spread_a: float = 50.0   # Max allowed spread (points) for symbol A
     max_spread_b: float = 50.0   # Max allowed spread (points) for symbol B
+    # Resolved at runtime (actual broker names)
+    resolved_a: str = ""
+    resolved_b: str = ""
 
 
 # Holy Trio — the only pairs we trade
@@ -84,11 +89,15 @@ class PairConfig:
 #   Forex majors: tight spreads (8-20 pts = ~0.8-2.0 pips)
 HOLY_TRIO: List[PairConfig] = [
     PairConfig(name="Index Spread",    symbol_a="US100",  symbol_b="DE40",   pair_index=0,
-               max_spread_a=200.0, max_spread_b=200.0),    # Indices: wider
+               aliases_a=("NAS100","USTEC","US100.cash","NAS100.cash","USTEC.cash"),
+               aliases_b=("DAX40","GER40","DE40.cash","DAX40.cash","GER40.cash"),
+               max_spread_a=200.0, max_spread_b=200.0),
     PairConfig(name="Forex Anchor",    symbol_a="AUDUSD", symbol_b="NZDUSD", pair_index=1,
-               max_spread_a=80.0,  max_spread_b=80.0),     # Forex: ~8 pips
+               aliases_a=("AUDUSDm",), aliases_b=("NZDUSDm",),
+               max_spread_a=80.0,  max_spread_b=80.0),
     PairConfig(name="EUR/GBP Spread",  symbol_a="EURUSD", symbol_b="GBPUSD", pair_index=2,
-               max_spread_a=60.0,  max_spread_b=60.0),     # Majors: ~6 pips
+               aliases_a=("EURUSDm",), aliases_b=("GBPUSDm",),
+               max_spread_a=60.0,  max_spread_b=60.0),
 ]
 
 
@@ -290,8 +299,37 @@ class TradingEngine:
                 del _probe
                 logger.info("FFI contract validated — all Rust getters present")
 
-            # Initialize pair states
+            # Auto-resolve broker symbol names from EA's available symbols
+            available = self._bridge.get_available_symbols()
+            logger.info(f"EA streaming symbols: {available}")
+
+            active_pairs = []
             for pair_cfg in HOLY_TRIO:
+                resolved_a = self._bridge.resolve_symbol(pair_cfg.symbol_a, list(pair_cfg.aliases_a))
+                resolved_b = self._bridge.resolve_symbol(pair_cfg.symbol_b, list(pair_cfg.aliases_b))
+
+                if resolved_a and resolved_b:
+                    # Update config with actual broker names
+                    pair_cfg.resolved_a = resolved_a
+                    pair_cfg.resolved_b = resolved_b
+                    pair_cfg.symbol_a = resolved_a
+                    pair_cfg.symbol_b = resolved_b
+                    active_pairs.append(pair_cfg)
+                    logger.info(f"  {pair_cfg.name}: {resolved_a} / {resolved_b} -- ACTIVE")
+                else:
+                    missing = []
+                    if not resolved_a:
+                        missing.append(f"{pair_cfg.symbol_a} (tried: {pair_cfg.aliases_a})")
+                    if not resolved_b:
+                        missing.append(f"{pair_cfg.symbol_b} (tried: {pair_cfg.aliases_b})")
+                    logger.warning(f"  {pair_cfg.name}: SKIPPED -- missing: {', '.join(missing)}")
+
+            if not active_pairs:
+                logger.error("No tradeable pairs found! Check broker symbol names.")
+                return False
+
+            # Initialize pair states for active pairs only
+            for pair_cfg in active_pairs:
                 self._init_pair(pair_cfg)
 
             # Initial broker time sync + daily DD tracking
@@ -371,6 +409,7 @@ class TradingEngine:
         # Heartbeat
         if not self._bridge.heartbeat():
             logger.warning("MT5 heartbeat failed — reconnecting")
+            self._bridge.disconnect()
             if not self._bridge.connect():
                 return
 
@@ -624,13 +663,15 @@ class TradingEngine:
             state.ticket_b = result_b.ticket
             dwell = self._calculate_dynamic_dwell(state.last_hurst)
             logger.info(
-                f"  ✅ {cfg.name} spread entered | tickets={result_a.ticket},{result_b.ticket} | "
+                f"  FILLED: {cfg.name} spread entered | tickets={result_a.ticket},{result_b.ticket} | "
                 f"Dwell={dwell:.0f}s (H={state.last_hurst:.3f})"
             )
         else:
             err_a = result_a.error_message if not result_a.success else "OK"
             err_b = result_b.error_message if not result_b.success else "OK"
-            logger.error(f"  ❌ Spread execution failed: A={err_a}, B={err_b}")
+            logger.error(f"  REJECTED: Spread execution failed: A={err_a}, B={err_b}")
+            # Set cooldown to prevent immediate retry (uses existing dwell mechanism)
+            state.last_close_time = datetime.utcnow()
 
     async def _maybe_exit(self, state: PairState) -> None:
         """Check exit conditions using v5.6 dynamic exit Z + dynamic dwell enforcement."""
@@ -835,7 +876,7 @@ class TradingEngine:
             missing_side = "B" if found_a else "A"
 
             logger.critical(
-                f"⚠️  WIDOWMAKER DETECTED: {cfg.name} | "
+                f"WARNING -- WIDOWMAKER DETECTED: {cfg.name} | "
                 f"Leg {orphan_side} FILLED (ticket={orphan.ticket}, "
                 f"{orphan.symbol} {orphan.type} {orphan.lots} lots) | "
                 f"Leg {missing_side} NOT FILLED | "
@@ -952,8 +993,14 @@ class TradingEngine:
             # Extract broker tick timestamp (use time_msc if available, else time)
             tick_epoch = getattr(tick, 'time_msc', 0)
             if tick_epoch == 0:
-                # Fallback: tick.time is usually seconds-since-epoch in broker TZ
-                tick_epoch = int(getattr(tick, 'time', 0) * 1000)
+                # Fallback: tick.time may be datetime or numeric
+                tick_time = getattr(tick, 'time', 0)
+                if isinstance(tick_time, datetime):
+                    tick_epoch = int(tick_time.timestamp() * 1000)
+                elif isinstance(tick_time, (int, float)):
+                    tick_epoch = int(tick_time * 1000)
+                else:
+                    tick_epoch = int(time.time() * 1000)
 
             # Check if tick has actually updated since last call
             prev_epoch, prev_wall = self._tick_tracker.get(symbol, (0, now_wall))
@@ -1002,41 +1049,91 @@ class TradingEngine:
             return False
         return True
 
+    # Minimum stop distance per asset class (points from current price).
+    # Must exceed broker's STOPS_LEVEL to avoid "Invalid stops" rejection.
+    MIN_STOP_DISTANCE = {
+        'INDEX': 500.0,    # Indices: 500 points minimum (NAS100, DAX40)
+        'FOREX': 0.0050,   # Forex: 50 pips minimum (AUDUSD, EURUSD etc.)
+    }
+
+    # Minimum Welford buffer length before we trust the sigma for hard stops
+    MIN_BUFFER_FOR_STOPS = 200
+
+    def _get_asset_class(self, symbol: str) -> str:
+        """Determine asset class from symbol name."""
+        forex_symbols = ('AUDUSD', 'NZDUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF',
+                         'AUDUSDm', 'NZDUSDm', 'EURUSDm', 'GBPUSDm')
+        if symbol in forex_symbols:
+            return 'FOREX'
+        return 'INDEX'
+
     def _calculate_hard_stops(
         self, state: PairState, direction: int, lots: float
     ) -> Tuple[float, float, float, float]:
         """
-        Calculate server-side hard stops for both legs (Huber 4.815σ safety net).
+        Calculate server-side hard stops for both legs (Huber 4.815-sigma safety net).
 
-        Uses the Welford running σ of the spread to derive per-leg SL/TP
-        at 4.815σ (Huber constant). These are *catastrophe* stops only —
-        normal exits are handled by the ghost stop + dynamic Z exit logic.
+        The spread sigma from Welford is in LOG-space (ln(A) - beta*ln(B)).
+        To convert to PRICE-space: dx = price * d(ln(x)), so:
+          stop_dist_A = price_A * HUBER * spread_sigma * weight_A
+          stop_dist_B = price_B * HUBER * spread_sigma * weight_B
 
-        Returns: (sl_a, tp_a, sl_b, tp_b)
+        Also enforces per-asset-class minimum stop distances to avoid
+        "Invalid stops" rejection from the broker (STOPS_LEVEL constraint).
+
+        These are *catastrophe* stops only — normal exits are handled by
+        the ghost stop + dynamic Z exit logic.
+
+        Returns: (sl_a, tp_a, sl_b, tp_b) — returns (0,0,0,0) if not enough data.
         """
         HUBER_SIGMA = 4.815
 
         price_a = state.last_price_a
         price_b = state.last_price_b
 
-        # Estimate per-leg sigma from spread sigma (simplified: split evenly)
+        if price_a <= 0 or price_b <= 0:
+            return (0.0, 0.0, 0.0, 0.0)
+
+        # Get spread sigma from Welford (LOG-space)
         spread_sigma = 0.0
+        buffer_len = 0
         if state.coint_engine is not None:
             try:
                 spread_sigma = state.coint_engine.last_std
+                buffer_len = state.coint_engine.buffer_len
             except AttributeError:
                 spread_sigma = 0.0
 
-        if spread_sigma <= 0 or price_a <= 0 or price_b <= 0:
-            return (0.0, 0.0, 0.0, 0.0)  # Can't compute → no hard stops
+        # Don't trust sigma until we have enough data points
+        if buffer_len < self.MIN_BUFFER_FOR_STOPS or spread_sigma <= 0:
+            # Use fallback: 2% of price as catastrophe stop
+            fallback_pct = 0.02
+            stop_dist_a = price_a * fallback_pct
+            stop_dist_b = price_b * fallback_pct
+            logger.debug(
+                f"HARD STOPS (fallback 2%%): {state.config.name} | "
+                f"buffer={buffer_len}/{self.MIN_BUFFER_FOR_STOPS} | "
+                f"Using 2%% price distance"
+            )
+        else:
+            # Convert log-space sigma to price-space:
+            # d(ln(x)) = dx/x => dx = x * d(ln(x))
+            # Spread risk split: A gets 60%, B gets 40%
+            stop_dist_a = price_a * HUBER_SIGMA * spread_sigma * 0.6
+            stop_dist_b = price_b * HUBER_SIGMA * spread_sigma * 0.4
 
-        stop_dist_a = HUBER_SIGMA * spread_sigma * 0.6  # Leg A gets ~60% of spread risk
-        stop_dist_b = HUBER_SIGMA * spread_sigma * 0.4  # Leg B gets ~40%
+        # Enforce minimum stop distances per asset class
+        asset_class_a = self._get_asset_class(state.config.symbol_a)
+        asset_class_b = self._get_asset_class(state.config.symbol_b)
+        min_dist_a = self.MIN_STOP_DISTANCE.get(asset_class_a, 500.0)
+        min_dist_b = self.MIN_STOP_DISTANCE.get(asset_class_b, 500.0)
+        stop_dist_a = max(stop_dist_a, min_dist_a)
+        stop_dist_b = max(stop_dist_b, min_dist_b)
 
         if direction > 0:
             # Long spread: buy A (SL below), sell B (SL above)
             sl_a = round(price_a - stop_dist_a, 5)
-            tp_a = 0.0  # No TP — dynamic exit handles this
+            tp_a = 0.0
             sl_b = round(price_b + stop_dist_b, 5)
             tp_b = 0.0
         else:
@@ -1047,8 +1144,9 @@ class TradingEngine:
             tp_b = 0.0
 
         logger.info(
-            f"HARD STOPS: {state.config.name} | σ_spread={spread_sigma:.5f} | "
-            f"SL_A={sl_a} SL_B={sl_b} (Huber {HUBER_SIGMA}σ)"
+            f"HARD STOPS: {state.config.name} | spread_sigma={spread_sigma:.5f} | "
+            f"buf={buffer_len} | dist_A={stop_dist_a:.1f} dist_B={stop_dist_b:.1f} | "
+            f"SL_A={sl_a:.2f} SL_B={sl_b:.2f} (Huber {HUBER_SIGMA}sig)"
         )
         return (sl_a, tp_a, sl_b, tp_b)
 

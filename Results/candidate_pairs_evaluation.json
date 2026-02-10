@@ -1,0 +1,94 @@
+{
+  "timestamp": "2026-02-10T19:28:25.977460",
+  "candidates": [
+    {
+      "name": "Gold/Silver",
+      "status": "EVALUATED",
+      "sym_a": "XAUUSD",
+      "sym_b": "XAGUSD",
+      "reason": "Precious metals \u2014 same safe-haven demand drivers",
+      "bars": 99807,
+      "price_corr": 0.9551,
+      "return_corr": 0.7174,
+      "total_trades": 681,
+      "win_rate": 55.9,
+      "profit_factor": 1.29,
+      "net_pnl_log": 0.11375,
+      "max_dd_log": 0.072903,
+      "avg_hurst": 0.5748,
+      "avg_z_crit": 2.92,
+      "avg_z_exit": 0.575,
+      "avg_hold_bars": 2.9,
+      "emergency_exits": 0,
+      "sentinel_aborts": 85593,
+      "sentinel_exits": 636,
+      "grade": "FAIL"
+    },
+    {
+      "name": "Dow/S&P500",
+      "status": "EVALUATED",
+      "sym_a": "US30",
+      "sym_b": "US500",
+      "reason": "US large-cap indices \u2014 same economy, 95%+ overlap",
+      "bars": 99721,
+      "price_corr": 0.8629,
+      "return_corr": 0.8174,
+      "total_trades": 711,
+      "win_rate": 49.9,
+      "profit_factor": 0.88,
+      "net_pnl_log": -0.012262,
+      "max_dd_log": 0.021849,
+      "avg_hurst": 0.5838,
+      "avg_z_crit": 3.02,
+      "avg_z_exit": 0.584,
+      "avg_hold_bars": 1.0,
+      "emergency_exits": 0,
+      "sentinel_aborts": 99721,
+      "sentinel_exits": 711,
+      "grade": "FAIL"
+    },
+    {
+      "name": "FTSE/DAX",
+      "status": "EVALUATED",
+      "sym_a": "UK100",
+      "sym_b": "DE40",
+      "reason": "European index siblings \u2014 correlated macro cycle",
+      "bars": 97549,
+      "price_corr": 0.814,
+      "return_corr": 0.6066,
+      "total_trades": 218,
+      "win_rate": 69.3,
+      "profit_factor": 1.06,
+      "net_pnl_log": 0.005946,
+      "max_dd_log": 0.01336,
+      "avg_hurst": 0.5813,
+      "avg_z_crit": 2.99,
+      "avg_z_exit": 0.581,
+      "avg_hold_bars": 33.1,
+      "emergency_exits": 0,
+      "sentinel_aborts": 0,
+      "sentinel_exits": 0,
+      "grade": "FAIL"
+    }
+  ],
+  "holy_trio_benchmarks": {
+    "US100/DE40": {
+      "wr": 70.3,
+      "pf": 1.41,
+      "avg_hurst": 0.584,
+      "avg_z_crit": 3.01
+    },
+    "AUDUSD/NZDUSD": {
+      "wr": 81.9,
+      "pf": 3.82,
+      "avg_hurst": 0.512,
+      "avg_z_crit": 2.15
+    },
+    "EURUSD/GBPUSD": {
+      "wr": 78.6,
+      "pf": 2.29,
+      "avg_hurst": 0.539,
+      "avg_z_crit": 2.47
+    }
+  }
+}

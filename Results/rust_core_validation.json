@@ -4,7 +4,7 @@
   "failed": 0,
   "total": 120,
   "pass_rate": 100.0,
-  "elapsed_seconds": 0.70088791847229,
+  "elapsed_seconds": 0.5437016487121582,
   "tests": [
     {
       "test": "Welford function vs Python ref",
@@ -592,19 +592,19 @@
       "detail": "wr=79.0%"
     },
     {
-      "test": "Welford: 422ns/update",
+      "test": "Welford: 295ns/update",
       "status": "PASS",
-      "detail": "422ns (422.1ms for 1M)"
+      "detail": "295ns (294.6ms for 1M)"
     },
     {
-      "test": "Kalman: 1194ns/update",
+      "test": "Kalman: 826ns/update",
       "status": "PASS",
-      "detail": "1194ns (119.4ms for 100K)"
+      "detail": "826ns (82.6ms for 100K)"
     },
     {
-      "test": "AKAD: 294ns/calc",
+      "test": "AKAD: 274ns/calc",
       "status": "PASS",
-      "detail": "294ns (29.4ms for 100K)"
+      "detail": "274ns (27.4ms for 100K)"
     }
   ]
 }
