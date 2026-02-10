@@ -1,0 +1,812 @@
+{
+  "version": "5.6.0",
+  "date": "2026-02-10T10:53:53.697186",
+  "passed": 147,
+  "failed": 6,
+  "warnings": 0,
+  "total": 153,
+  "pass_rate": 96.1,
+  "elapsed_seconds": 7.1,
+  "pair_results": {
+    "US100/DE40": {
+      "trades": 161,
+      "win_rate": 66.45962732919256,
+      "pf": 1.1532818435554493,
+      "pnl": 12.782803370958717,
+      "min_hold": 2,
+      "avg_hold": 34.78260869565217,
+      "dwell_enforced": 161,
+      "emergency": 0,
+      "cooldown_blocked": 0
+    },
+    "AUDUSD/NZDUSD": {
+      "trades": 177,
+      "win_rate": 79.66101694915254,
+      "pf": 3.4005226641498356,
+      "pnl": 41.44033833526212,
+      "min_hold": 2,
+      "avg_hold": 24.29943502824859,
+      "dwell_enforced": 174,
+      "emergency": 2,
+      "cooldown_blocked": 4
+    },
+    "EURUSD/GBPUSD": {
+      "trades": 53,
+      "win_rate": 79.24528301886792,
+      "pf": 1.369175324225399,
+      "pnl": 2.3040539081312925,
+      "min_hold": 2,
+      "avg_hold": 24.264150943396228,
+      "dwell_enforced": 52,
+      "emergency": 0,
+      "cooldown_blocked": 2
+    }
+  },
+  "tests": [
+    {
+      "test": "shf_core version == 5.6.0",
+      "status": "PASS",
+      "detail": "version=5.6.0"
+    },
+    {
+      "test": "Class ExecutionCore exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class MathKernel exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class OnlineNormalizer exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class CointegrationEngine exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class KalmanSentinel exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class AKADRiskCalculator exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class CorrelationRiskMonitor exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class SpreadSignal exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class OUFitResult exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Class DynamicSignalResult exists in shf_core",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function fit_robust_ou_process exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_rolling_hurst exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_prop_kelly exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_hard_stop_price exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_equilibrium_std exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_z_score exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_z_score_quantiles exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_hurst_quantiles exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function generate_dynamic_signal exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_rolling_z_scores exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_rolling_hurst_series_py exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_correlation exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Function calculate_correlation_matrix exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine constructor accepts all \u00a74.1 params",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.last_hurst exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.last_z_crit exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.last_exit_z exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.entry_z exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.exit_z exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.dynamic_z_enabled exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.dynamic_exit_enabled exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.last_z_score exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.last_spread exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.last_std exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.last_mean exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "CointegrationEngine.buffer_len exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Dynamic Z formula H=0.5",
+      "status": "PASS",
+      "detail": "Z_crit=2.00, expected=2.00"
+    },
+    {
+      "test": "Dynamic Z formula H=0.58",
+      "status": "PASS",
+      "detail": "Z_crit=2.96, expected=2.96"
+    },
+    {
+      "test": "Dynamic Z formula H=0.7",
+      "status": "PASS",
+      "detail": "Z_crit=4.40, expected=4.40"
+    },
+    {
+      "test": "Dynamic Exit Z formula H=0.3",
+      "status": "PASS",
+      "detail": "Z_exit=0.300, expected=0.300"
+    },
+    {
+      "test": "Dynamic Exit Z formula H=0.5",
+      "status": "PASS",
+      "detail": "Z_exit=0.500, expected=0.500"
+    },
+    {
+      "test": "Dynamic Exit Z formula H=0.7",
+      "status": "PASS",
+      "detail": "Z_exit=0.700, expected=0.700"
+    },
+    {
+      "test": "AKAD DD=0%",
+      "status": "PASS",
+      "detail": "risk=0.00750, expected=0.00750"
+    },
+    {
+      "test": "AKAD DD=1%",
+      "status": "PASS",
+      "detail": "risk=0.00503, expected=0.00503"
+    },
+    {
+      "test": "AKAD DD=2%",
+      "status": "PASS",
+      "detail": "risk=0.00337, expected=0.00337"
+    },
+    {
+      "test": "AKAD DD=3%",
+      "status": "PASS",
+      "detail": "risk=0.00226, expected=0.00226"
+    },
+    {
+      "test": "AKAD DD=4%",
+      "status": "PASS",
+      "detail": "risk=0.00151, expected=0.00151"
+    },
+    {
+      "test": "AKAD DD=5%",
+      "status": "PASS",
+      "detail": "risk=0.00102, expected=0.00102"
+    },
+    {
+      "test": "CorrelationRiskMonitor window param accepted",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "US100/DE40 in engine.py",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "AUDUSD/NZDUSD in engine.py",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "EURUSD/GBPUSD in engine.py",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C1a: _daily_start_balance in engine.py",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C1b: GHOST_STOP_MAX in engine.py",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C1c: GHOST_STOP_MAX checked in _tick()",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C1d: Daily DD reset via broker date",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C1e: RiskSupervisor.update() called in _tick()",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C1f: RiskSupervisor.record_win() in _close_spread()",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C1g: RiskSupervisor.record_loss() in _close_spread()",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C2a: _calculate_hard_stops method exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C2b: Hard stops used in _maybe_enter()",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C2c: Huber 4.815 sigma constant",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C2d: OrderRequest takes sl parameter",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C3a: get_quote returns Optional[TickData]",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C3b: Error check in get_quote",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "C3c: Zero price guard in get_quote",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "G1a: HMM detector in PairState",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "G1b: HMM create_regime_detector called",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "G1c: hmm_blocked check before entry",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "G1d: hmm_detector.update() called",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "G2: is_halted check in _tick()",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "G3: _check_spread calls _get_tick_data()",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "FFI: last_std getter in engine.py",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "FFI: last_mean getter in engine.py",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "FFI: Contract validation at startup",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "P0a: GET_SERVER_TIME in bridge",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "P0b: ServerTimeInfo dataclass",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "P0c: get_server_time method",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "P0d: _sync_broker_time in engine",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "P0e: _get_broker_date in engine",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "P0f: Rollover lockout",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Timeout: BridgeTimeoutError defined",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Timeout: zmq.Again raises BridgeTimeoutError",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Timeout: Reconciliation in engine",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Staleness: _tick_tracker in engine",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Staleness: STALE_FEED_TIMEOUT constant",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Spread Filter: max_spread_a in PairConfig",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Spread Filter: _check_spread in _maybe_enter",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Dwell: DWELL_BASE_SECONDS constant",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Dwell: _calculate_dynamic_dwell method",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Dwell: Re-entry cooldown in _maybe_enter",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Execution: execute_spread in bridge",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Execution: ThreadPoolExecutor used",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "EA: HandleGetServerTime exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "EA: HandleOrderSend exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "EA: SL passed to OrderSend",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "EA: HandleGetQuote exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "EA: Version 5.60",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Pipeline: signals generated",
+      "status": "PASS",
+      "detail": "signals=12"
+    },
+    {
+      "test": "Pipeline: Hurst computed",
+      "status": "PASS",
+      "detail": "H=0.5842"
+    },
+    {
+      "test": "Pipeline: Z_crit dynamic",
+      "status": "PASS",
+      "detail": "Z_crit=3.0105"
+    },
+    {
+      "test": "Pipeline: Exit Z dynamic",
+      "status": "PASS",
+      "detail": "exit_z=0.5842"
+    },
+    {
+      "test": "Pipeline: Kalman beta stable",
+      "status": "PASS",
+      "detail": "beta=0.9914"
+    },
+    {
+      "test": "Pipeline: AKAD risk > floor",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Pipeline: Corr risk_mult in [0.4, 1.0]",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Pipeline: last_std > 0",
+      "status": "PASS",
+      "detail": "std=0.003895"
+    },
+    {
+      "test": "Warmup: No signals before 200 bars",
+      "status": "PASS",
+      "detail": "early_sigs=0"
+    },
+    {
+      "test": "Spread sigma computable",
+      "status": "PASS",
+      "detail": "\u03c3=0.001195"
+    },
+    {
+      "test": "Hard stop SL_A < price_A (long)",
+      "status": "PASS",
+      "detail": "SL_A=1.07655, price=1.08"
+    },
+    {
+      "test": "Hard stop SL_B > price_B (sell)",
+      "status": "PASS",
+      "detail": "SL_B=1.2723, price=1.27"
+    },
+    {
+      "test": "Hard stop distance reasonable",
+      "status": "PASS",
+      "detail": "stop_dist=0.003452"
+    },
+    {
+      "test": "Zero price_a: no crash",
+      "status": "PASS",
+      "detail": "z=0.0000"
+    },
+    {
+      "test": "Zero price_b: no crash",
+      "status": "PASS",
+      "detail": "z=7.0356"
+    },
+    {
+      "test": "Both prices zero: no crash",
+      "status": "PASS",
+      "detail": "z=3.0704"
+    },
+    {
+      "test": "Negative price_a: no crash",
+      "status": "PASS",
+      "detail": "z=-0.1892"
+    },
+    {
+      "test": "AKAD at DD=0%",
+      "status": "PASS",
+      "detail": "risk=0.007500"
+    },
+    {
+      "test": "AKAD at DD=50% (floor)",
+      "status": "PASS",
+      "detail": "risk=0.000500"
+    },
+    {
+      "test": "AKAD at DD=100%",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Kalman detects extreme drift",
+      "status": "PASS",
+      "detail": "abort=True, beta=4.8559"
+    },
+    {
+      "test": "Identical series: max_corr \u2248 1.0",
+      "status": "PASS",
+      "detail": "max_corr=1.0000"
+    },
+    {
+      "test": "Identical series: risk_mult = 0.4",
+      "status": "PASS",
+      "detail": "risk_mult=0.4"
+    },
+    {
+      "test": "Anti-correlated: max_corr \u2248 1.0 (absolute)",
+      "status": "PASS",
+      "detail": "max_corr=1.0000"
+    },
+    {
+      "test": "Anti-correlated: risk_mult = 0.4",
+      "status": "PASS",
+      "detail": "risk_mult=0.4"
+    },
+    {
+      "test": "Empty corr monitor: safe default",
+      "status": "PASS",
+      "detail": "risk_mult=1.0"
+    },
+    {
+      "test": "Rapid reset: buffer_len = 0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Rapid reset: z_score = 0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Tiny OU dataset: no crash",
+      "status": "PASS",
+      "detail": "theta=0.0000"
+    },
+    {
+      "test": "Dwell H=0.00: clamped correctly",
+      "status": "PASS",
+      "detail": "dwell=30s, expected=[30,30]"
+    },
+    {
+      "test": "Dwell H=0.15: clamped correctly",
+      "status": "PASS",
+      "detail": "dwell=30s, expected=[30,30]"
+    },
+    {
+      "test": "Dwell H=0.30: clamped correctly",
+      "status": "PASS",
+      "detail": "dwell=60s, expected=[60,60]"
+    },
+    {
+      "test": "Dwell H=0.50: clamped correctly",
+      "status": "PASS",
+      "detail": "dwell=100s, expected=[100,100]"
+    },
+    {
+      "test": "Dwell H=1.00: clamped correctly",
+      "status": "PASS",
+      "detail": "dwell=200s, expected=[200,200]"
+    },
+    {
+      "test": "Dwell H=2.00: clamped correctly",
+      "status": "PASS",
+      "detail": "dwell=300s, expected=[300,300]"
+    },
+    {
+      "test": "Sizing bal=$100000 risk=0.75%",
+      "status": "PASS",
+      "detail": "lots=0.75"
+    },
+    {
+      "test": "Sizing bal=$1000 risk=0.05%",
+      "status": "PASS",
+      "detail": "lots=0.01"
+    },
+    {
+      "test": "Sizing bal=$0 risk=0.75%",
+      "status": "PASS",
+      "detail": "lots=0.01"
+    },
+    {
+      "test": "Real M1: Portfolio trades > 1000",
+      "status": "FAIL",
+      "detail": "trades=391"
+    },
+    {
+      "test": "Real M1: Win rate > 75%",
+      "status": "FAIL",
+      "detail": "WR=74.2%"
+    },
+    {
+      "test": "Real M1: Profit factor > 2.0",
+      "status": "FAIL",
+      "detail": "PF=1.53"
+    },
+    {
+      "test": "Real M1: Positive P&L",
+      "status": "PASS",
+      "detail": "P&L=$56.53"
+    },
+    {
+      "test": "Real M1: Min hold >= 2 bars (with dwell)",
+      "status": "PASS",
+      "detail": "min_hold=2 bars"
+    },
+    {
+      "test": "Real M1: No sub-30s trades (non-emergency)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Cross-validate: trades within 5% of stored",
+      "status": "FAIL",
+      "detail": "current=391, stored=1040"
+    },
+    {
+      "test": "Cross-validate: WR within 2% of stored",
+      "status": "FAIL",
+      "detail": "current=74.2%, stored=79.0%"
+    },
+    {
+      "test": "Cross-validate: PF within 10% of stored",
+      "status": "FAIL",
+      "detail": "current=1.53, stored=2.30"
+    },
+    {
+      "test": "AKAD: risk monotonically decreasing with DD",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Combined: corr reduces AKAD risk",
+      "status": "PASS",
+      "detail": "base=0.00503, adjusted=0.00201, mult=0.4"
+    },
+    {
+      "test": "Sentinel: few aborts on cointegrated data",
+      "status": "PASS",
+      "detail": "aborts=0/1000"
+    },
+    {
+      "test": "2-year stress: 0 ghost stops",
+      "status": "PASS",
+      "detail": "ghost_stops=0"
+    },
+    {
+      "test": "2-year stress: all 12 profitable",
+      "status": "PASS",
+      "detail": "profitable=12/12"
+    },
+    {
+      "test": "Dwell: PF drop < 5%",
+      "status": "PASS",
+      "detail": "PF drop=-0.0%"
+    },
+    {
+      "test": "Dwell: min hold >= 1 bar",
+      "status": "PASS",
+      "detail": "min_hold=2"
+    }
+  ]
+}

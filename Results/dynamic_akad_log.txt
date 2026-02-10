@@ -1,0 +1,73 @@
+==========================================================================================
+TRULY DYNAMIC AKAD — ADAPTIVE BASE RISK TEST
+==========================================================================================
+
+  Dynamic AKAD Formula:
+    dd_remaining = 4% - daily_dd_used
+    rolling_wr = last 50 trades win rate (clamped [50%-85%])
+    n_survive = log(0.0001) / log(1 - rolling_wr)
+    dynamic_base = (exp(40.0 * dd_remaining) - 1) / (40.0 * n_survive)
+    risk = dynamic_base * exp(-40.0 * total_dd)
+    Clamped to [0.3%, 3.0%]
+
+  GUARANTEE: Can NEVER breach 4% daily DD limit.
+  As daily DD rises, dd_remaining shrinks -> base shrinks -> risk shrinks.
+  As WR improves, n_survive shrinks -> base rises -> more aggressive.
+
+  Dynamic Base Risk at Various States:
+   Daily DD Used  Total DD  Rolling WR  Dynamic Base  Final Risk  vs Fixed
+  ----------------------------------------------------------------------
+            0.0%      0.0%         74%        1.445%     1.4454%      1.9x
+            0.0%      0.0%         80%        1.727%     1.7269%      2.3x
+            0.5%      1.0%         74%        1.117%     0.7488%      1.5x
+            1.0%      2.0%         74%        0.848%     0.3812%      1.1x
+            2.0%      3.0%         74%        0.448%     0.1350%      0.6x
+            2.0%      3.0%         60%        0.305%     0.0918%      0.4x
+            3.0%      5.0%         74%        0.300%     0.0500%      0.5x
+            3.5%      7.0%         65%        0.300%     0.0500%      1.1x
+
+
+==========================================================================================
+PART 1: REAL M1 DATA BACKTEST (3.5 months)
+==========================================================================================
+
+  Fixed AKAD:   6.7s | P&L=$ +5,023.94 | PF=2.02 | WR=74.3% | MaxDailyDD=0.451% | MaxTotalDD=0.810%
+  Dynamic AKAD: 7.0s | P&L=$ +6,929.17 | PF=1.50 | WR=74.3% | MaxDailyDD=1.577% | MaxTotalDD=2.547%
+
+  Dynamic Base Risk Adaptation (across 378 trades):
+    Base Risk:  min=0.407%  avg=1.459%  max=2.036%
+    Final Risk: min=0.1609%  avg=1.2379%  max=2.0356%
+    Rolling WR: min=56.0%  avg=73.4%  max=85.0%
+
+  COMPARISON:
+                           FIXED 0.75%         DYNAMIC           DELTA
+  -------------------------------------------------------------------
+               Net P&L $      5,023.94 $      6,929.17 $     +1,905.23
+                    PF            2.02            1.50           -0.52
+              Win Rate           74.3%           74.3%           +0.0%
+          Max Daily DD          0.451%          1.577%         +1.126%
+          Max Total DD          0.810%          2.547%         +1.737%
+       P&L Improvement                                          +37.9%
+
+
+==========================================================================================
+PART 2: SYNTHETIC STRESS TESTS
+==========================================================================================
+
+  Scenario                  FIXED P&L   MaxDD  DYNAMIC P&L   MaxDD   P&L Diff  Ghost
+  ----------------------------------------------------------------------------------
+  1. Normal          13s $   2,072.14   0.29% $   5,292.29   0.45% $+3,220.15     No
+  3. Bear            16s $   2,149.21   0.59% $   4,540.51   0.99% $+2,391.30     No
+  8. High Vol        14s $   3,837.54   0.96% $   7,952.58   1.34% $+4,115.04     No
+  12. Worst          12s $   2,227.03   0.54% $   3,666.31   1.79% $+1,439.28     No
+
+
+==========================================================================================
+PART 3: 4% DAILY DD GUARANTEE VERIFICATION
+==========================================================================================
+
+  Fixed AKAD max daily DD:   0.451% (limit: 4.000%)
+  Dynamic AKAD max daily DD: 1.577% (limit: 4.000%)
+  RESULT: DAILY DD NEVER BREACHED 4% LIMIT
+
+  Done.

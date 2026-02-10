@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Rust build artifacts
+rust_core/target/
+
+# Data (too large for git — keep local)
+data/historical/*.csv
+data/historical_backup/
+
+# Compiled binaries (rebuild from source)
+*.pyd
+*.dll
+*.dll.lib
+*.dll.exp
+*.pdb
+*.exe
+
+# Logs and state
+logs/
+state/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini

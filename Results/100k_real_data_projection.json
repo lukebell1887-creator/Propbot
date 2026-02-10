@@ -1,0 +1,40 @@
+{
+  "balance": 105023.94,
+  "net_pnl": 5023.94,
+  "return_pct": 5.02,
+  "trades": 378,
+  "win_rate": 74.3,
+  "pf_unit": 1.53,
+  "pf_real": 2.02,
+  "max_dd_pct": 0.6,
+  "pair_results": {
+    "US100/DE40": {
+      "trades": 158,
+      "win_rate": 66.5,
+      "pf_unit": 1.17,
+      "pnl_unit": 14.15,
+      "pf_real": 1.65,
+      "pnl_real": 2073.71,
+      "avg_lots": 0.31
+    },
+    "AUDUSD/NZDUSD": {
+      "trades": 173,
+      "win_rate": 80.9,
+      "pf_unit": 3.52,
+      "pnl_unit": 41.93,
+      "pf_real": 3.48,
+      "pnl_real": 2931.24,
+      "avg_lots": 0.71
+    },
+    "EURUSD/GBPUSD": {
+      "trades": 47,
+      "win_rate": 76.6,
+      "pf_unit": 1.06,
+      "pnl_unit": 0.43,
+      "pf_real": 1.03,
+      "pnl_real": 18.99,
+      "avg_lots": 0.77
+    }
+  },
+  "cross_check_unit_pnl": 56.5
+}

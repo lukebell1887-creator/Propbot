@@ -1,0 +1,610 @@
+{
+  "version": "5.6.0",
+  "passed": 120,
+  "failed": 0,
+  "total": 120,
+  "pass_rate": 100.0,
+  "elapsed_seconds": 0.70088791847229,
+  "tests": [
+    {
+      "test": "Welford function vs Python ref",
+      "status": "PASS",
+      "detail": "max_diff=0.00e+00"
+    },
+    {
+      "test": "Welford class vs Python ref",
+      "status": "PASS",
+      "detail": "max_diff=0.00e+00"
+    },
+    {
+      "test": "OnlineNormalizer.count",
+      "status": "PASS",
+      "detail": "count=2000"
+    },
+    {
+      "test": "OnlineNormalizer.mean is finite",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "OnlineNormalizer.std > 0",
+      "status": "PASS",
+      "detail": "std=3.767514e-03"
+    },
+    {
+      "test": "OnlineNormalizer.reset",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Hurst MR: Python H < 0.6",
+      "status": "PASS",
+      "detail": "H=0.5699"
+    },
+    {
+      "test": "Hurst MR: Rust final in [0, 1]",
+      "status": "PASS",
+      "detail": "H=0.5853"
+    },
+    {
+      "test": "Hurst Trend: Python H",
+      "status": "PASS",
+      "detail": "H=0.6326"
+    },
+    {
+      "test": "Hurst cross-validation (Py vs Rust)",
+      "status": "PASS",
+      "detail": "Py=0.5625, Rust=0.5625, diff=0.0000"
+    },
+    {
+      "test": "Engine created",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Engine.entry_z == 2.0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Engine.exit_z == 0.5",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Engine.dynamic_z_enabled",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Engine.dynamic_exit_enabled",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "SpreadSignal.z_score is finite",
+      "status": "PASS",
+      "detail": "z=-0.6036"
+    },
+    {
+      "test": "SpreadSignal.signal in [-1,0,1]",
+      "status": "PASS",
+      "detail": "sig=0"
+    },
+    {
+      "test": "SpreadSignal.spread is finite",
+      "status": "PASS",
+      "detail": "spread=-0.025752"
+    },
+    {
+      "test": "Engine.buffer_len > 0",
+      "status": "PASS",
+      "detail": "buf=768"
+    },
+    {
+      "test": "Engine.last_hurst in [0,1]",
+      "status": "PASS",
+      "detail": "H=0.5842"
+    },
+    {
+      "test": "Dynamic z_crit >= z_base",
+      "status": "PASS",
+      "detail": "z_crit=3.0105"
+    },
+    {
+      "test": "Dynamic exit_z matches formula",
+      "status": "PASS",
+      "detail": "engine=0.5842, expected=0.5842"
+    },
+    {
+      "test": "Engine.reset",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Static engine z_crit == entry_z",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Static engine exit_z == 0.5",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "KalmanSentinel created",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Initial beta == 1.0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Kalman beta near 1.0 for coint. data",
+      "status": "PASS",
+      "detail": "beta=0.9971"
+    },
+    {
+      "test": "Few aborts for coint. data",
+      "status": "PASS",
+      "detail": "aborts=0/500"
+    },
+    {
+      "test": "Kalman detects beta drift",
+      "status": "PASS",
+      "detail": "aborts=380/500, final_beta=1.4651"
+    },
+    {
+      "test": "KalmanSentinel.reset",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "AKAD created",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "base_risk == 0.0075",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "dd_lambda == 40.0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "DD factor at 0%",
+      "status": "PASS",
+      "detail": "dd_factor=1.000000, expected=1.000000"
+    },
+    {
+      "test": "DD factor at 5%",
+      "status": "PASS",
+      "detail": "dd_factor=0.135335, expected=0.135335"
+    },
+    {
+      "test": "DD factor at 10%",
+      "status": "PASS",
+      "detail": "dd_factor=0.018316, expected=0.018316"
+    },
+    {
+      "test": "Risk floor at 50% DD >= 0.05%",
+      "status": "PASS",
+      "detail": "risk=0.000500"
+    },
+    {
+      "test": "Exp gate = 1.0 with all winners",
+      "status": "PASS",
+      "detail": "exp_gate=1.0"
+    },
+    {
+      "test": "Exp gate = 0.0 with all losers (HALT)",
+      "status": "PASS",
+      "detail": "exp_gate=0.0"
+    },
+    {
+      "test": "Exp gate = 0.75 (fast neg, slow pos)",
+      "status": "PASS",
+      "detail": "exp_gate=0.75"
+    },
+    {
+      "test": "ATR factor blocks at vol_ratio > 2.0",
+      "status": "PASS",
+      "detail": "atr_factor=0.0"
+    },
+    {
+      "test": "CorrelationRiskMonitor created",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Uncorrelated: max_corr < 0.3",
+      "status": "PASS",
+      "detail": "max_corr=0.0755"
+    },
+    {
+      "test": "Uncorrelated: risk_mult == 1.0",
+      "status": "PASS",
+      "detail": "risk_mult=1.0"
+    },
+    {
+      "test": "Correlated: max_corr > 0.7",
+      "status": "PASS",
+      "detail": "max_corr=0.9954"
+    },
+    {
+      "test": "Correlated: risk_mult == 0.4",
+      "status": "PASS",
+      "detail": "risk_mult=0.4"
+    },
+    {
+      "test": "Medium corr: risk_mult <= 1.0",
+      "status": "PASS",
+      "detail": "corr=0.6703, mult=0.6"
+    },
+    {
+      "test": "OU theta > 0",
+      "status": "PASS",
+      "detail": "theta=0.4606"
+    },
+    {
+      "test": "OU half_life finite",
+      "status": "PASS",
+      "detail": "hl=1.5048"
+    },
+    {
+      "test": "OU iterations > 0",
+      "status": "PASS",
+      "detail": "iters=8"
+    },
+    {
+      "test": "OU outlier_pct in [0,1]",
+      "status": "PASS",
+      "detail": "outlier_pct=0.1846"
+    },
+    {
+      "test": "Huber handles outliers (theta > 0)",
+      "status": "PASS",
+      "detail": "theta=1.5004"
+    },
+    {
+      "test": "Huber detects outliers",
+      "status": "PASS",
+      "detail": "outlier_pct=0.1892 (18.9%)"
+    },
+    {
+      "test": "Eq std > 0",
+      "status": "PASS",
+      "detail": "eq_std=0.004782"
+    },
+    {
+      "test": "Hard stop long < short",
+      "status": "PASS",
+      "detail": "long=0.987626, short=1.034169"
+    },
+    {
+      "test": "Kelly fraction",
+      "status": "PASS",
+      "detail": "kelly=0.208333, expected=0.208333"
+    },
+    {
+      "test": "Kelly >= 0 for bad stats",
+      "status": "PASS",
+      "detail": "kelly=0.000000"
+    },
+    {
+      "test": "Correlation of perfectly correlated",
+      "status": "PASS",
+      "detail": "corr=1.0000000000"
+    },
+    {
+      "test": "Negative correlation",
+      "status": "PASS",
+      "detail": "corr=-1.0000000000"
+    },
+    {
+      "test": "Corr matrix diagonal = 1.0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Corr matrix symmetric",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Z quantile 50th near 0",
+      "status": "PASS",
+      "detail": "median=-0.0024"
+    },
+    {
+      "test": "Z quantile 1st < 99th",
+      "status": "PASS",
+      "detail": "q01=-2.3203, q99=2.3247"
+    },
+    {
+      "test": "DynamicSignalResult.z_score finite",
+      "status": "PASS",
+      "detail": "z=6.5546"
+    },
+    {
+      "test": "DynamicSignalResult.hurst in [0,1]",
+      "status": "PASS",
+      "detail": "H=0.6031"
+    },
+    {
+      "test": "DynamicSignalResult.z_crit > 0",
+      "status": "PASS",
+      "detail": "z_crit=3.2376"
+    },
+    {
+      "test": "DynamicSignalResult.exit_z in [0.1,1.0]",
+      "status": "PASS",
+      "detail": "exit_z=0.6031"
+    },
+    {
+      "test": "Stored Hurst [1. BASELINE (Normal MR)]",
+      "status": "PASS",
+      "detail": "H=0.6016"
+    },
+    {
+      "test": "Stored Hurst [2. STRONG TRENDING (USD Rally)]",
+      "status": "PASS",
+      "detail": "H=0.5949"
+    },
+    {
+      "test": "Stored Hurst [3. FLASH CRASH (GBP Sep 2022)]",
+      "status": "PASS",
+      "detail": "H=0.5914"
+    },
+    {
+      "test": "Stored Hurst [4. REGIME SWITCHING (Uncertain]",
+      "status": "PASS",
+      "detail": "H=0.5979"
+    },
+    {
+      "test": "Stored Hurst [5. CORRELATION BREAKDOWN (Ukra]",
+      "status": "PASS",
+      "detail": "H=0.5915"
+    },
+    {
+      "test": "Stored Hurst [6. HIGH-VOL WHIPSAW (Fed Days)]",
+      "status": "PASS",
+      "detail": "H=0.5823"
+    },
+    {
+      "test": "Stored Hurst [7. EXTREME TRENDING (H~0.7)]",
+      "status": "PASS",
+      "detail": "H=0.6018"
+    },
+    {
+      "test": "Stored Hurst [8. COMBINED WORST-CASE]",
+      "status": "PASS",
+      "detail": "H=0.5969"
+    },
+    {
+      "test": "Exit Z formula [1. BASELINE (Normal MR)]",
+      "status": "PASS",
+      "detail": "H=0.602 \u2192 exit_z=0.602"
+    },
+    {
+      "test": "Exit Z formula [2. STRONG TRENDING (USD Rally)]",
+      "status": "PASS",
+      "detail": "H=0.595 \u2192 exit_z=0.595"
+    },
+    {
+      "test": "Exit Z formula [3. FLASH CRASH (GBP Sep 2022)]",
+      "status": "PASS",
+      "detail": "H=0.591 \u2192 exit_z=0.591"
+    },
+    {
+      "test": "Exit Z formula [4. REGIME SWITCHING (Uncertain]",
+      "status": "PASS",
+      "detail": "H=0.598 \u2192 exit_z=0.598"
+    },
+    {
+      "test": "Exit Z formula [5. CORRELATION BREAKDOWN (Ukra]",
+      "status": "PASS",
+      "detail": "H=0.591 \u2192 exit_z=0.591"
+    },
+    {
+      "test": "Exit Z formula [6. HIGH-VOL WHIPSAW (Fed Days)]",
+      "status": "PASS",
+      "detail": "H=0.582 \u2192 exit_z=0.582"
+    },
+    {
+      "test": "Exit Z formula [7. EXTREME TRENDING (H~0.7)]",
+      "status": "PASS",
+      "detail": "H=0.602 \u2192 exit_z=0.602"
+    },
+    {
+      "test": "Exit Z formula [8. COMBINED WORST-CASE]",
+      "status": "PASS",
+      "detail": "H=0.597 \u2192 exit_z=0.597"
+    },
+    {
+      "test": "Scenario 8: v5.6 verdict",
+      "status": "PASS",
+      "detail": "verdict=v5.6 WINS (better PF + lower DD)"
+    },
+    {
+      "test": "Scenario 8: v5.6 PF > v5.5 PF",
+      "status": "PASS",
+      "detail": "v56_pf=6.90, v55_pf=4.74"
+    },
+    {
+      "test": "Scenario 8: v5.6 DD < v5.5 DD",
+      "status": "PASS",
+      "detail": "v56_dd=1.89, v55_dd=3.74"
+    },
+    {
+      "test": "Trending: v5.5 << v5.3 trades",
+      "status": "PASS",
+      "detail": "v55=3, v53=62"
+    },
+    {
+      "test": "Trending: DD reduction > 90%",
+      "status": "PASS",
+      "detail": "dd_red_v56=96.4%"
+    },
+    {
+      "test": "Version == 5.6",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "US100/DE40: Hurst in valid range",
+      "status": "PASS",
+      "detail": "H=0.5842"
+    },
+    {
+      "test": "US100/DE40: v55 trades > 0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "US100/DE40: v56 trades > 0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "US100/DE40: win_rate > 50%",
+      "status": "PASS",
+      "detail": "wr=70.3%"
+    },
+    {
+      "test": "US100/DE40: PF > 1.0",
+      "status": "PASS",
+      "detail": "pf=1.41"
+    },
+    {
+      "test": "US100/DE40: exit_z_mean in [0.1, 1.0]",
+      "status": "PASS",
+      "detail": "mean=0.529"
+    },
+    {
+      "test": "AUDUSD/NZDUSD: Hurst in valid range",
+      "status": "PASS",
+      "detail": "H=0.5124"
+    },
+    {
+      "test": "AUDUSD/NZDUSD: v55 trades > 0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "AUDUSD/NZDUSD: v56 trades > 0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "AUDUSD/NZDUSD: win_rate > 50%",
+      "status": "PASS",
+      "detail": "wr=81.9%"
+    },
+    {
+      "test": "AUDUSD/NZDUSD: PF > 1.0",
+      "status": "PASS",
+      "detail": "pf=3.82"
+    },
+    {
+      "test": "AUDUSD/NZDUSD: exit_z_mean in [0.1, 1.0]",
+      "status": "PASS",
+      "detail": "mean=0.487"
+    },
+    {
+      "test": "EURUSD/GBPUSD: Hurst in valid range",
+      "status": "PASS",
+      "detail": "H=0.5390"
+    },
+    {
+      "test": "EURUSD/GBPUSD: v55 trades > 0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "EURUSD/GBPUSD: v56 trades > 0",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "EURUSD/GBPUSD: win_rate > 50%",
+      "status": "PASS",
+      "detail": "wr=78.6%"
+    },
+    {
+      "test": "EURUSD/GBPUSD: PF > 1.0",
+      "status": "PASS",
+      "detail": "pf=2.29"
+    },
+    {
+      "test": "EURUSD/GBPUSD: exit_z_mean in [0.1, 1.0]",
+      "status": "PASS",
+      "detail": "mean=0.504"
+    },
+    {
+      "test": "corr_US100/DE40_AUDUSD/NZDUSD: |full_corr| < 1.0",
+      "status": "PASS",
+      "detail": "full_corr=-0.0009"
+    },
+    {
+      "test": "corr_US100/DE40_AUDUSD/NZDUSD: risk_mult_mean in [0.4, 1.0]",
+      "status": "PASS",
+      "detail": "mean=1.0000"
+    },
+    {
+      "test": "corr_US100/DE40_EURUSD/GBPUSD: |full_corr| < 1.0",
+      "status": "PASS",
+      "detail": "full_corr=0.0028"
+    },
+    {
+      "test": "corr_US100/DE40_EURUSD/GBPUSD: risk_mult_mean in [0.4, 1.0]",
+      "status": "PASS",
+      "detail": "mean=0.9996"
+    },
+    {
+      "test": "corr_AUDUSD/NZDUSD_EURUSD/GBPUSD: |full_corr| < 1.0",
+      "status": "PASS",
+      "detail": "full_corr=-0.0113"
+    },
+    {
+      "test": "corr_AUDUSD/NZDUSD_EURUSD/GBPUSD: risk_mult_mean in [0.4, 1.0]",
+      "status": "PASS",
+      "detail": "mean=0.9993"
+    },
+    {
+      "test": "Portfolio v56 trades > 1000",
+      "status": "PASS",
+      "detail": "trades=1040"
+    },
+    {
+      "test": "Portfolio v56 PF > 2.0",
+      "status": "PASS",
+      "detail": "pf=2.30"
+    },
+    {
+      "test": "Portfolio v56 WR > 75%",
+      "status": "PASS",
+      "detail": "wr=79.0%"
+    },
+    {
+      "test": "Welford: 422ns/update",
+      "status": "PASS",
+      "detail": "422ns (422.1ms for 1M)"
+    },
+    {
+      "test": "Kalman: 1194ns/update",
+      "status": "PASS",
+      "detail": "1194ns (119.4ms for 100K)"
+    },
+    {
+      "test": "AKAD: 294ns/calc",
+      "status": "PASS",
+      "detail": "294ns (29.4ms for 100K)"
+    }
+  ]
+}

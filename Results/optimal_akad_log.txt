@@ -1,0 +1,107 @@
+==========================================================================================
+OPTIMAL AKAD — CALCULATOR + STRESS TEST COMPARISON
+==========================================================================================
+==========================================================================================
+PART 1: OPTIMAL AKAD BASE RISK CALCULATION
+==========================================================================================
+
+  Formula: base_risk = (exp(lam * max_dd) - 1) / (lam * n_survive)
+  Where:   n_survive = log(p_ruin) / log(1 - WR)
+
+  Lambda:        40.0
+  Max Daily DD:  4%
+  Observed WR:   74.3%
+  Conservative WR: 65% (used for safety)
+
+  Ruin Prob         N_survive   Prob of N losses   Base Risk  vs Current  Est Monthly
+  ----------------------------------------------------------------------------------
+  1 in 1,000,000,000       19.7           2.25e-12      0.501%        0.7x $      1,025
+  1 in 1,000,000         13.2           1.72e-08      0.751%        1.0x $      1,537
+  1 in 10,000             8.8           6.66e-06      1.126%        1.5x $      2,305
+  1 in 1,000              6.6           1.31e-04      1.502%        2.0x $      3,074
+  1 in 100                4.4           2.58e-03      2.253%        3.0x $      4,611
+
+  Current base_risk: 0.750%
+  Current survives: 13 consecutive losses before daily DD limit
+
+
+==========================================================================================
+PART 2: REAL M1 DATA BACKTEST (3.5 months)
+==========================================================================================
+
+  Testing: CURRENT (0.75%) (base=0.750%)...
+    6.6s | P&L=$ +5,023.94 | PF=2.02 | WR=74.3% | MaxDailyDD=0.45% | MaxTotalDD=0.81%
+
+  Testing: OPTIMAL p=1e-6 (safe) (base=0.751%)...
+    6.6s | P&L=$ +5,028.63 | PF=2.02 | WR=74.3% | MaxDailyDD=0.45% | MaxTotalDD=0.81%
+
+  Testing: OPTIMAL p=1e-4 (base=1.126%)...
+    6.6s | P&L=$ +7,462.42 | PF=2.04 | WR=74.3% | MaxDailyDD=0.65% | MaxTotalDD=1.18%
+
+  Testing: OPTIMAL p=1e-3 (base=1.502%)...
+    6.6s | P&L=$ +9,820.81 | PF=2.05 | WR=74.3% | MaxDailyDD=0.83% | MaxTotalDD=1.52%
+
+  Level                          Base%      Net P&L     PF     WR  DailyDD  TotalDD  Trades  Ghost
+  -----------------------------------------------------------------------------------------------
+  CURRENT (0.75%)               0.750% $  +5,023.94   2.02  74.3%    0.45%    0.81%     378     No
+  OPTIMAL p=1e-6 (safe)         0.751% $  +5,028.63   2.02  74.3%    0.45%    0.81%     378     No
+  OPTIMAL p=1e-4                1.126% $  +7,462.42   2.04  74.3%    0.65%    1.18%     378     No
+  OPTIMAL p=1e-3                1.502% $  +9,820.81   2.05  74.3%    0.83%    1.52%     378     No
+
+
+==========================================================================================
+PART 3: SYNTHETIC STRESS TEST (5 key scenarios x 2 years each)
+==========================================================================================
+
+  Scenario: 1. Normal
+    CURRENT (0.75%)                7.9s | P&L=$   +2,072.14 | PF=2.59 | MaxDD=0.29%
+    OPTIMAL p=1e-6 (safe)          7.7s | P&L=$   +2,075.98 | PF=2.59 | MaxDD=0.29%
+    OPTIMAL p=1e-4                 6.8s | P&L=$   +3,091.94 | PF=2.60 | MaxDD=0.43%
+    OPTIMAL p=1e-3                 6.4s | P&L=$   +4,106.16 | PF=2.60 | MaxDD=0.56%
+
+  Scenario: 3. Bear
+    CURRENT (0.75%)                6.5s | P&L=$   +2,149.21 | PF=1.87 | MaxDD=0.59%
+    OPTIMAL p=1e-6 (safe)          6.3s | P&L=$   +2,150.63 | PF=1.87 | MaxDD=0.59%
+    OPTIMAL p=1e-4                 6.2s | P&L=$   +3,183.29 | PF=1.88 | MaxDD=0.86%
+    OPTIMAL p=1e-3                 7.5s | P&L=$   +4,195.92 | PF=1.89 | MaxDD=1.11%
+
+  Scenario: 7. Low Vol
+    CURRENT (0.75%)                6.6s | P&L=$   +2,631.02 | PF=5.46 | MaxDD=0.06%
+    OPTIMAL p=1e-6 (safe)          6.8s | P&L=$   +2,633.88 | PF=5.45 | MaxDD=0.06%
+    OPTIMAL p=1e-4                 6.3s | P&L=$   +3,974.39 | PF=5.45 | MaxDD=0.09%
+    OPTIMAL p=1e-3                 6.2s | P&L=$   +5,322.71 | PF=5.43 | MaxDD=0.12%
+
+  Scenario: 8. High Vol
+    CURRENT (0.75%)                6.2s | P&L=$   +3,837.54 | PF=1.95 | MaxDD=0.96%
+    OPTIMAL p=1e-6 (safe)          6.2s | P&L=$   +3,848.65 | PF=1.95 | MaxDD=0.96%
+    OPTIMAL p=1e-4                 7.3s | P&L=$   +5,729.36 | PF=1.96 | MaxDD=1.36%
+    OPTIMAL p=1e-3                 6.6s | P&L=$   +7,594.24 | PF=1.98 | MaxDD=1.72%
+
+  Scenario: 12. Worst-Case
+    CURRENT (0.75%)                7.3s | P&L=$   +2,227.03 | PF=1.63 | MaxDD=0.54%
+    OPTIMAL p=1e-6 (safe)          6.8s | P&L=$   +2,228.61 | PF=1.63 | MaxDD=0.54%
+    OPTIMAL p=1e-4                 6.6s | P&L=$   +3,269.32 | PF=1.65 | MaxDD=0.76%
+    OPTIMAL p=1e-3                 6.4s | P&L=$   +4,237.85 | PF=1.65 | MaxDD=0.96%
+
+
+==========================================================================================
+FINAL COMPARISON TABLE
+==========================================================================================
+
+  REAL M1 DATA (3.5 months on $100K):
+  Level                                 P&L    Monthly     PF   MaxDD  Ghost
+  ------------------------------------------------------------------------
+  CURRENT (0.75%)              $  +5,023.94 $    1,522   2.02   0.81%     No
+  OPTIMAL p=1e-6 (safe)        $  +5,028.63 $    1,524   2.02   0.81%     No
+  OPTIMAL p=1e-4               $  +7,462.42 $    2,261   2.04   1.18%     No
+  OPTIMAL p=1e-3               $  +9,820.81 $    2,976   2.05   1.52%     No
+
+  STRESS TEST (2-year synthetic, worst of 5 scenarios):
+  Level                           Worst P&L  Worst DD  Ghost  All Prof
+  --------------------------------------------------------------------
+  CURRENT (0.75%)              $  +2,072.14     0.96%     No       YES
+  OPTIMAL p=1e-6 (safe)        $  +2,075.98     0.96%     No       YES
+  OPTIMAL p=1e-4               $  +3,091.94     1.36%     No       YES
+  OPTIMAL p=1e-3               $  +4,106.16     1.72%     No       YES
+
+  Saved to Results/optimal_akad_comparison.json

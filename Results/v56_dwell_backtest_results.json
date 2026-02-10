@@ -1,0 +1,166 @@
+{
+  "version": "5.6+dwell",
+  "features": [
+    "dynamic_exit_z",
+    "dynamic_dwell",
+    "reentry_cooldown",
+    "emergency_bypass"
+  ],
+  "dwell_formula": "dwell = 60.0 * (H / 0.3), clamped [30.0, 300.0]s",
+  "test_date": "2026-02-10T07:40:56.596438",
+  "pairs": {
+    "US100/DE40": {
+      "hurst_mean": 0.5842413716459338,
+      "expected_dwell_seconds": 116.84827432918676,
+      "expected_dwell_bars": 2,
+      "baseline": {
+        "trades": 155,
+        "winners": 109,
+        "losers": 46,
+        "win_rate": 70.3225806451613,
+        "profit_factor": 1.4124986467309726,
+        "total_pnl": 31.46056285953236,
+        "avg_win": 0.9883380205858754,
+        "avg_loss": -1.65800611705061,
+        "max_dd": 18.363899766958625,
+        "avg_hold_bars": 32.34193548387097,
+        "min_hold_bars": 1,
+        "max_hold_bars": 167,
+        "emergency_exits": 0
+      },
+      "dwell": {
+        "trades": 155,
+        "winners": 109,
+        "losers": 46,
+        "win_rate": 70.3225806451613,
+        "profit_factor": 1.4277541116495762,
+        "total_pnl": 32.624070950593165,
+        "avg_win": 0.9990124067423966,
+        "avg_loss": -1.65800611705061,
+        "max_dd": 18.363899766958625,
+        "avg_hold_bars": 32.36129032258064,
+        "min_hold_bars": 2,
+        "max_hold_bars": 167,
+        "emergency_exits": 0
+      },
+      "dwell_stats": {
+        "enforced": 155,
+        "bypassed_emergency": 0,
+        "cooldown_blocked": 0
+      }
+    },
+    "AUDUSD/NZDUSD": {
+      "hurst_mean": 0.5124132345364643,
+      "expected_dwell_seconds": 102.48264690729285,
+      "expected_dwell_bars": 2,
+      "baseline": {
+        "trades": 515,
+        "winners": 422,
+        "losers": 93,
+        "win_rate": 81.94174757281554,
+        "profit_factor": 3.820675457882256,
+        "total_pnl": 127.09713069227453,
+        "avg_win": 0.40795318116389717,
+        "avg_loss": -0.4845065780525806,
+        "max_dd": 3.5664018807106004,
+        "avg_hold_bars": 24.46019417475728,
+        "min_hold_bars": 1,
+        "max_hold_bars": 159,
+        "emergency_exits": 3
+      },
+      "dwell": {
+        "trades": 512,
+        "winners": 418,
+        "losers": 94,
+        "win_rate": 81.640625,
+        "profit_factor": 3.796423136318313,
+        "total_pnl": 124.35496748910508,
+        "avg_win": 0.40388579722104845,
+        "avg_loss": -0.4730776143541831,
+        "max_dd": 3.5664018807106004,
+        "avg_hold_bars": 24.640625,
+        "min_hold_bars": 2,
+        "max_hold_bars": 159,
+        "emergency_exits": 3
+      },
+      "dwell_stats": {
+        "enforced": 509,
+        "bypassed_emergency": 3,
+        "cooldown_blocked": 6
+      }
+    },
+    "EURUSD/GBPUSD": {
+      "hurst_mean": 0.5389825131332631,
+      "expected_dwell_seconds": 107.79650262665261,
+      "expected_dwell_bars": 2,
+      "baseline": {
+        "trades": 370,
+        "winners": 291,
+        "losers": 79,
+        "win_rate": 78.64864864864865,
+        "profit_factor": 2.2886444247254074,
+        "total_pnl": 44.6582511314172,
+        "avg_win": 0.272554870521721,
+        "avg_loss": -0.4386736226633367,
+        "max_dd": 4.10467718337876,
+        "avg_hold_bars": 26.445945945945947,
+        "min_hold_bars": 1,
+        "max_hold_bars": 150,
+        "emergency_exits": 0
+      },
+      "dwell": {
+        "trades": 370,
+        "winners": 292,
+        "losers": 78,
+        "win_rate": 78.91891891891892,
+        "profit_factor": 2.312803262690359,
+        "total_pnl": 45.427236778377164,
+        "avg_win": 0.2740769502428071,
+        "avg_loss": -0.44363118836567306,
+        "max_dd": 4.10467718337876,
+        "avg_hold_bars": 26.45945945945946,
+        "min_hold_bars": 2,
+        "max_hold_bars": 150,
+        "emergency_exits": 0
+      },
+      "dwell_stats": {
+        "enforced": 370,
+        "bypassed_emergency": 0,
+        "cooldown_blocked": 5
+      }
+    }
+  },
+  "portfolio": {
+    "baseline": {
+      "trades": 1040,
+      "winners": 822,
+      "losers": 218,
+      "win_rate": 79.03846153846153,
+      "profit_factor": 2.3028115477192634,
+      "total_pnl": 203.21594468322414,
+      "avg_win": 0.43698120926623585,
+      "avg_loss": -0.7155165565762461,
+      "max_dd": 18.363899766958625,
+      "avg_hold_bars": 26.341346153846153,
+      "min_hold_bars": 1,
+      "max_hold_bars": 167,
+      "emergency_exits": 3
+    },
+    "dwell": {
+      "trades": 1037,
+      "winners": 819,
+      "losers": 218,
+      "win_rate": 78.9778206364513,
+      "profit_factor": 2.302981975210556,
+      "total_pnl": 202.4062752180754,
+      "avg_win": 0.43680962764861925,
+      "avg_loss": -0.7125725221382742,
+      "max_dd": 18.363899766958625,
+      "avg_hold_bars": 26.443587270973964,
+      "min_hold_bars": 2,
+      "max_hold_bars": 167,
+      "emergency_exits": 3
+    },
+    "verdict": "STRONG WIN \u2014 Prop-safe + quality improved"
+  }
+}

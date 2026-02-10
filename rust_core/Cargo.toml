@@ -1,0 +1,21 @@
+[package]
+name = "shf_core"
+version = "5.6.0"
+edition = "2021"
+description = "SHF v5.6 Cointegration Pairs Trading Engine — Rust Core"
+authors = ["SHF Trading Systems"]
+
+[lib]
+name = "shf_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20", features = ["extension-module", "abi3-py310"] }
+numpy = "0.20"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+target-cpu = "native"
+strip = true

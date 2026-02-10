@@ -1,0 +1,260 @@
+{
+  "levels": {
+    "CURRENT (0.75%)": 0.75,
+    "OPTIMAL p=1e-6 (safe)": 0.751,
+    "OPTIMAL p=1e-4": 1.126,
+    "OPTIMAL p=1e-3": 1.502
+  },
+  "real_m1": {
+    "CURRENT (0.75%)": {
+      "balance": 105023.94,
+      "net_pnl": 5023.94,
+      "trades": 378,
+      "win_rate": 74.3,
+      "pf": 2.02,
+      "max_daily_dd": 0.45,
+      "max_total_dd": 0.81,
+      "ghost_stopped": false
+    },
+    "OPTIMAL p=1e-6 (safe)": {
+      "balance": 105028.63,
+      "net_pnl": 5028.63,
+      "trades": 378,
+      "win_rate": 74.3,
+      "pf": 2.02,
+      "max_daily_dd": 0.45,
+      "max_total_dd": 0.81,
+      "ghost_stopped": false
+    },
+    "OPTIMAL p=1e-4": {
+      "balance": 107462.42,
+      "net_pnl": 7462.42,
+      "trades": 378,
+      "win_rate": 74.3,
+      "pf": 2.04,
+      "max_daily_dd": 0.65,
+      "max_total_dd": 1.18,
+      "ghost_stopped": false
+    },
+    "OPTIMAL p=1e-3": {
+      "balance": 109820.81,
+      "net_pnl": 9820.81,
+      "trades": 378,
+      "win_rate": 74.3,
+      "pf": 2.05,
+      "max_daily_dd": 0.83,
+      "max_total_dd": 1.52,
+      "ghost_stopped": false
+    }
+  },
+  "stress": {
+    "CURRENT (0.75%)": {
+      "1. Normal": {
+        "net_pnl": 2072.14,
+        "return_pct": 2.07,
+        "trades": 209,
+        "wr": 73.2,
+        "pf": 2.59,
+        "max_daily_dd": 0.15,
+        "max_total_dd": 0.29,
+        "ghost_stopped": false
+      },
+      "3. Bear": {
+        "net_pnl": 2149.21,
+        "return_pct": 2.15,
+        "trades": 190,
+        "wr": 71.6,
+        "pf": 1.87,
+        "max_daily_dd": 0.23,
+        "max_total_dd": 0.59,
+        "ghost_stopped": false
+      },
+      "7. Low Vol": {
+        "net_pnl": 2631.02,
+        "return_pct": 2.63,
+        "trades": 258,
+        "wr": 81.8,
+        "pf": 5.46,
+        "max_daily_dd": 0.06,
+        "max_total_dd": 0.06,
+        "ghost_stopped": false
+      },
+      "8. High Vol": {
+        "net_pnl": 3837.54,
+        "return_pct": 3.84,
+        "trades": 190,
+        "wr": 72.1,
+        "pf": 1.95,
+        "max_daily_dd": 0.36,
+        "max_total_dd": 0.96,
+        "ghost_stopped": false
+      },
+      "12. Worst-Case": {
+        "net_pnl": 2227.03,
+        "return_pct": 2.23,
+        "trades": 175,
+        "wr": 68.6,
+        "pf": 1.63,
+        "max_daily_dd": 0.27,
+        "max_total_dd": 0.54,
+        "ghost_stopped": false
+      }
+    },
+    "OPTIMAL p=1e-6 (safe)": {
+      "1. Normal": {
+        "net_pnl": 2075.98,
+        "return_pct": 2.08,
+        "trades": 209,
+        "wr": 73.2,
+        "pf": 2.59,
+        "max_daily_dd": 0.15,
+        "max_total_dd": 0.29,
+        "ghost_stopped": false
+      },
+      "3. Bear": {
+        "net_pnl": 2150.63,
+        "return_pct": 2.15,
+        "trades": 190,
+        "wr": 71.6,
+        "pf": 1.87,
+        "max_daily_dd": 0.23,
+        "max_total_dd": 0.59,
+        "ghost_stopped": false
+      },
+      "7. Low Vol": {
+        "net_pnl": 2633.88,
+        "return_pct": 2.63,
+        "trades": 258,
+        "wr": 81.8,
+        "pf": 5.45,
+        "max_daily_dd": 0.06,
+        "max_total_dd": 0.06,
+        "ghost_stopped": false
+      },
+      "8. High Vol": {
+        "net_pnl": 3848.65,
+        "return_pct": 3.85,
+        "trades": 190,
+        "wr": 72.1,
+        "pf": 1.95,
+        "max_daily_dd": 0.36,
+        "max_total_dd": 0.96,
+        "ghost_stopped": false
+      },
+      "12. Worst-Case": {
+        "net_pnl": 2228.61,
+        "return_pct": 2.23,
+        "trades": 175,
+        "wr": 68.6,
+        "pf": 1.63,
+        "max_daily_dd": 0.27,
+        "max_total_dd": 0.54,
+        "ghost_stopped": false
+      }
+    },
+    "OPTIMAL p=1e-4": {
+      "1. Normal": {
+        "net_pnl": 3091.94,
+        "return_pct": 3.09,
+        "trades": 209,
+        "wr": 73.2,
+        "pf": 2.6,
+        "max_daily_dd": 0.23,
+        "max_total_dd": 0.43,
+        "ghost_stopped": false
+      },
+      "3. Bear": {
+        "net_pnl": 3183.29,
+        "return_pct": 3.18,
+        "trades": 190,
+        "wr": 71.6,
+        "pf": 1.88,
+        "max_daily_dd": 0.33,
+        "max_total_dd": 0.86,
+        "ghost_stopped": false
+      },
+      "7. Low Vol": {
+        "net_pnl": 3974.39,
+        "return_pct": 3.97,
+        "trades": 258,
+        "wr": 81.8,
+        "pf": 5.45,
+        "max_daily_dd": 0.09,
+        "max_total_dd": 0.09,
+        "ghost_stopped": false
+      },
+      "8. High Vol": {
+        "net_pnl": 5729.36,
+        "return_pct": 5.73,
+        "trades": 190,
+        "wr": 72.1,
+        "pf": 1.96,
+        "max_daily_dd": 0.51,
+        "max_total_dd": 1.36,
+        "ghost_stopped": false
+      },
+      "12. Worst-Case": {
+        "net_pnl": 3269.32,
+        "return_pct": 3.27,
+        "trades": 175,
+        "wr": 68.6,
+        "pf": 1.65,
+        "max_daily_dd": 0.4,
+        "max_total_dd": 0.76,
+        "ghost_stopped": false
+      }
+    },
+    "OPTIMAL p=1e-3": {
+      "1. Normal": {
+        "net_pnl": 4106.16,
+        "return_pct": 4.11,
+        "trades": 209,
+        "wr": 73.2,
+        "pf": 2.6,
+        "max_daily_dd": 0.3,
+        "max_total_dd": 0.56,
+        "ghost_stopped": false
+      },
+      "3. Bear": {
+        "net_pnl": 4195.92,
+        "return_pct": 4.2,
+        "trades": 190,
+        "wr": 71.6,
+        "pf": 1.89,
+        "max_daily_dd": 0.42,
+        "max_total_dd": 1.11,
+        "ghost_stopped": false
+      },
+      "7. Low Vol": {
+        "net_pnl": 5322.71,
+        "return_pct": 5.32,
+        "trades": 258,
+        "wr": 81.8,
+        "pf": 5.43,
+        "max_daily_dd": 0.12,
+        "max_total_dd": 0.12,
+        "ghost_stopped": false
+      },
+      "8. High Vol": {
+        "net_pnl": 7594.24,
+        "return_pct": 7.59,
+        "trades": 190,
+        "wr": 72.1,
+        "pf": 1.98,
+        "max_daily_dd": 0.62,
+        "max_total_dd": 1.72,
+        "ghost_stopped": false
+      },
+      "12. Worst-Case": {
+        "net_pnl": 4237.85,
+        "return_pct": 4.24,
+        "trades": 175,
+        "wr": 68.6,
+        "pf": 1.65,
+        "max_daily_dd": 0.52,
+        "max_total_dd": 0.96,
+        "ghost_stopped": false
+      }
+    }
+  }
+}
