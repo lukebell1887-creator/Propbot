@@ -90,6 +90,8 @@ class HMMRegimeDetector:
         self._regime_probs = np.ones(n_regimes) / n_regimes
         self._return_buffer: List[float] = []
         self._fitted = False
+        self._regime_hold_count: int = 0  # Ticks since last regime change
+        self._min_regime_hold: int = 100  # Min ticks before regime can change (~10s at 100ms)
 
         logger.info(f"HMMRegimeDetector initialized | regimes={n_regimes}, lookback={lookback}")
 
@@ -139,11 +141,18 @@ class HMMRegimeDetector:
         vol_80 = np.percentile(vols, 80)
 
         if current_vol <= vol_40:
-            self._current_regime = 0  # Low vol — mean-reverting
+            new_regime = 0  # Low vol — mean-reverting
         elif current_vol <= vol_80:
-            self._current_regime = 1  # Medium vol — trending
+            new_regime = 1  # Medium vol — trending
         else:
-            self._current_regime = 2  # High vol — volatile
+            new_regime = 2  # High vol — volatile
+
+        # Hysteresis: hold regime for minimum ticks to prevent flickering
+        self._regime_hold_count += 1
+        if new_regime != self._current_regime:
+            if self._regime_hold_count >= self._min_regime_hold:
+                self._current_regime = new_regime
+                self._regime_hold_count = 0
 
         return self._current_regime
 

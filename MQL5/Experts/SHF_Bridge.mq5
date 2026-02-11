@@ -436,9 +436,28 @@ string HandleOrderSend(string data)
    req.deviation = (ulong)deviation;
    req.magic     = magic;
    req.comment   = comment;
-   req.type_filling = ORDER_FILLING_IOC;
+   // Auto-detect filling mode: try IOC first, fall back to FOK then RETURN
+   req.type_filling = GetSymbolFillingMode(symbol);
    
    bool result = OrderSend(req, res);
+   
+   // If fill type rejected, retry with alternatives
+   if(!result || (res.retcode != TRADE_RETCODE_DONE && res.retcode != TRADE_RETCODE_DONE_PARTIAL))
+   {
+      if(req.type_filling == ORDER_FILLING_IOC)
+      {
+         req.type_filling = ORDER_FILLING_FOK;
+         result = OrderSend(req, res);
+      }
+      if(!result || (res.retcode != TRADE_RETCODE_DONE && res.retcode != TRADE_RETCODE_DONE_PARTIAL))
+      {
+         if(req.type_filling != ORDER_FILLING_RETURN)
+         {
+            req.type_filling = ORDER_FILLING_RETURN;
+            result = OrderSend(req, res);
+         }
+      }
+   }
    
    if(result && res.retcode == TRADE_RETCODE_DONE)
    {
@@ -679,5 +698,19 @@ double JsonGetDouble(string json, string key)
    string val = JsonGetString(json, key);
    if(StringLen(val) == 0) return 0.0;
    return StringToDouble(val);
+}
+
+//+------------------------------------------------------------------+
+//| Auto-detect symbol filling mode                                    |
+//+------------------------------------------------------------------+
+ENUM_ORDER_TYPE_FILLING GetSymbolFillingMode(string symbol)
+{
+   long filling_mode = SymbolInfoInteger(symbol, SYMBOL_FILLING_MODE);
+   
+   if((filling_mode & SYMBOL_FILLING_IOC) != 0)
+      return ORDER_FILLING_IOC;
+   if((filling_mode & SYMBOL_FILLING_FOK) != 0)
+      return ORDER_FILLING_FOK;
+   return ORDER_FILLING_RETURN;
 }
 //+------------------------------------------------------------------+
