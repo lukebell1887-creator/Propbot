@@ -60,6 +60,7 @@ class MessageType(Enum):
     GET_ACCOUNT = "GET_ACCOUNT"
     GET_QUOTE = "GET_QUOTE"
     GET_SERVER_TIME = "GET_SERVER_TIME"
+    GET_HISTORY = "GET_HISTORY"
     SUBSCRIBE = "SUBSCRIBE"
     UNSUBSCRIBE = "UNSUBSCRIBE"
     RESPONSE = "RESPONSE"
@@ -686,6 +687,45 @@ class MT5Bridge:
             second=int(data.get('second', 0)),
             day_of_week=int(data.get('day_of_week', 0)),
         )
+
+    def get_history(self, symbol: str, count: int = 768, timeout_ms: int = 15000) -> List[dict]:
+        """
+        Fetch historical M1 bars from broker via EA's CopyRates().
+
+        Used at startup to pre-warm the CointegrationEngine so the bot
+        is immediately ready to trade (no 3+ hour wait for live bars).
+
+        Args:
+            symbol: Broker symbol name (e.g. "AUDUSD", "NAS100")
+            count: Number of M1 bars to request (default 768 = fills Hurst window)
+            timeout_ms: Timeout for this command (longer than normal — history can be slow)
+
+        Returns:
+            List of bar dicts: [{"t": epoch, "o": open, "h": high, "l": low, "c": close, "v": vol}, ...]
+            Ordered oldest-first (chronological). Empty list on failure.
+        """
+        data = {'symbol': symbol, 'count': count}
+
+        # Use longer timeout for history requests (CopyRates can be slow)
+        old_timeout = self.recv_timeout_ms
+        self.recv_timeout_ms = timeout_ms
+        try:
+            response = self._send_command(MessageType.GET_HISTORY, data)
+        except BridgeTimeoutError:
+            logger.error(f"GET_HISTORY timeout for {symbol} ({timeout_ms}ms)")
+            self.recv_timeout_ms = old_timeout
+            return []
+        finally:
+            self.recv_timeout_ms = old_timeout
+
+        bars = response.get('bars', [])
+        error = response.get('error', '')
+        if error:
+            logger.error(f"GET_HISTORY error for {symbol}: {error}")
+            return []
+
+        logger.info(f"GET_HISTORY: {symbol} — received {len(bars)} M1 bars")
+        return bars
 
     def get_quote(self, symbol: str) -> Optional[TickData]:
         """Get current quote from cached data (updated every 100ms by EA)."""

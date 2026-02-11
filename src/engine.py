@@ -364,6 +364,10 @@ class TradingEngine:
             )
 
             logger.info(f"Initialized {len(self._pairs)} pairs")
+
+            # Pre-warm engines with historical M1 bars (instant readiness)
+            self._prewarm_pairs()
+
             return True
 
         except Exception as e:
@@ -404,6 +408,106 @@ class TradingEngine:
             logger.info(f"  {cfg.name}: HMM 3-regime volatility filter (lookback=100)")
 
         self._pairs[cfg.name] = state
+
+    # =========================================================================
+    # HISTORICAL PRE-WARM (instant readiness — no 3h wait)
+    # =========================================================================
+
+    PREWARM_BARS = 768  # Request 768 M1 bars (fills Hurst 512 window + 256 extra)
+
+    def _prewarm_pairs(self) -> None:
+        """
+        Fetch historical M1 bars from broker and replay them through the
+        signal engines (CointegrationEngine, HMM, Kalman, CorrelationMonitor).
+
+        This makes the bot immediately ready to trade on startup instead of
+        waiting 3+ hours for live M1 bars to accumulate.
+
+        The backtest processes M1 CSV data sequentially — this does exactly
+        the same thing with broker history, producing identical engine state.
+        """
+        logger.info(f"PRE-WARM: Fetching {self.PREWARM_BARS} M1 bars per symbol from broker...")
+
+        for name, state in self._pairs.items():
+            cfg = state.config
+            t_start = time.time()
+
+            # Fetch M1 history for both legs
+            bars_a = self._bridge.get_history(cfg.symbol_a, self.PREWARM_BARS)
+            bars_b = self._bridge.get_history(cfg.symbol_b, self.PREWARM_BARS)
+
+            if not bars_a or not bars_b:
+                logger.warning(
+                    f"PRE-WARM FAILED: {name} | A={len(bars_a)} B={len(bars_b)} bars | "
+                    f"Will warm up from live data instead (~{self.MIN_WARMUP_BARS} min)"
+                )
+                continue
+
+            # Use the shorter of the two series (they should be equal, but be safe)
+            n_bars = min(len(bars_a), len(bars_b))
+            if n_bars < 50:
+                logger.warning(f"PRE-WARM: {name} | Only {n_bars} bars — too few, skipping")
+                continue
+
+            # Replay bars through all engines (oldest first — chronological)
+            prev_spread = 0.0
+            for i in range(n_bars):
+                close_a = bars_a[i].get('c', 0.0)
+                close_b = bars_b[i].get('c', 0.0)
+                if close_a <= 0 or close_b <= 0:
+                    continue
+
+                # Feed to CointegrationEngine (Welford + Hurst + Z-score)
+                if state.coint_engine is not None:
+                    signal = state.coint_engine.update(close_a, close_b)
+                    state.last_z = signal.z_score
+                    state.last_signal = signal.signal
+                    state.last_hurst = state.coint_engine.last_hurst
+                    state.last_z_crit = state.coint_engine.last_z_crit
+                    state.last_exit_z = state.coint_engine.last_exit_z
+                    current_spread = signal.spread
+
+                    # Feed to CorrelationRiskMonitor
+                    if self._corr_monitor is not None and prev_spread != 0.0:
+                        spread_return = current_spread - prev_spread
+                        self._corr_monitor.push_return(cfg.pair_index, spread_return)
+
+                    # Feed to HMM Volatility Filter
+                    if state.hmm_detector is not None and prev_spread != 0.0:
+                        spread_return = current_spread - prev_spread
+                        state.hmm_detector.update(spread_return)
+                        state.hmm_blocked = state.hmm_detector.is_blocked
+
+                    # Feed to Kalman Sentinel
+                    if state.kalman_sentinel is not None:
+                        log_a = math.log(close_a) if close_a > 0 else 0.0
+                        log_b = math.log(close_b) if close_b > 0 else 0.0
+                        state.kalman_sentinel.update(log_a, log_b)
+
+                    prev_spread = current_spread
+
+            # Update bar tracking state
+            state.last_spread = prev_spread
+            state.m1_bar_count = n_bars
+            state.last_price_a = bars_a[-1].get('c', 0.0)
+            state.last_price_b = bars_b[-1].get('c', 0.0)
+
+            # Set current bar epoch to NOW so live bar tracking starts cleanly
+            state.current_bar_epoch_min = int(time.time()) // 60
+            state.bar_close_a = state.last_price_a
+            state.bar_close_b = state.last_price_b
+
+            elapsed = time.time() - t_start
+            buf = state.coint_engine.buffer_len if state.coint_engine else 0
+
+            logger.info(
+                f"PRE-WARM DONE: {name} | {n_bars} M1 bars replayed in {elapsed:.1f}s | "
+                f"Buffer={buf} | Z={state.last_z:+.2f} H={state.last_hurst:.3f} "
+                f"Zcrit={state.last_z_crit:.2f} | HMM={'BLOCKED' if state.hmm_blocked else 'OK'} | "
+                f"READY TO TRADE"
+            )
+
+        logger.info("PRE-WARM COMPLETE: All pairs ready")
 
     # =========================================================================
     # MAIN LOOP

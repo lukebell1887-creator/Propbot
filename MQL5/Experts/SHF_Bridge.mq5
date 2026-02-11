@@ -316,6 +316,8 @@ bool CheckAndProcessCommand()
       result = HandleGetPositions(msg);
    else if(cmd_type == "GET_SERVER_TIME")
       result = HandleGetServerTime();
+   else if(cmd_type == "GET_HISTORY")
+      result = HandleGetHistory(msg);
    else
       result = StringFormat("{\"error\":\"Unknown: %s\"}", cmd_type);
    
@@ -636,6 +638,47 @@ string HandleGetPositions(string data)
          PositionGetInteger(POSITION_MAGIC), PositionGetString(POSITION_COMMENT));
    }
    return StringFormat("{\"positions\":%s]}", json);
+}
+
+//+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+//| GET_HISTORY — Return M1 bars for pre-warming signal engine       |
+//| Request:  {"type":"GET_HISTORY","symbol":"AUDUSD","count":768}   |
+//| Response: {"bars":[{"t":1707600000,"o":0.65,"h":0.651,"l":0.649,"c":0.650},...],"count":768} |
+//+------------------------------------------------------------------+
+string HandleGetHistory(string data)
+{
+   string symbol = JsonGetString(data, "symbol");
+   int count     = (int)JsonGetDouble(data, "count");
+   if(count <= 0) count = 768;
+   if(count > 2000) count = 2000;  // Safety cap
+   
+   MqlRates rates[];
+   ArraySetAsSeries(rates, false);  // oldest first (chronological)
+   
+   int copied = CopyRates(symbol, PERIOD_M1, 0, count, rates);
+   if(copied <= 0)
+   {
+      PrintFormat("GET_HISTORY: CopyRates failed for %s, err=%d", symbol, GetLastError());
+      return StringFormat("{\"bars\":[],\"count\":0,\"error\":\"CopyRates failed for %s\"}", symbol);
+   }
+   
+   // Build JSON array — oldest bar first
+   string json = "{\"bars\":[";
+   for(int i = 0; i < copied; i++)
+   {
+      if(i > 0) json += ",";
+      json += StringFormat(
+         "{\"t\":%d,\"o\":%.5f,\"h\":%.5f,\"l\":%.5f,\"c\":%.5f,\"v\":%d}",
+         (long)rates[i].time,
+         rates[i].open, rates[i].high, rates[i].low, rates[i].close,
+         (long)rates[i].tick_volume
+      );
+   }
+   json += StringFormat("],\"count\":%d}", copied);
+   
+   PrintFormat("GET_HISTORY: %s — returned %d M1 bars", symbol, copied);
+   return json;
 }
 
 //+------------------------------------------------------------------+
