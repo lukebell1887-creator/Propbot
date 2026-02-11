@@ -188,6 +188,9 @@ class TradingEngine:
     # Rollover Lockout — block all new entries ±5 min around broker midnight
     ROLLOVER_LOCKOUT_MINUTES = 5  # Minutes before AND after broker 00:00
 
+    # Cold-Start Warmup: block entries until Welford + Hurst buffers are stable
+    MIN_WARMUP_BUFFER = 600  # ~60 seconds at 100ms ticks (must exceed Hurst 512)
+
     # Delta Staleness Guard (timezone-agnostic)
     STALE_FEED_TIMEOUT = 5.0  # seconds — if no new tick for this long, data is stale
 
@@ -609,6 +612,12 @@ class TradingEngine:
         """Evaluate and potentially enter a spread trade."""
         cfg = state.config
         direction = state.last_signal  # 1=long spread, -1=short spread
+
+        # Cold-Start Warmup: block entries until statistics are stable
+        if state.coint_engine is not None:
+            buf_len = state.coint_engine.buffer_len
+            if buf_len < self.MIN_WARMUP_BUFFER:
+                return  # Still warming up — Z-scores not reliable yet
 
         # Rollover Lockout: block new entries ±5 min around broker midnight
         if self._is_rollover_lockout():
