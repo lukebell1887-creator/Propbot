@@ -243,6 +243,9 @@ class MT5Bridge:
         Returns:
             True if EA connected successfully
         """
+        # Reset data timestamp so we wait for REAL new data after reconnect
+        self._last_data_time = 0.0
+
         try:
             self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
