@@ -97,28 +97,50 @@ class HMMRegimeDetector:
         """
         Update with new spread return, return current regime.
 
+        Uses rolling sub-window volatility comparison:
+        Split lookback into sub-windows, compute vol of each,
+        then classify current vol against the vol distribution.
+        This correctly compares volatility-to-volatility.
+
         Returns:
             0 = Mean-Reverting, 1 = Trending, 2 = Volatile
         """
         self._return_buffer.append(spread_return)
 
         # Keep buffer bounded
-        if len(self._return_buffer) > self._lookback * 2:
-            self._return_buffer = self._return_buffer[-self._lookback:]
+        if len(self._return_buffer) > self._lookback * 3:
+            self._return_buffer = self._return_buffer[-self._lookback * 2:]
 
         # Need minimum data to classify
-        if len(self._return_buffer) < 30:
+        if len(self._return_buffer) < 50:
             return 0  # Default: assume mean-reverting
 
-        # Simple variance-based regime detection
-        # (Full Baum-Welch fitting would run periodically, not every tick)
         recent = np.array(self._return_buffer[-self._lookback:])
-        vol = np.std(recent)
+        n = len(recent)
 
-        # Classify by volatility quantiles
-        if vol < np.percentile(np.abs(recent), 33):
+        # Split into sub-windows and compute volatility of each
+        window_size = min(20, n // 3)
+        if window_size < 5:
+            return 0
+
+        vols = []
+        for i in range(0, n - window_size + 1, window_size):
+            chunk = recent[i:i + window_size]
+            vols.append(np.std(chunk))
+
+        if len(vols) < 3:
+            return 0
+
+        # Current vol = most recent sub-window
+        current_vol = vols[-1]
+
+        # Compare current vol against the DISTRIBUTION of sub-window vols
+        vol_40 = np.percentile(vols, 40)
+        vol_80 = np.percentile(vols, 80)
+
+        if current_vol <= vol_40:
             self._current_regime = 0  # Low vol — mean-reverting
-        elif vol < np.percentile(np.abs(recent), 67):
+        elif current_vol <= vol_80:
             self._current_regime = 1  # Medium vol — trending
         else:
             self._current_regime = 2  # High vol — volatile

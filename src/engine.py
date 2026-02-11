@@ -196,6 +196,7 @@ class TradingEngine:
 
     # Engine
     TICK_INTERVAL = 0.1  # 100ms tick
+    STATUS_LOG_INTERVAL = 300.0  # Log pair status every 5 minutes
 
     def __init__(self):
         # MT5 bridge
@@ -227,6 +228,7 @@ class TradingEngine:
         self._running = False
         self._shutdown_requested = False
         self._initial_balance = 0.0
+        self._last_status_log: float = 0.0  # Wall-clock of last status log
 
         logger.info("SHF v5.6 Engine initialized")
         logger.info(f"  Rust available: {RUST_AVAILABLE}")
@@ -468,6 +470,27 @@ class TradingEngine:
         # Process each pair (pass daily_dd for Dynamic AKAD)
         for name, state in self._pairs.items():
             await self._process_pair(state, current_dd, daily_dd, account.balance)
+
+        # --- Periodic Status Log (every 5 minutes) ---
+        now_wall = time.time()
+        if now_wall - self._last_status_log >= self.STATUS_LOG_INTERVAL:
+            self._last_status_log = now_wall
+            broker_now = self._get_broker_now()
+            for name, state in self._pairs.items():
+                hmm_regime = state.hmm_detector.current_regime if state.hmm_detector else "?"
+                hmm_status = "BLOCKED" if state.hmm_blocked else "OK"
+                pos_str = "FLAT" if state.position == 0 else ("LONG" if state.position > 0 else "SHORT")
+                buf = state.coint_engine.buffer_len if state.coint_engine else 0
+                logger.info(
+                    f"STATUS | {name} | {pos_str} | Z={state.last_z:+.2f} Zcrit={state.last_z_crit:.2f} "
+                    f"Zexit={state.last_exit_z:.3f} | H={state.last_hurst:.3f} | "
+                    f"HMM={hmm_regime}({hmm_status}) | Sentinel={'ABORT' if state.sentinel_aborted else 'OK'} | "
+                    f"Buf={buf} | Trades={state.total_trades} ({state.wins}W/{state.losses}L)"
+                )
+            logger.info(
+                f"STATUS | Account: ${account.equity:.2f} | DD={current_dd*100:.2f}% daily={daily_dd*100:.2f}% | "
+                f"Broker time: {broker_now.strftime('%H:%M')}"
+            )
 
     async def _process_pair(self, state: PairState, current_dd: float, daily_dd: float, balance: float) -> None:
         """Process a single pair through the full v5.6 pipeline."""
