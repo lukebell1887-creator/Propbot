@@ -155,6 +155,9 @@ class PairState:
     sentinel_aborted: bool = False
     sentinel_abort_count: int = 0
 
+    # Entry tracking for actual P&L calculation
+    entry_spread: float = 0.0   # Raw spread value at entry (for real win/loss)
+
     # Dwell / Cooldown timing
     entry_time: Optional[datetime] = None       # When position was opened
     last_close_time: Optional[datetime] = None   # When last position was closed
@@ -199,8 +202,10 @@ class TradingEngine:
     DWELL_MIN_SECONDS = 30.0      # Floor (prop firm anti-scalp)
     DWELL_MAX_SECONDS = 300.0     # Ceiling (don't get stuck)
 
-    # Rollover Lockout — block all new entries ±5 min around broker midnight
-    ROLLOVER_LOCKOUT_MINUTES = 5  # Minutes before AND after broker 00:00
+    # Rollover Lockout — block all new entries ±30 min around broker midnight
+    # Markets are thin/volatile at open; spreads blow out, swaps charge, JPY
+    # pairs especially dangerous in this window.
+    ROLLOVER_LOCKOUT_MINUTES = 30  # Minutes before AND after broker 00:00
 
     # Cold-Start Warmup: block entries until enough M1 BARS are accumulated.
     # The Hurst R/S window is 512 bars; we need at least 200 for Welford to
@@ -907,13 +912,14 @@ class TradingEngine:
         if result_a.success and result_b.success:
             state.position = direction
             state.entry_z = state.last_z
+            state.entry_spread = state.last_spread  # Store raw spread for real P&L calc
             state.entry_time = datetime.utcnow()
             state.ticket_a = result_a.ticket
             state.ticket_b = result_b.ticket
             dwell = self._calculate_dynamic_dwell(state.last_hurst)
             logger.info(
                 f"  FILLED: {cfg.name} spread entered | tickets={result_a.ticket},{result_b.ticket} | "
-                f"Dwell={dwell:.0f}s (H={state.last_hurst:.3f})"
+                f"Dwell={dwell:.0f}s (H={state.last_hurst:.3f}) | EntrySpread={state.entry_spread:.6f}"
             )
         else:
             err_a = result_a.error_message if not result_a.success else "OK"
@@ -963,11 +969,11 @@ class TradingEngine:
         closed_a = self._bridge.close_position(state.ticket_a) if state.ticket_a else True
         closed_b = self._bridge.close_position(state.ticket_b) if state.ticket_b else True
 
-        # Determine win/loss from Z movement
-        is_win = (
-            (state.position == 1 and state.last_z > state.entry_z * 0.5) or
-            (state.position == -1 and state.last_z < state.entry_z * 0.5)
-        )
+        # Determine win/loss from ACTUAL spread P&L (not Z-score proxy!)
+        # spread_pnl = (exit_spread - entry_spread) * direction
+        # This matches the backtest: pnl = (spread - es) * pos * elots * notional
+        spread_pnl = (state.last_spread - state.entry_spread) * state.position
+        is_win = spread_pnl > 0
 
         state.total_trades += 1
         if is_win:
@@ -1001,6 +1007,7 @@ class TradingEngine:
 
         logger.info(
             f"EXIT {cfg.name} | {'WIN' if is_win else 'LOSS'} | {reason} | "
+            f"SpreadPnL={spread_pnl:+.6f} (entry={state.entry_spread:.6f} exit={state.last_spread:.6f}) | "
             f"H={state.last_hurst:.3f} Z_exit={state.last_exit_z:.3f} | "
             f"Hold={hold_seconds:.1f}s Dwell={dwell_required:.0f}s | "
             f"Record: {state.wins}W/{state.losses}L ({wr:.0f}%)"
@@ -1011,6 +1018,7 @@ class TradingEngine:
         state.entry_time = None
         state.position = 0
         state.entry_z = 0.0
+        state.entry_spread = 0.0
         state.ticket_a = 0
         state.ticket_b = 0
 
@@ -1103,6 +1111,7 @@ class TradingEngine:
             # SCENARIO A: Both legs filled — trade is live
             state.position = direction
             state.entry_z = state.last_z
+            state.entry_spread = state.last_spread  # For real P&L tracking
             state.entry_time = datetime.utcnow()
             state.ticket_a = found_a.ticket
             state.ticket_b = found_b.ticket
