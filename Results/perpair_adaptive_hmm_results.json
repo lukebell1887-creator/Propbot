@@ -1,0 +1,299 @@
+{
+  "method": "perpair_adaptive_sigmoid",
+  "formula": "hold = 5 + 95 * sigmoid(-50.0 * (H - 0.55)) + theta_discount",
+  "parameters": {
+    "k": 50.0,
+    "h_midpoint": 0.55,
+    "theta_threshold": 2.0,
+    "theta_max_discount": 0.3,
+    "refit_interval": 500
+  },
+  "results": {
+    "Index Spread": {
+      "trades": 91,
+      "wr": 69.2,
+      "pf": 1.89,
+      "net_pnl": 4481.93,
+      "return_pct": 4.48,
+      "max_dd_pct": 0.73,
+      "avg_hurst": 0.585,
+      "hmm_blocks": 224,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 151.52,
+      "avg_loss": -180.84,
+      "avg_hold_bars": 30.4,
+      "gross_profit": 9545.49,
+      "gross_loss": 5063.56,
+      "monthly": {
+        "2025-10": {
+          "trades": 6,
+          "wins": 3,
+          "pnl": 577.4911072426879
+        },
+        "2025-11": {
+          "trades": 25,
+          "wins": 19,
+          "pnl": 2185.356169901224
+        },
+        "2025-12": {
+          "trades": 32,
+          "wins": 21,
+          "pnl": 625.9067545989546
+        },
+        "2026-01": {
+          "trades": 17,
+          "wins": 11,
+          "pnl": 378.6507027594572
+        },
+        "2026-02": {
+          "trades": 11,
+          "wins": 9,
+          "pnl": 714.5210271095781
+        }
+      },
+      "trades_per_month": 26.0,
+      "days": 105,
+      "dakad_wr": 70.0,
+      "avg_hmm_hold": 31.1,
+      "min_hmm_hold": 5,
+      "max_hmm_hold": 97,
+      "avg_theta": 0.6346,
+      "avg_h_at_refit": 0.586,
+      "refits": 187,
+      "rollover_blocks": 0,
+      "dwell_blocks": 0,
+      "sentinel_exits": 0
+    },
+    "Forex Anchor": {
+      "trades": 127,
+      "wr": 81.9,
+      "pf": 3.39,
+      "net_pnl": 5255.38,
+      "return_pct": 5.26,
+      "max_dd_pct": 0.42,
+      "avg_hurst": 0.512,
+      "hmm_blocks": 146,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 71.69,
+      "avg_loss": -95.69,
+      "avg_hold_bars": 22.9,
+      "gross_profit": 7456.21,
+      "gross_loss": 2200.84,
+      "monthly": {
+        "2025-10": {
+          "trades": 6,
+          "wins": 6,
+          "pnl": 204.50010428964265
+        },
+        "2025-11": {
+          "trades": 100,
+          "wins": 81,
+          "pnl": 4149.583529626375
+        },
+        "2026-02": {
+          "trades": 21,
+          "wins": 17,
+          "pnl": 901.2917212107697
+        }
+      },
+      "trades_per_month": 38.5,
+      "days": 99,
+      "dakad_wr": 80.0,
+      "avg_hmm_hold": 72.2,
+      "min_hmm_hold": 5,
+      "max_hmm_hold": 99,
+      "avg_theta": 1.4958,
+      "avg_h_at_refit": 0.51,
+      "refits": 198,
+      "rollover_blocks": 0,
+      "dwell_blocks": 3,
+      "sentinel_exits": 1
+    },
+    "EUR/GBP Spread": {
+      "trades": 26,
+      "wr": 84.6,
+      "pf": 1.63,
+      "net_pnl": 291.76,
+      "return_pct": 0.29,
+      "max_dd_pct": 0.29,
+      "avg_hurst": 0.539,
+      "hmm_blocks": 112,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 34.36,
+      "avg_loss": -116.04,
+      "avg_hold_bars": 21.4,
+      "gross_profit": 755.93,
+      "gross_loss": 464.17,
+      "monthly": {
+        "2025-11": {
+          "trades": 26,
+          "wins": 22,
+          "pnl": 291.7623217395917
+        }
+      },
+      "trades_per_month": 7.9,
+      "days": 99,
+      "dakad_wr": 78.0,
+      "avg_hmm_hold": 58.7,
+      "min_hmm_hold": 5,
+      "max_hmm_hold": 99,
+      "avg_theta": 1.2219,
+      "avg_h_at_refit": 0.538,
+      "refits": 198,
+      "rollover_blocks": 0,
+      "dwell_blocks": 0,
+      "sentinel_exits": 1
+    },
+    "EURJPY/CHFJPY": {
+      "trades": 345,
+      "wr": 83.5,
+      "pf": 3.32,
+      "net_pnl": 13186.68,
+      "return_pct": 13.19,
+      "max_dd_pct": 0.7,
+      "avg_hurst": 0.528,
+      "hmm_blocks": 419,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 65.5,
+      "avg_loss": -99.61,
+      "avg_hold_bars": 22.9,
+      "gross_profit": 18864.41,
+      "gross_loss": 5677.73,
+      "monthly": {
+        "2025-10": {
+          "trades": 11,
+          "wins": 11,
+          "pnl": 435.43207762136933
+        },
+        "2025-11": {
+          "trades": 87,
+          "wins": 70,
+          "pnl": 2725.8332239864008
+        },
+        "2025-12": {
+          "trades": 113,
+          "wins": 96,
+          "pnl": 5208.382801284603
+        },
+        "2026-01": {
+          "trades": 103,
+          "wins": 87,
+          "pnl": 4090.0405127550216
+        },
+        "2026-02": {
+          "trades": 31,
+          "wins": 24,
+          "pnl": 726.99205486969
+        }
+      },
+      "trades_per_month": 104.5,
+      "days": 99,
+      "dakad_wr": 76.0,
+      "avg_hmm_hold": 61.1,
+      "min_hmm_hold": 5,
+      "max_hmm_hold": 99,
+      "avg_theta": 1.6242,
+      "avg_h_at_refit": 0.53,
+      "refits": 200,
+      "rollover_blocks": 0,
+      "dwell_blocks": 2,
+      "sentinel_exits": 0
+    },
+    "XTIUSD/XBRUSD": {
+      "trades": 1481,
+      "wr": 97.6,
+      "pf": 36.62,
+      "net_pnl": 454688.46,
+      "return_pct": 454.69,
+      "max_dd_pct": 1.84,
+      "avg_hurst": 0.383,
+      "hmm_blocks": 673,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 323.27,
+      "avg_loss": -364.76,
+      "avg_hold_bars": 9.0,
+      "gross_profit": 467454.92,
+      "gross_loss": 12766.46,
+      "monthly": {
+        "2025-10": {
+          "trades": 107,
+          "wins": 105,
+          "pnl": 12075.545876816836
+        },
+        "2025-11": {
+          "trades": 369,
+          "wins": 361,
+          "pnl": 53792.78757099401
+        },
+        "2025-12": {
+          "trades": 534,
+          "wins": 531,
+          "pnl": 156680.06443320066
+        },
+        "2026-01": {
+          "trades": 359,
+          "wins": 343,
+          "pnl": 175045.15570405888
+        },
+        "2026-02": {
+          "trades": 112,
+          "wins": 106,
+          "pnl": 57094.90344354959
+        }
+      },
+      "trades_per_month": 415.2,
+      "days": 107,
+      "dakad_wr": 98.0,
+      "avg_hmm_hold": 78.6,
+      "min_hmm_hold": 7,
+      "max_hmm_hold": 99,
+      "avg_theta": 8.6847,
+      "avg_h_at_refit": 0.386,
+      "refits": 184,
+      "rollover_blocks": 0,
+      "dwell_blocks": 30,
+      "sentinel_exits": 0
+    },
+    "XAUUSD/XAGUSD": {
+      "trades": 32,
+      "wr": 75.0,
+      "pf": 1.16,
+      "net_pnl": 727.09,
+      "return_pct": 0.73,
+      "max_dd_pct": 2.86,
+      "avg_hurst": 0.575,
+      "hmm_blocks": 46,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 218.08,
+      "avg_loss": -563.35,
+      "avg_hold_bars": 28.8,
+      "gross_profit": 5233.91,
+      "gross_loss": 4506.82,
+      "monthly": {
+        "2025-12": {
+          "trades": 32,
+          "wins": 24,
+          "pnl": 727.0920519171019
+        }
+      },
+      "trades_per_month": 9.1,
+      "days": 105,
+      "dakad_wr": 72.3,
+      "avg_hmm_hold": 37.2,
+      "min_hmm_hold": 5,
+      "max_hmm_hold": 99,
+      "avg_theta": 0.8234,
+      "avg_h_at_refit": 0.572,
+      "refits": 200,
+      "rollover_blocks": 0,
+      "dwell_blocks": 0,
+      "sentinel_exits": 0
+    }
+  }
+}

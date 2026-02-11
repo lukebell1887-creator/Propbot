@@ -1,0 +1,194 @@
+[
+  {
+    "label": "A) BASELINE (v5.6 original)",
+    "trades": 379,
+    "wr": 74.7,
+    "pf": 2.01,
+    "net_pnl": 5002.38,
+    "ghost": false,
+    "hmm_blocks": 0,
+    "roll_blocks": 0,
+    "dwell_holds": 0,
+    "dwell_reentry_blocks": 0,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 158,
+        "wr": 66.5,
+        "pf": 1.64,
+        "pnl": 2037.21
+      },
+      "Forex Anchor": {
+        "trades": 174,
+        "wr": 81.6,
+        "pf": 3.4,
+        "pnl": 2937.09
+      },
+      "EUR/GBP Spread": {
+        "trades": 47,
+        "wr": 76.6,
+        "pf": 1.05,
+        "pnl": 28.08
+      }
+    }
+  },
+  {
+    "label": "B) + HMM Filter ONLY",
+    "trades": 287,
+    "wr": 75.3,
+    "pf": 1.55,
+    "net_pnl": 2712.41,
+    "ghost": false,
+    "hmm_blocks": 360,
+    "roll_blocks": 0,
+    "dwell_holds": 0,
+    "dwell_reentry_blocks": 0,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 116,
+        "wr": 68.1,
+        "pf": 1.17,
+        "pnl": 613.77
+      },
+      "Forex Anchor": {
+        "trades": 135,
+        "wr": 82.2,
+        "pf": 3.41,
+        "pnl": 2196.18
+      },
+      "EUR/GBP Spread": {
+        "trades": 36,
+        "wr": 72.2,
+        "pf": 0.78,
+        "pnl": -97.54
+      }
+    }
+  },
+  {
+    "label": "C) + Rollover Lockout ONLY",
+    "trades": 379,
+    "wr": 74.7,
+    "pf": 2.01,
+    "net_pnl": 5002.38,
+    "ghost": false,
+    "hmm_blocks": 0,
+    "roll_blocks": 0,
+    "dwell_holds": 0,
+    "dwell_reentry_blocks": 0,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 158,
+        "wr": 66.5,
+        "pf": 1.64,
+        "pnl": 2037.21
+      },
+      "Forex Anchor": {
+        "trades": 174,
+        "wr": 81.6,
+        "pf": 3.4,
+        "pnl": 2937.09
+      },
+      "EUR/GBP Spread": {
+        "trades": 47,
+        "wr": 76.6,
+        "pf": 1.05,
+        "pnl": 28.08
+      }
+    }
+  },
+  {
+    "label": "D) + Dynamic AKAD ONLY",
+    "trades": 379,
+    "wr": 74.7,
+    "pf": 1.5,
+    "net_pnl": 7118.78,
+    "ghost": false,
+    "hmm_blocks": 0,
+    "roll_blocks": 0,
+    "dwell_holds": 0,
+    "dwell_reentry_blocks": 0,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 158,
+        "wr": 66.5,
+        "pf": 1.02,
+        "pnl": 200.18
+      },
+      "Forex Anchor": {
+        "trades": 174,
+        "wr": 81.6,
+        "pf": 3.22,
+        "pnl": 6934.39
+      },
+      "EUR/GBP Spread": {
+        "trades": 47,
+        "wr": 76.6,
+        "pf": 0.99,
+        "pnl": -15.79
+      }
+    }
+  },
+  {
+    "label": "E) + Dwell ONLY",
+    "trades": 378,
+    "wr": 74.3,
+    "pf": 2.02,
+    "net_pnl": 5023.94,
+    "ghost": false,
+    "hmm_blocks": 0,
+    "roll_blocks": 0,
+    "dwell_holds": 392,
+    "dwell_reentry_blocks": 6,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 158,
+        "wr": 66.5,
+        "pf": 1.65,
+        "pnl": 2073.71
+      },
+      "Forex Anchor": {
+        "trades": 173,
+        "wr": 80.9,
+        "pf": 3.48,
+        "pnl": 2931.24
+      },
+      "EUR/GBP Spread": {
+        "trades": 47,
+        "wr": 76.6,
+        "pf": 1.03,
+        "pnl": 18.99
+      }
+    }
+  },
+  {
+    "label": "F) ALL FEATURES (live bot)",
+    "trades": 286,
+    "wr": 74.8,
+    "pf": 1.66,
+    "net_pnl": 7617.49,
+    "ghost": false,
+    "hmm_blocks": 360,
+    "roll_blocks": 0,
+    "dwell_holds": 295,
+    "dwell_reentry_blocks": 6,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 116,
+        "wr": 68.1,
+        "pf": 1.3,
+        "pnl": 2446.99
+      },
+      "Forex Anchor": {
+        "trades": 134,
+        "wr": 81.3,
+        "pf": 3.47,
+        "pnl": 5538.64
+      },
+      "EUR/GBP Spread": {
+        "trades": 36,
+        "wr": 72.2,
+        "pf": 0.7,
+        "pnl": -368.15
+      }
+    }
+  }
+]

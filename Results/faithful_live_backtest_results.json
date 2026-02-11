@@ -1,0 +1,182 @@
+{
+  "config": "Exact live bot config \u2014 Holy Trio with per-pair HMM holds",
+  "pairs": {
+    "Index Spread": {
+      "hmm_hold": 10,
+      "sym_a": "US100",
+      "sym_b": "DE40"
+    },
+    "Forex Anchor": {
+      "hmm_hold": 100,
+      "sym_a": "AUDUSD",
+      "sym_b": "NZDUSD"
+    },
+    "EURJPY/CHFJPY": {
+      "hmm_hold": 100,
+      "sym_a": "EURJPY",
+      "sym_b": "CHFJPY"
+    }
+  },
+  "results": {
+    "Index Spread": {
+      "pair": "Index Spread",
+      "hmm_hold": 10,
+      "trades": 83,
+      "wr": 71.1,
+      "pf": 2.05,
+      "net_pnl": 4653.65,
+      "return_pct": 4.65,
+      "max_dd_pct": 0.78,
+      "avg_hurst": 0.585,
+      "hmm_blocks": 299,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 154.3,
+      "avg_loss": -185.42,
+      "avg_hold": 32.1,
+      "gross_profit": 9103.74,
+      "gross_loss": 4450.09,
+      "exit_reasons": {
+        "DYNAMIC_EXIT": 83
+      },
+      "sentinel_exits": 0,
+      "rollover_blocks": 0,
+      "dwell_blocks": 0,
+      "monthly": {
+        "2025-10": {
+          "trades": 5,
+          "wins": 4,
+          "pnl": 774.2946232738497
+        },
+        "2025-11": {
+          "trades": 26,
+          "wins": 18,
+          "pnl": 2026.170211106224
+        },
+        "2025-12": {
+          "trades": 26,
+          "wins": 18,
+          "pnl": 775.4836691565562
+        },
+        "2026-01": {
+          "trades": 18,
+          "wins": 12,
+          "pnl": 355.68658703614983
+        },
+        "2026-02": {
+          "trades": 8,
+          "wins": 7,
+          "pnl": 722.0177210647067
+        }
+      },
+      "trades_per_month": 23.7,
+      "days": 105,
+      "dakad_wr": 72.0
+    },
+    "Forex Anchor": {
+      "pair": "Forex Anchor",
+      "hmm_hold": 100,
+      "trades": 134,
+      "wr": 81.3,
+      "pf": 3.6,
+      "net_pnl": 5442.25,
+      "return_pct": 5.44,
+      "max_dd_pct": 0.41,
+      "avg_hurst": 0.512,
+      "hmm_blocks": 132,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 69.15,
+      "avg_loss": -83.8,
+      "avg_hold": 24.6,
+      "gross_profit": 7537.23,
+      "gross_loss": 2094.98,
+      "exit_reasons": {
+        "DYNAMIC_EXIT": 131,
+        "EMERGENCY": 2,
+        "SENTINEL": 1
+      },
+      "sentinel_exits": 1,
+      "rollover_blocks": 0,
+      "dwell_blocks": 4,
+      "monthly": {
+        "2025-10": {
+          "trades": 5,
+          "wins": 5,
+          "pnl": 190.10805786638522
+        },
+        "2025-11": {
+          "trades": 106,
+          "wins": 86,
+          "pnl": 4171.860951980869
+        },
+        "2026-02": {
+          "trades": 23,
+          "wins": 18,
+          "pnl": 1080.2817154622412
+        }
+      },
+      "trades_per_month": 40.6,
+      "days": 99,
+      "dakad_wr": 82.0
+    },
+    "EURJPY/CHFJPY": {
+      "pair": "EURJPY/CHFJPY",
+      "hmm_hold": 100,
+      "trades": 344,
+      "wr": 83.4,
+      "pf": 4.85,
+      "net_pnl": 15477.3,
+      "return_pct": 15.48,
+      "max_dd_pct": 0.54,
+      "avg_hurst": 0.528,
+      "hmm_blocks": 442,
+      "ghost": false,
+      "ghost_info": "",
+      "avg_win": 67.92,
+      "avg_loss": -70.45,
+      "avg_hold": 21.5,
+      "gross_profit": 19492.7,
+      "gross_loss": 4015.4,
+      "exit_reasons": {
+        "DYNAMIC_EXIT": 344
+      },
+      "sentinel_exits": 0,
+      "rollover_blocks": 0,
+      "dwell_blocks": 2,
+      "monthly": {
+        "2025-10": {
+          "trades": 13,
+          "wins": 12,
+          "pnl": 449.6275732002948
+        },
+        "2025-11": {
+          "trades": 84,
+          "wins": 68,
+          "pnl": 3300.05968992825
+        },
+        "2025-12": {
+          "trades": 114,
+          "wins": 99,
+          "pnl": 5411.885377653812
+        },
+        "2026-01": {
+          "trades": 105,
+          "wins": 85,
+          "pnl": 4825.170607640765
+        },
+        "2026-02": {
+          "trades": 28,
+          "wins": 23,
+          "pnl": 1490.5559248805725
+        }
+      },
+      "trades_per_month": 104.2,
+      "days": 99,
+      "dakad_wr": 80.0
+    }
+  },
+  "combined_pnl": 25573.2,
+  "combined_trades": 561,
+  "combined_return_pct": 25.57
+}

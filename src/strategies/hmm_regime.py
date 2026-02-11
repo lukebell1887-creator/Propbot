@@ -174,6 +174,10 @@ class HMMRegimeDetector:
 def create_regime_detector(
     n_regimes: int = 3,
     lookback: int = 100,
+    min_regime_hold: int = 100,
 ) -> HMMRegimeDetector:
-    """Factory function to create an HMM regime detector."""
-    return HMMRegimeDetector(n_regimes=n_regimes, lookback=lookback)
+    """Factory function to create an HMM regime detector with per-pair hold."""
+    detector = HMMRegimeDetector(n_regimes=n_regimes, lookback=lookback)
+    detector._min_regime_hold = min_regime_hold
+    logger.info(f"HMM created with min_regime_hold={min_regime_hold}")
+    return detector

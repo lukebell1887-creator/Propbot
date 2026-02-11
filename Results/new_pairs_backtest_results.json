@@ -1,0 +1,95 @@
+{
+  "all_results": {
+    "XTIUSD/XBRUSD": [
+      {
+        "trades": 1457,
+        "wr": 97.3,
+        "pf": 32.65,
+        "net_pnl": 434426.9,
+        "return_pct": 434.43,
+        "max_dd_pct": 2.16,
+        "avg_hurst": 0.383,
+        "hmm_blocks": 685,
+        "ghost": false,
+        "avg_win": 316.27,
+        "avg_loss": -343.19,
+        "avg_hold": 62.9,
+        "gross_profit": 448154.51,
+        "gross_loss": 13727.61,
+        "hmm_hold": 5
+      },
+      {
+        "trades": 1479,
+        "wr": 97.2,
+        "pf": 32.41,
+        "net_pnl": 445403.1,
+        "return_pct": 445.4,
+        "max_dd_pct": 2.2,
+        "avg_hurst": 0.383,
+        "hmm_blocks": 651,
+        "ghost": false,
+        "avg_win": 319.6,
+        "avg_loss": -345.88,
+        "avg_hold": 62.0,
+        "gross_profit": 459584.29,
+        "gross_loss": 14181.19,
+        "hmm_hold": 10
+      },
+      {
+        "trades": 1489,
+        "wr": 97.4,
+        "pf": 33.0,
+        "net_pnl": 458273.55,
+        "return_pct": 458.27,
+        "max_dd_pct": 2.25,
+        "avg_hurst": 0.383,
+        "hmm_blocks": 610,
+        "ghost": false,
+        "avg_win": 325.7,
+        "avg_loss": -376.86,
+        "avg_hold": 61.5,
+        "gross_profit": 472594.07,
+        "gross_loss": 14320.52,
+        "hmm_hold": 20
+      },
+      {
+        "trades": 1439,
+        "wr": 97.2,
+        "pf": 34.47,
+        "net_pnl": 437874.68,
+        "return_pct": 437.87,
+        "max_dd_pct": 2.17,
+        "avg_hurst": 0.383,
+        "hmm_blocks": 699,
+        "ghost": false,
+        "avg_win": 322.34,
+        "avg_loss": -327.1,
+        "avg_hold": 63.7,
+        "gross_profit": 450958.81,
+        "gross_loss": 13084.12,
+        "hmm_hold": 100
+      }
+    ]
+  },
+  "best_pairs": [
+    {
+      "pair": "XTIUSD/XBRUSD",
+      "best_hmm": 100,
+      "trades": 1439,
+      "wr": 97.2,
+      "pf": 34.47,
+      "net_pnl": 437874.68,
+      "return_pct": 437.87,
+      "max_dd_pct": 2.17,
+      "avg_hurst": 0.383,
+      "hmm_blocks": 699,
+      "ghost": false,
+      "avg_win": 322.34,
+      "avg_loss": -327.1,
+      "avg_hold": 63.7,
+      "gross_profit": 450958.81,
+      "gross_loss": 13084.12,
+      "hmm_hold": 100
+    }
+  ]
+}

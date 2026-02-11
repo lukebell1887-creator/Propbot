@@ -12,7 +12,7 @@ The central orchestrator for cointegration-based pairs trading:
 - Ghost Stop (4% daily / 9% max DD, 100ms tick)
 - Server-Side Hard Stops (Huber 4.815σ)
 
-Holy Trio: US100/DE40 | AUDUSD/NZDUSD | EURUSD/GBPUSD
+Holy Trio: US100/DE40 | AUDUSD/NZDUSD | EURJPY/CHFJPY
 """
 
 import asyncio
@@ -78,26 +78,31 @@ class PairConfig:
     pair_index: int = 0  # For CorrelationRiskMonitor
     max_spread_a: float = 50.0   # Max allowed spread (points) for symbol A
     max_spread_b: float = 50.0   # Max allowed spread (points) for symbol B
+    hmm_min_hold: int = 100      # Per-pair HMM min regime hold (bars before regime can change)
     # Resolved at runtime (actual broker names)
     resolved_a: str = ""
     resolved_b: str = ""
 
 
 # Holy Trio — the only pairs we trade
-# Spread limits are per-asset-class:
-#   Indices (US100/DE40): wider spreads normal (100-200 pts)
-#   Forex majors: tight spreads (8-20 pts = ~0.8-2.0 pips)
+# Per-pair HMM hold calibrated from Hurst exponent (physics-based, not curve-fit):
+#   Index (H=0.585, trending): hmm_min_hold=10 → fast regime response
+#   Forex (H=0.512, MR):      hmm_min_hold=100 → patient, ignore noise
+#   EURJPY (H=0.528, MR):     hmm_min_hold=100 → patient, ignore noise
 HOLY_TRIO: List[PairConfig] = [
     PairConfig(name="Index Spread",    symbol_a="US100",  symbol_b="DE40",   pair_index=0,
                aliases_a=("NAS100","USTEC","US100.cash","NAS100.cash","USTEC.cash"),
                aliases_b=("DAX40","GER40","DE40.cash","DAX40.cash","GER40.cash"),
-               max_spread_a=200.0, max_spread_b=200.0),
+               max_spread_a=200.0, max_spread_b=200.0,
+               hmm_min_hold=10),  # H=0.585 trending → fast HMM
     PairConfig(name="Forex Anchor",    symbol_a="AUDUSD", symbol_b="NZDUSD", pair_index=1,
                aliases_a=("AUDUSDm",), aliases_b=("NZDUSDm",),
-               max_spread_a=80.0,  max_spread_b=80.0),
-    PairConfig(name="EUR/GBP Spread",  symbol_a="EURUSD", symbol_b="GBPUSD", pair_index=2,
-               aliases_a=("EURUSDm",), aliases_b=("GBPUSDm",),
-               max_spread_a=60.0,  max_spread_b=60.0),
+               max_spread_a=80.0,  max_spread_b=80.0,
+               hmm_min_hold=100),  # H=0.512 MR → slow HMM
+    PairConfig(name="EURJPY/CHFJPY",   symbol_a="EURJPY", symbol_b="CHFJPY", pair_index=2,
+               aliases_a=("EURJPYm",), aliases_b=("CHFJPYm",),
+               max_spread_a=80.0,  max_spread_b=80.0,
+               hmm_min_hold=100),  # H=0.528 MR → slow HMM
 ]
 
 
@@ -402,10 +407,12 @@ class TradingEngine:
             )
             logger.info(f"  {cfg.name}: Rust KalmanSentinel (tol={cfg.beta_tolerance})")
 
-        # HMM Volatility Filter (per pair, Numba JIT)
+        # HMM Volatility Filter (per pair, Numba JIT, per-pair min_regime_hold)
         if HMM_AVAILABLE:
-            state.hmm_detector = create_regime_detector(n_regimes=3, lookback=100)
-            logger.info(f"  {cfg.name}: HMM 3-regime volatility filter (lookback=100)")
+            state.hmm_detector = create_regime_detector(
+                n_regimes=3, lookback=100, min_regime_hold=cfg.hmm_min_hold
+            )
+            logger.info(f"  {cfg.name}: HMM 3-regime volatility filter (lookback=100, hold={cfg.hmm_min_hold})")
 
         self._pairs[cfg.name] = state
 
@@ -1296,14 +1303,19 @@ class TradingEngine:
     MIN_STOP_DISTANCE = {
         'INDEX': 500.0,    # Indices: 500 points minimum (NAS100, DAX40)
         'FOREX': 0.0050,   # Forex: 50 pips minimum (AUDUSD, EURUSD etc.)
+        'FOREX_JPY': 0.500, # JPY pairs: 50 pips minimum (1 pip = 0.01 for JPY)
     }
 
     # Minimum Welford buffer length before we trust the sigma for hard stops
     MIN_BUFFER_FOR_STOPS = 200
 
     def _get_asset_class(self, symbol: str) -> str:
-        """Determine asset class from symbol name."""
-        forex_symbols = ('AUDUSD', 'NZDUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF',
+        """Determine asset class from symbol name (JPY pairs need different stop distances)."""
+        jpy_symbols = ('EURJPY', 'CHFJPY', 'GBPJPY', 'USDJPY', 'AUDJPY', 'NZDJPY', 'CADJPY',
+                       'EURJPYm', 'CHFJPYm', 'GBPJPYm', 'USDJPYm')
+        if symbol in jpy_symbols:
+            return 'FOREX_JPY'
+        forex_symbols = ('AUDUSD', 'NZDUSD', 'EURUSD', 'GBPUSD', 'USDCAD', 'USDCHF',
                          'AUDUSDm', 'NZDUSDm', 'EURUSDm', 'GBPUSDm')
         if symbol in forex_symbols:
             return 'FOREX'

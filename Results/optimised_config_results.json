@@ -1,0 +1,287 @@
+[
+  {
+    "label": "A) CURRENT LIVE (3 orig, HMM=100)",
+    "trades": 286,
+    "wr": 74.8,
+    "pf": 1.66,
+    "net_pnl": 7617.49,
+    "return_pct": 7.62,
+    "max_dd_pct": 1.35,
+    "ghost": false,
+    "hmm_blocks": 360,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 116,
+        "wr": 68.1,
+        "pf": 1.3,
+        "pnl": 2446.99
+      },
+      "Forex Anchor": {
+        "trades": 134,
+        "wr": 81.3,
+        "pf": 3.47,
+        "pnl": 5538.64
+      },
+      "EUR/GBP Spread": {
+        "trades": 36,
+        "wr": 72.2,
+        "pf": 0.7,
+        "pnl": -368.15
+      }
+    },
+    "avg_win": 89.77,
+    "avg_loss": -161.03
+  },
+  {
+    "label": "B) 2 orig only (HMM=20)",
+    "trades": 232,
+    "wr": 75.9,
+    "pf": 2.22,
+    "net_pnl": 9967.28,
+    "return_pct": 9.97,
+    "max_dd_pct": 1.59,
+    "ghost": false,
+    "hmm_blocks": 387,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 98,
+        "wr": 70.4,
+        "pf": 1.85,
+        "pnl": 4926.02
+      },
+      "Forex Anchor": {
+        "trades": 134,
+        "wr": 79.9,
+        "pf": 3.12,
+        "pnl": 5041.26
+      }
+    },
+    "avg_win": 103.01,
+    "avg_loss": -145.76
+  },
+  {
+    "label": "C) Replace EUR/GBP -> EURJPY/CHFJPY",
+    "trades": 562,
+    "wr": 79.2,
+    "pf": 2.61,
+    "net_pnl": 21893.4,
+    "return_pct": 21.89,
+    "max_dd_pct": 1.59,
+    "ghost": false,
+    "hmm_blocks": 911,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 98,
+        "wr": 70.4,
+        "pf": 1.85,
+        "pnl": 4926.02
+      },
+      "Forex Anchor": {
+        "trades": 134,
+        "wr": 79.9,
+        "pf": 3.12,
+        "pnl": 5041.26
+      },
+      "EURJPY/CHFJPY": {
+        "trades": 330,
+        "wr": 81.5,
+        "pf": 3.19,
+        "pnl": 11926.13
+      }
+    },
+    "avg_win": 79.78,
+    "avg_loss": -116.32
+  },
+  {
+    "label": "D) Replace EUR/GBP -> Oil",
+    "trades": 1721,
+    "wr": 94.5,
+    "pf": 22.5,
+    "net_pnl": 514152.63,
+    "return_pct": 514.15,
+    "max_dd_pct": 2.47,
+    "ghost": false,
+    "hmm_blocks": 997,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 98,
+        "wr": 70.4,
+        "pf": 1.85,
+        "pnl": 4926.02
+      },
+      "Forex Anchor": {
+        "trades": 134,
+        "wr": 79.9,
+        "pf": 3.12,
+        "pnl": 5041.26
+      },
+      "XTIUSD/XBRUSD": {
+        "trades": 1489,
+        "wr": 97.4,
+        "pf": 33.01,
+        "pnl": 504185.36
+      }
+    },
+    "avg_win": 330.71,
+    "avg_loss": -254.4
+  },
+  {
+    "label": "E) 4 pairs: Orig2+EJCJ+Oil",
+    "trades": 2051,
+    "wr": 92.4,
+    "pf": 19.68,
+    "net_pnl": 580047.22,
+    "return_pct": 580.05,
+    "max_dd_pct": 2.74,
+    "ghost": false,
+    "hmm_blocks": 1521,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 98,
+        "wr": 70.4,
+        "pf": 1.85,
+        "pnl": 4926.02
+      },
+      "Forex Anchor": {
+        "trades": 134,
+        "wr": 79.9,
+        "pf": 3.12,
+        "pnl": 5041.26
+      },
+      "EURJPY/CHFJPY": {
+        "trades": 330,
+        "wr": 81.5,
+        "pf": 3.19,
+        "pnl": 11926.13
+      },
+      "XTIUSD/XBRUSD": {
+        "trades": 1489,
+        "wr": 97.4,
+        "pf": 32.99,
+        "pnl": 558153.81
+      }
+    },
+    "avg_win": 322.31,
+    "avg_loss": -200.35
+  },
+  {
+    "label": "F) 5 pairs: E + Gold/Silver",
+    "trades": 2084,
+    "wr": 92.1,
+    "pf": 8.61,
+    "net_pnl": 583238.15,
+    "return_pct": 583.24,
+    "max_dd_pct": 28.29,
+    "ghost": false,
+    "hmm_blocks": 1570,
+    "per_pair": {
+      "Index Spread": {
+        "trades": 98,
+        "wr": 70.4,
+        "pf": 1.85,
+        "pnl": 4926.02
+      },
+      "Forex Anchor": {
+        "trades": 134,
+        "wr": 79.9,
+        "pf": 3.12,
+        "pnl": 5041.26
+      },
+      "EURJPY/CHFJPY": {
+        "trades": 330,
+        "wr": 81.5,
+        "pf": 3.19,
+        "pnl": 11926.13
+      },
+      "XTIUSD/XBRUSD": {
+        "trades": 1489,
+        "wr": 97.4,
+        "pf": 32.99,
+        "pnl": 558153.81
+      },
+      "XAUUSD/XAGUSD": {
+        "trades": 33,
+        "wr": 72.7,
+        "pf": 1.07,
+        "pnl": 3190.93
+      }
+    },
+    "avg_win": 343.71,
+    "avg_loss": -467.62
+  },
+  {
+    "label": "G) Best3: FX+EJCJ+Oil (no Index)",
+    "trades": 1953,
+    "wr": 93.5,
+    "pf": 23.82,
+    "net_pnl": 549289.82,
+    "return_pct": 549.29,
+    "max_dd_pct": 2.61,
+    "ghost": false,
+    "hmm_blocks": 1271,
+    "per_pair": {
+      "Forex Anchor": {
+        "trades": 134,
+        "wr": 79.9,
+        "pf": 3.26,
+        "pnl": 4994.03
+      },
+      "EURJPY/CHFJPY": {
+        "trades": 330,
+        "wr": 81.5,
+        "pf": 3.19,
+        "pnl": 11385.28
+      },
+      "XTIUSD/XBRUSD": {
+        "trades": 1489,
+        "wr": 97.4,
+        "pf": 33.0,
+        "pnl": 532910.52
+      }
+    },
+    "avg_win": 313.82,
+    "avg_loss": -191.0
+  },
+  {
+    "label": "H) Oil only",
+    "trades": 1489,
+    "wr": 97.4,
+    "pf": 33.0,
+    "net_pnl": 458273.55,
+    "return_pct": 458.27,
+    "max_dd_pct": 2.25,
+    "ghost": false,
+    "hmm_blocks": 610,
+    "per_pair": {
+      "XTIUSD/XBRUSD": {
+        "trades": 1489,
+        "wr": 97.4,
+        "pf": 33.0,
+        "pnl": 458273.55
+      }
+    },
+    "avg_win": 325.7,
+    "avg_loss": -376.86
+  },
+  {
+    "label": "I) EJCJ only",
+    "trades": 330,
+    "wr": 81.5,
+    "pf": 3.25,
+    "net_pnl": 10798.87,
+    "return_pct": 10.8,
+    "max_dd_pct": 0.98,
+    "ghost": false,
+    "hmm_blocks": 524,
+    "per_pair": {
+      "EURJPY/CHFJPY": {
+        "trades": 330,
+        "wr": 81.5,
+        "pf": 3.25,
+        "pnl": 10798.87
+      }
+    },
+    "avg_win": 57.98,
+    "avg_loss": -78.66
+  }
+]

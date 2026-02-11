@@ -57,8 +57,8 @@ void DetectSymbols()
    string index_b_variants[] = {"DE40","DAX40","GER40","DE40.cash","DAX40.cash","GER40.cash"};
    string fx_a1[] = {"AUDUSD","AUDUSDm","AUDUSD.","AUDUSD_"};
    string fx_b1[] = {"NZDUSD","NZDUSDm","NZDUSD.","NZDUSD_"};
-   string fx_a2[] = {"EURUSD","EURUSDm","EURUSD.","EURUSD_"};
-   string fx_b2[] = {"GBPUSD","GBPUSDm","GBPUSD.","GBPUSD_"};
+   string fx_a2[] = {"EURJPY","EURJPYm","EURJPY.","EURJPY_"};
+   string fx_b2[] = {"CHFJPY","CHFJPYm","CHFJPY.","CHFJPY_"};
    
    ArrayResize(g_symbols, 0);
    g_num_symbols = 0;
