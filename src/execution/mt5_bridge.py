@@ -457,10 +457,14 @@ class MT5Bridge:
             )
 
     def _ping(self) -> bool:
-        """Check EA is alive via cached data freshness."""
+        """Check EA is alive via cached data freshness.
+        
+        Uses 10s window — EA pushes every 100ms, so 10s of silence
+        means genuinely dead, not just a brief chart change.
+        """
         with self._data_lock:
-            # If we received data in the last 2 seconds, EA is alive
-            if self._last_data_time > 0 and (time.time() - self._last_data_time) < 2.0:
+            # If we received data in the last 10 seconds, EA is alive
+            if self._last_data_time > 0 and (time.time() - self._last_data_time) < 10.0:
                 return True
         return False
 

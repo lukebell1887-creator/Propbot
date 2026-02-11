@@ -529,11 +529,23 @@ class TradingEngine:
 
     async def _tick(self) -> None:
         """Single tick — process all pairs."""
-        # Heartbeat
+        # Heartbeat — tolerant of brief EA restarts (chart timeframe changes etc.)
         if not self._bridge.heartbeat():
-            logger.warning("MT5 heartbeat failed — reconnecting")
+            self._hb_fail_count = getattr(self, '_hb_fail_count', 0) + 1
+            if self._hb_fail_count <= 3:
+                # Brief blip — wait it out (EA may be reinitializing)
+                return
+            logger.warning(f"MT5 heartbeat failed {self._hb_fail_count}x — reconnecting")
             self._bridge.disconnect()
             if not self._bridge.connect():
+                return
+            self._hb_fail_count = 0
+            self._hb_grace_until = time.time() + 15.0  # 15s grace after reconnect
+            return
+        else:
+            self._hb_fail_count = 0
+            # Grace period after reconnect — skip processing until data flows
+            if time.time() < getattr(self, '_hb_grace_until', 0):
                 return
 
         # Get current account state
