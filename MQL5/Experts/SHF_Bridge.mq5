@@ -502,14 +502,24 @@ string HandleOrderClose(string data)
    req.symbol   = symbol;
    req.volume   = lots;
    req.deviation = (ulong)InpMaxSlippage;
-   req.type_filling = ORDER_FILLING_IOC;
+   req.type_filling = GetSymbolFillingMode(symbol);
    
    if(pos_type == POSITION_TYPE_BUY)
    { req.type = ORDER_TYPE_SELL; req.price = SymbolInfoDouble(symbol, SYMBOL_BID); }
    else
    { req.type = ORDER_TYPE_BUY; req.price = SymbolInfoDouble(symbol, SYMBOL_ASK); }
    
-   if(OrderSend(req, res) && res.retcode == TRADE_RETCODE_DONE)
+   bool result = OrderSend(req, res);
+   // Retry with alternative fill types if rejected
+   if(!result || (res.retcode != TRADE_RETCODE_DONE && res.retcode != TRADE_RETCODE_DONE_PARTIAL))
+   {
+      if(req.type_filling == ORDER_FILLING_IOC)
+      { req.type_filling = ORDER_FILLING_FOK; result = OrderSend(req, res); }
+      if(!result || (res.retcode != TRADE_RETCODE_DONE && res.retcode != TRADE_RETCODE_DONE_PARTIAL))
+      { req.type_filling = ORDER_FILLING_RETURN; result = OrderSend(req, res); }
+   }
+   
+   if(result && res.retcode == TRADE_RETCODE_DONE)
       return "{\"success\":true}";
    return StringFormat("{\"success\":false,\"error_message\":\"%s\"}", RetcodeDesc(res.retcode));
 }
@@ -534,12 +544,17 @@ string HandleCloseAll(string data)
       req.symbol = sym;
       req.volume = PositionGetDouble(POSITION_VOLUME);
       req.deviation = (ulong)InpMaxSlippage;
-      req.type_filling = ORDER_FILLING_IOC;
+      req.type_filling = GetSymbolFillingMode(sym);
       if(pt == POSITION_TYPE_BUY)
       { req.type = ORDER_TYPE_SELL; req.price = SymbolInfoDouble(sym, SYMBOL_BID); }
       else
       { req.type = ORDER_TYPE_BUY; req.price = SymbolInfoDouble(sym, SYMBOL_ASK); }
-      if(OrderSend(req, res) && res.retcode == TRADE_RETCODE_DONE) closed++;
+      bool r = OrderSend(req, res);
+      if(!r || res.retcode != TRADE_RETCODE_DONE)
+      { req.type_filling = ORDER_FILLING_FOK; r = OrderSend(req, res); }
+      if(!r || res.retcode != TRADE_RETCODE_DONE)
+      { req.type_filling = ORDER_FILLING_RETURN; r = OrderSend(req, res); }
+      if(r && res.retcode == TRADE_RETCODE_DONE) closed++;
    }
    return StringFormat("{\"closed_count\":%d}", closed);
 }
