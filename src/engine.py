@@ -114,7 +114,7 @@ class PairState:
     coint_engine: Optional[object] = None    # CointegrationEngine
     kalman_sentinel: Optional[object] = None  # KalmanSentinel
 
-    # Signals
+    # Signals (updated ONLY on M1 bar close — not every tick)
     position: int = 0       # +1 long spread, -1 short spread, 0 flat
     entry_z: float = 0.0    # Z at entry
     last_z: float = 0.0
@@ -123,11 +123,20 @@ class PairState:
     last_exit_z: float = 0.5
     last_signal: int = 0    # from Rust: 1=long, -1=short, 0=flat
 
-    # Price tracking
+    # Price tracking (tick-level — updated every tick for execution/monitoring)
     last_price_a: float = 0.0
     last_price_b: float = 0.0
     last_spread: float = 0.0
-    prev_spread: float = 0.0  # For correlation monitor
+    prev_spread: float = 0.0  # For correlation monitor (M1-bar-level)
+
+    # M1 Bar Aggregation — CRITICAL: signals computed on M1 bars, NOT ticks
+    # This matches the backtest which used M1 CSV data (one update per minute)
+    current_bar_minute: int = -1   # Current M1 bar minute-of-day (0-1439), -1 = not started
+    current_bar_epoch_min: int = -1  # Current bar epoch minute (unix_time // 60)
+    bar_close_a: float = 0.0       # Latest close price of symbol A in current M1 bar
+    bar_close_b: float = 0.0       # Latest close price of symbol B in current M1 bar
+    m1_bar_count: int = 0          # Total completed M1 bars (for warmup tracking)
+    last_bar_log_time: float = 0.0  # Wall time of last bar-close log (rate limit)
 
     # Positions
     ticket_a: int = 0
@@ -188,8 +197,11 @@ class TradingEngine:
     # Rollover Lockout — block all new entries ±5 min around broker midnight
     ROLLOVER_LOCKOUT_MINUTES = 5  # Minutes before AND after broker 00:00
 
-    # Cold-Start Warmup: block entries until Welford + Hurst buffers are stable
-    MIN_WARMUP_BUFFER = 600  # ~60 seconds at 100ms ticks (must exceed Hurst 512)
+    # Cold-Start Warmup: block entries until enough M1 BARS are accumulated.
+    # The Hurst R/S window is 512 bars; we need at least 200 for Welford to
+    # stabilise (matching backtest `if count < 200: continue`).
+    # Hurst defaults to 0.5 until 512 bars → safe base thresholds until then.
+    MIN_WARMUP_BARS = 200    # M1 bars (~3.3 hours) before first trade allowed
 
     # Delta Staleness Guard (timezone-agnostic)
     STALE_FEED_TIMEOUT = 5.0  # seconds — if no new tick for this long, data is stale
@@ -241,6 +253,8 @@ class TradingEngine:
         logger.info(f"  Dynamic Dwell: base={self.DWELL_BASE_SECONDS}s, anchor_H={self.DWELL_HURST_ANCHOR}, "
                      f"range=[{self.DWELL_MIN_SECONDS}s, {self.DWELL_MAX_SECONDS}s]")
         logger.info(f"  AKAD: base={self.AKAD_BASE_RISK*100:.2f}%, lambda={self.AKAD_DD_LAMBDA}")
+        logger.info(f"  M1 BAR MODE: signals computed on M1 bar close (not every tick)")
+        logger.info(f"  Warmup: {self.MIN_WARMUP_BARS} M1 bars (~{self.MIN_WARMUP_BARS/60:.1f}h) before first trade")
 
     async def initialize(self) -> bool:
         """Initialize all components."""
@@ -484,11 +498,14 @@ class TradingEngine:
                 hmm_status = "BLOCKED" if state.hmm_blocked else "OK"
                 pos_str = "FLAT" if state.position == 0 else ("LONG" if state.position > 0 else "SHORT")
                 buf = state.coint_engine.buffer_len if state.coint_engine else 0
+                warmup_pct = min(100, buf * 100 // self.MIN_WARMUP_BARS) if self.MIN_WARMUP_BARS > 0 else 100
+                warmup_str = f"WARM {warmup_pct}%" if buf < self.MIN_WARMUP_BARS else "READY"
                 logger.info(
                     f"STATUS | {name} | {pos_str} | Z={state.last_z:+.2f} Zcrit={state.last_z_crit:.2f} "
                     f"Zexit={state.last_exit_z:.3f} | H={state.last_hurst:.3f} | "
                     f"HMM={hmm_regime}({hmm_status}) | Sentinel={'ABORT' if state.sentinel_aborted else 'OK'} | "
-                    f"Buf={buf} | Trades={state.total_trades} ({state.wins}W/{state.losses}L)"
+                    f"M1Bars={buf}/{self.MIN_WARMUP_BARS}({warmup_str}) | "
+                    f"Trades={state.total_trades} ({state.wins}W/{state.losses}L)"
                 )
             logger.info(
                 f"STATUS | Account: ${account.equity:.2f} | DD={current_dd*100:.2f}% daily={daily_dd*100:.2f}% | "
@@ -496,10 +513,33 @@ class TradingEngine:
             )
 
     async def _process_pair(self, state: PairState, current_dd: float, daily_dd: float, balance: float) -> None:
-        """Process a single pair through the full v5.6 pipeline."""
+        """
+        Process a single pair through the full v5.6 pipeline.
+
+        CRITICAL FIX (v5.6.1): M1 Bar Aggregation
+        ===========================================
+        The backtests computed all signals on M1 (1-minute) bar close prices.
+        The live engine receives ticks every ~100ms (10/second).
+
+        Previously, every tick was fed to CointegrationEngine.update(), meaning:
+          - Welford stats were computed on ~77 seconds of data (768 ticks) instead
+            of ~768 minutes (12.8 hours) as in the backtest
+          - Hurst exponent was wrong (tick-level H ≈ 0.4 vs M1-bar H ≈ 0.55)
+          - Z_crit dropped to minimum 2.0 instead of 2.1–3.0
+          - Trades fired every 1–2 minutes instead of ~10/day
+
+        FIX: Aggregate tick prices into M1 bars. Only call coint_engine.update(),
+        HMM, Kalman, and correlation monitor on M1 bar CLOSE — exactly matching
+        the backtest cadence.
+
+        Tick-level data is still used for: price monitoring, staleness checks,
+        spread blowout detection, and execution.
+        """
         cfg = state.config
 
-        # 1. Get latest prices
+        # =====================================================================
+        # STEP 1: Get latest TICK prices (always — for execution & monitoring)
+        # =====================================================================
         price_a = self._get_price(cfg.symbol_a)
         price_b = self._get_price(cfg.symbol_b)
         if price_a is None or price_b is None:
@@ -508,12 +548,58 @@ class TradingEngine:
         state.last_price_a = price_a
         state.last_price_b = price_b
 
-        # 2. Store previous spread for correlation monitor
+        # =====================================================================
+        # STEP 2: M1 Bar Aggregation — detect minute boundary
+        # =====================================================================
+        # Use wall-clock epoch minute as bar key (stable, monotonic)
+        epoch_minute = int(time.time()) // 60
+
+        if state.current_bar_epoch_min == -1:
+            # Very first tick — initialise bar tracking, no signal yet
+            state.current_bar_epoch_min = epoch_minute
+            state.bar_close_a = price_a
+            state.bar_close_b = price_b
+            logger.info(f"M1 BAR INIT: {cfg.name} | First bar started | epoch_min={epoch_minute}")
+            return
+
+        if epoch_minute == state.current_bar_epoch_min:
+            # Same minute — just update the close prices for this bar
+            state.bar_close_a = price_a
+            state.bar_close_b = price_b
+            return  # NO signal processing until bar closes
+
+        # =================================================================
+        # NEW MINUTE — the previous M1 bar just CLOSED
+        # =================================================================
+        # Use the PREVIOUS bar's close prices for signal computation
+        # (this is exactly what the backtest does with M1 CSV close prices)
+        m1_close_a = state.bar_close_a
+        m1_close_b = state.bar_close_b
+
+        # Start the new bar
+        state.current_bar_epoch_min = epoch_minute
+        state.bar_close_a = price_a
+        state.bar_close_b = price_b
+        state.m1_bar_count += 1
+
+        # Log bar close periodically (every 10 bars = every 10 min)
+        now_wall = time.time()
+        if now_wall - state.last_bar_log_time >= 600.0:  # every 10 min
+            state.last_bar_log_time = now_wall
+            logger.info(
+                f"M1 BAR: {cfg.name} | bar #{state.m1_bar_count} closed | "
+                f"A={m1_close_a:.5f} B={m1_close_b:.5f} | "
+                f"Z={state.last_z:+.2f} H={state.last_hurst:.3f} Zcrit={state.last_z_crit:.2f}"
+            )
+
+        # =====================================================================
+        # STEP 3: Feed M1 bar close to Rust CointegrationEngine
+        # =====================================================================
+        # Store previous spread for correlation monitor (M1-bar-level delta)
         state.prev_spread = state.last_spread
 
-        # 3. Run Rust CointegrationEngine (spread → Z → Hurst → Dynamic Z → signal)
         if state.coint_engine is not None:
-            signal = state.coint_engine.update(price_a, price_b)
+            signal = state.coint_engine.update(m1_close_a, m1_close_b)
             state.last_z = signal.z_score
             state.last_signal = signal.signal
             state.last_hurst = state.coint_engine.last_hurst
@@ -523,15 +609,19 @@ class TradingEngine:
         else:
             return  # No engine, skip
 
-        # 4. Feed spread returns to CorrelationRiskMonitor
+        # =====================================================================
+        # STEP 4: Feed M1-bar spread returns to CorrelationRiskMonitor
+        # =====================================================================
         if self._corr_monitor is not None and state.prev_spread != 0.0:
             spread_return = state.last_spread - state.prev_spread
             self._corr_monitor.push_return(cfg.pair_index, spread_return)
 
-        # 5. Kalman Sentinel check
+        # =====================================================================
+        # STEP 5: Kalman Sentinel check (M1-bar cadence)
+        # =====================================================================
         if state.kalman_sentinel is not None:
-            log_a = math.log(price_a) if price_a > 0 else 0.0
-            log_b = math.log(price_b) if price_b > 0 else 0.0
+            log_a = math.log(m1_close_a) if m1_close_a > 0 else 0.0
+            log_b = math.log(m1_close_b) if m1_close_b > 0 else 0.0
             beta, should_abort = state.kalman_sentinel.update(log_a, log_b)
 
             if should_abort and not state.sentinel_aborted:
@@ -554,8 +644,9 @@ class TradingEngine:
         if state.sentinel_aborted:
             return  # Pair is blocked
 
-        # 5b. HMM Volatility Filter — block NEW entries in high-vol regime
-        #     (existing positions can still exit normally)
+        # =====================================================================
+        # STEP 5b: HMM Volatility Filter (M1-bar cadence)
+        # =====================================================================
         if state.hmm_detector is not None and state.prev_spread != 0.0:
             spread_return = state.last_spread - state.prev_spread
             regime = state.hmm_detector.update(spread_return)
@@ -574,7 +665,9 @@ class TradingEngine:
                     f"Entries re-enabled"
                 )
 
-        # 6. Signal processing — entry/exit
+        # =====================================================================
+        # STEP 6: Signal processing — entry/exit (only on M1 bar close)
+        # =====================================================================
         if state.position == 0:
             # Check for entry (blocked if HMM says volatile regime)
             if state.last_signal != 0 and not state.hmm_blocked:
@@ -613,11 +706,12 @@ class TradingEngine:
         cfg = state.config
         direction = state.last_signal  # 1=long spread, -1=short spread
 
-        # Cold-Start Warmup: block entries until statistics are stable
+        # Cold-Start Warmup: block entries until enough M1 bars accumulated
+        # (buffer_len now counts M1 bars since we only feed bar closes)
         if state.coint_engine is not None:
             buf_len = state.coint_engine.buffer_len
-            if buf_len < self.MIN_WARMUP_BUFFER:
-                return  # Still warming up — Z-scores not reliable yet
+            if buf_len < self.MIN_WARMUP_BARS:
+                return  # Still warming up — need 200 M1 bars (~3.3h) for reliable stats
 
         # Rollover Lockout: block new entries ±5 min around broker midnight
         if self._is_rollover_lockout():
