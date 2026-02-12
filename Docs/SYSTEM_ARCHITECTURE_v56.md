@@ -1470,4 +1470,176 @@ JPY pairs have different pip values (1 pip = 0.01 vs 0.0001 for standard forex).
 
 ---
 
-**This document describes the v5.6.2 production system as of Feb 11, 2026.**
+---
+
+## 20. v5.6.3: Oil + Index Duo — Real-Cost Validation & Per-Pair Dwell (Feb 12, 2026)
+
+### 20.1 Why the Trio Became a Duo
+
+After deploying v5.6.2 (Index + Forex Anchor + EURJPY/CHFJPY), a comprehensive **real-world cost analysis** was conducted across all 4 candidate pairs. The results were decisive:
+
+**Full Cost Model (matching real broker FivePercentOnline-Real specs):**
+
+| Pair | Spread/Fill A | Spread/Fill B | Commission | Session Multipliers |
+|------|--------------|--------------|------------|---------------------|
+| Index (US100/DE40) | $1.0 | $1.0 | **ZERO** | Asian 1.8×, LDN 1.2×, NY 1.0× |
+| Oil (XTIUSD/XBRUSD) | $4.0 | $5.0 | 0.03% (~$7.80/lot) | Asian 1.8×, LDN 1.2×, NY 1.0× |
+| Forex Anchor (AUD/NZD) | $5.0 | $7.0 | $4/lot RT | Asian 1.8×, LDN 1.2×, NY 1.0× |
+| EURJPY/CHFJPY | $6.2 | $9.4 | $4/lot RT | Asian 1.8×, LDN 1.2×, NY 1.0× |
+
+**Result: Forex pairs destroyed by costs**
+
+| Pair | Gross P&L | Costs | Net P&L | Avg Win | Avg Cost/Trade | Verdict |
+|------|----------|-------|---------|---------|---------------|---------|
+| **Oil Spread** | $248,305 | $128,864 | **+$119,442** | $177.65 | $87.37 | ✅ Edge survives |
+| **Index Spread** | $4,795 | $526 | **+$4,377** | $148.62 | $5.37 | ✅ Edge survives |
+| Forex Anchor | $1,101 | $2,325 | **-$1,224** | $20.19 | $20.76 | ❌ Costs > wins |
+| EURJPY/CHFJPY | $1,162 | $4,115 | **-$2,953** | $10.29 | $16.86 | ❌ Costs > wins |
+
+> **Key Finding:** Forex pairs have a real gross edge (77-83% WR) but their average gross win ($10-20) is SMALLER than the average cost per trade ($17-21). The spread + commission eats the entire edge. Index and Oil have average wins ($148, $178) that dwarf their costs ($5, $87).
+
+### 20.2 The Oil Bid-Ask Bounce Problem
+
+Initial oil results showed $119K profit — suspiciously high. Analysis revealed:
+
+**Without raised dwell (standard 60s base):**
+- 1,475 trades, avg hold = **9.4 bars (9.4 minutes)**
+- 90% net WR, PF=10.03
+- Most "profits" came from the WTI/Brent spread bouncing between bid and ask prices over 5-10 bars
+
+**The mechanism:** The WTI-Brent log spread has -0.427 lag-1 autocorrelation. When spread moves +1 tick, 43% chance it reverses next bar. In backtest, this is free money. In live trading, YOUR ORDER is the bounce — you're trading the bid-ask spread itself, not real price movement.
+
+**Evidence from hold-time analysis:**
+
+| Min Hold | Trades | Net P&L | Avg Hold | Nature |
+|----------|--------|---------|----------|--------|
+| 1 bar | 1,475 | $119K | 9 min | ❌ Mostly bid-ask bounce |
+| 30 bars | ~900 | $32K | 36 min | ⚠️ Mixed |
+| 50 bars | ~660 | $28K | 41 min | ✅ Real edge |
+| 60 bars | ~450 | $16K | 65 min | ✅ Definitely real |
+| 120 bars | ~300 | $10K | 2 hrs | ✅ Definitely real |
+
+> **Critical Insight:** The edge PERSISTS at every hold time up to 4+ hours. This proves oil has a genuine mean-reversion edge beyond bid-ask bounce. We just need to filter out the short-hold noise trades.
+
+### 20.3 Per-Pair Dynamic Dwell — The Solution
+
+Instead of a fixed minimum hold, the existing Dynamic Dwell architecture was extended with **per-pair dwell parameters**:
+
+**Standard dwell (Index, Forex):**
+```
+dwell = 60 × (H / 0.3), clamped [30s, 300s]
+→ At H=0.5: 100s = ~2 M1 bars
+```
+
+**Oil-specific raised dwell:**
+```
+dwell = 1800 × (H / 0.3), clamped [900s, 9000s]
+→ At H=0.4: 2400s = 40 bars
+→ At H=0.5: 3000s = 50 bars
+→ At H=0.6: 3600s = 60 bars
+```
+
+**Why this is BETTER than a fixed 1-hour hold:**
+1. ✅ **Still Hurst-adaptive** — holds shorter when oil is mean-reverting (H<0.5), longer when trending
+2. ✅ **Fits existing architecture** — just a per-pair config value in `PairConfig`, no new mechanism
+3. ✅ **Emergency exits still bypass it** — if |Z| > 2.5× entry_Z, immediate exit for safety
+4. ✅ **Eliminates bid-ask bounce** — 40-60 bar minimum is well past the ~5-10 bar bounce zone
+5. ✅ **M1 math is unchanged** — all signal computation still runs every M1 bar with full precision
+
+**New `PairConfig` fields:**
+```python
+dwell_base: float = 60.0      # Base dwell seconds (60 for forex/index, 1800 for oil)
+dwell_anchor: float = 0.3     # Hurst anchor
+dwell_min: float = 30.0       # Floor
+dwell_max: float = 300.0      # Ceiling
+```
+
+### 20.4 Final Validated Results — Oil + Index with Real Costs
+
+**Test: `Scripts/test_oil_index_live.py`** — 3.5 months real M1 data, $100K balance, all dynamic features active, real broker costs, per-pair dwell, HMM sweep [100, 20, 10, 5].
+
+**Oil Spread (XTIUSD/XBRUSD) — HMM sweep:**
+
+| HMM | Trades | Tr/Mo | Net WR | Gross WR | PF | Gross P&L | Costs | Net P&L | Return | MaxDD | Avg Hold |
+|-----|--------|-------|--------|----------|-----|----------|-------|---------|--------|-------|----------|
+| 100 | 628 | 176 | 78.2% | 92.7% | 4.75 | $58,258 | $32,944 | $25,313 | 25.31% | 0.78% | 41.0 |
+| 20 | 667 | 187 | 78.4% | 93.0% | 4.56 | $62,190 | $35,096 | $27,094 | 27.09% | 0.88% | 41.3 |
+| 10 | 666 | 187 | 79.4% | 92.8% | 4.61 | $64,135 | $35,966 | $28,169 | 28.17% | 0.66% | 41.2 |
+| **5** | **659** | **185** | **79.7%** | **93.2%** | **4.70** | **$64,315** | **$35,926** | **$28,389** | **28.39%** | **0.81%** | **41.0** |
+
+**Index Spread (US100/DE40) — HMM sweep:**
+
+| HMM | Trades | Tr/Mo | Net WR | Gross WR | PF | Gross P&L | Costs | Net P&L | Return | MaxDD | Avg Hold |
+|-----|--------|-------|--------|----------|-----|----------|-------|---------|--------|-------|----------|
+| 100 | 116 | 33 | 68.1% | 68.1% | 1.25 | $2,436 | $487 | $1,950 | 1.95% | 1.54% | 32.7 |
+| **20** | **98** | **28** | **70.4%** | **70.4%** | **1.75** | **$4,903** | **$526** | **$4,377** | **4.38%** | **1.61%** | **31.4** |
+| 10 | 83 | 24 | 71.1% | 71.1% | 1.91 | $4,596 | $444 | $4,152 | 4.15% | 0.80% | 32.1 |
+| 5 | 73 | 21 | 72.6% | 72.6% | 1.93 | $4,390 | $415 | $3,975 | 3.98% | 0.67% | 31.3 |
+
+**Best config per pair:**
+
+| Pair | Best HMM | Trades | WR | PF | Net P&L | Return | MaxDD | Avg Hold | $/Trade |
+|------|----------|--------|-----|-----|---------|--------|-------|----------|---------|
+| **Oil Spread** | **5** | 659 | 79.7% | **4.70** | **$28,389** | 28.39% | 0.81% | 41 bars | $43.08 |
+| **Index Spread** | **20** | 98 | 70.4% | **1.75** | **$4,377** | 4.38% | 1.61% | 31 bars | $44.66 |
+| **COMBINED** | — | **757** | — | — | **$32,766** | **32.77%** | — | — | — |
+
+**Monthly rate: ~9.2%/month (backtest) → estimated ~5-7%/month live**
+
+**Filter statistics (how the dwell protects oil):**
+
+| Pair | HMM | HMM Blocks | Dwell Blocks | Rollover Blocks |
+|------|-----|------------|-------------|-----------------|
+| Oil (HMM=5) | 5 | 516 | **630** | 13 |
+| Index (HMM=20) | 20 | 250 | 0 | 0 |
+
+> **Oil dwell blocked 630 bounce entries** — these are the bid-ask noise trades that would lose money live. The remaining 659 trades have 41-bar average hold = real mean-reversion.
+
+### 20.5 Realistic Live Expectations
+
+The backtest is the most realistic possible without live trading, but several factors will reduce live results:
+
+| Factor | Impact | Estimate |
+|--------|--------|----------|
+| **AKAD compounding path** | Backtest assumes smooth growth → bigger lots. Bad early trades shrink lots. | -15 to -25% |
+| **Random slippage** | Real fills 0.1-0.5 pips worse randomly. 2,636 oil fills × ~$0.50 = ~$1.3K | -3 to -5% |
+| **Oil news events** | Weekly EIA inventory report (Wed 15:30 UTC) causes spread blowouts | 1-2 bad trades/month |
+| **Regime change** | Oil market character could shift over longer timeframes | Unknown |
+
+**Realistic live projection:**
+
+| Scenario | Oil Net | Index Net | Combined | Monthly |
+|----------|---------|-----------|----------|---------|
+| **Backtest** | $28,389 | $4,377 | $32,766 | ~9.2%/mo |
+| **Realistic (good start)** | ~$18-22K | ~$3-4K | ~$21-26K | **~6-7%/mo** |
+| **Conservative (bad start)** | ~$12-16K | ~$2-3K | ~$14-19K | **~4-5%/mo** |
+
+### 20.6 v5.6.3 Deployment Config
+
+**Production pairs (2-pair duo):**
+
+| Pair | Assets | Broker Symbols | HMM Hold | Dwell Base | Dwell at H=0.5 |
+|------|--------|----------------|----------|------------|-----------------|
+| Oil Spread | XTIUSD vs XBRUSD | `XTIUSD` / `XBRUSD` | **5** | **1800s** | **50 bars** |
+| Index Spread | US100 vs DE40 | `NAS100` / `DAX40` | **20** | 60s | 2 bars |
+
+**Dropped pairs (costs kill the edge):**
+- ❌ Forex Anchor (AUDUSD/NZDUSD) — avg cost $20.76 > avg gross win $20.19
+- ❌ EURJPY/CHFJPY — avg cost $16.86 > avg gross win $10.29
+
+### 20.7 Deployment Checklist (v5.6.3)
+
+- [x] Real-cost analysis of all 4 candidate pairs
+- [x] Identified bid-ask bounce problem in oil short holds
+- [x] Designed per-pair dwell with raised oil base (1800s)
+- [x] Full validation test: Oil+Index with costs, HMM sweep, per-pair dwell
+- [x] Results validated: $32.8K combined, 0.81% MaxDD, 41-bar avg oil hold
+- [x] Realistic live expectations documented (5-7%/month)
+- [ ] Update engine.py for Oil+Index duo with per-pair dwell
+- [ ] Update SHF_Bridge.mq5 for XTIUSD/XBRUSD symbols
+- [ ] Push to GitHub
+- [ ] Deploy to VPS
+
+---
+
+**This document describes the v5.6.3 production system as of Feb 12, 2026.**

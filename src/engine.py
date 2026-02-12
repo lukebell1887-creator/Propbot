@@ -1,19 +1,4 @@
-"""
-SHF Trading Engine v5.6 — Pairs Trading with Dynamic Z Entry + Dynamic Z Exit
-===============================================================================
-
-The central orchestrator for cointegration-based pairs trading:
-- Rust CointegrationEngine (Dynamic Z entry + Dynamic Z exit, Hurst-adaptive)
-- Rust KalmanSentinel (regime break kill-switch, ~50ns)
-- Rust AKADRiskCalculator (adaptive position sizing, ~50ns)
-- Rust CorrelationRiskMonitor (cross-pair correlation risk)
-- HMM Volatility Filter (Numba JIT)
-- Concurrent Spread Execution (~15ms inter-leg gap)
-- Ghost Stop (4% daily / 9% max DD, 100ms tick)
-- Server-Side Hard Stops (Huber 4.815σ)
-
-Holy Trio: US100/DE40 | AUDUSD/NZDUSD | EURJPY/CHFJPY
-"""
+"""SHF Trading Engine v5.6.3 - Oil + Index Duo"""
 
 import asyncio
 import logging
@@ -79,30 +64,33 @@ class PairConfig:
     max_spread_a: float = 50.0   # Max allowed spread (points) for symbol A
     max_spread_b: float = 50.0   # Max allowed spread (points) for symbol B
     hmm_min_hold: int = 100      # Per-pair HMM min regime hold (bars before regime can change)
+    # Per-pair dwell parameters (oil needs raised dwell to eliminate bid-ask bounce)
+    dwell_base: float = 60.0     # Base dwell seconds (60 for index, 1800 for oil)
+    dwell_anchor: float = 0.3    # Hurst anchor value
+    dwell_min: float = 30.0      # Floor seconds
+    dwell_max: float = 300.0     # Ceiling seconds
     # Resolved at runtime (actual broker names)
     resolved_a: str = ""
     resolved_b: str = ""
 
 
-# Holy Trio — the only pairs we trade
-# Per-pair HMM hold calibrated from Hurst exponent (physics-based, not curve-fit):
-#   Index (H=0.585, trending): hmm_min_hold=10 → fast regime response
-#   Forex (H=0.512, MR):      hmm_min_hold=100 → patient, ignore noise
-#   EURJPY (H=0.528, MR):     hmm_min_hold=100 → patient, ignore noise
+# v5.6.3 DUO — Oil + Index (forex pairs dropped: costs eat the edge)
+# Per-pair HMM hold + Per-pair dwell (physics-based from Hurst):
+#   Index (H=0.585, trending): hmm=20, dwell=60s base (2-bar holds fine)
+#   Oil (H~0.5, fast MR):     hmm=5,  dwell=1800s base (eliminate bid-ask bounce)
 HOLY_TRIO: List[PairConfig] = [
     PairConfig(name="Index Spread",    symbol_a="US100",  symbol_b="DE40",   pair_index=0,
                aliases_a=("NAS100","USTEC","US100.cash","NAS100.cash","USTEC.cash"),
                aliases_b=("DAX40","GER40","DE40.cash","DAX40.cash","GER40.cash"),
                max_spread_a=200.0, max_spread_b=200.0,
-               hmm_min_hold=10),  # H=0.585 trending → fast HMM
-    PairConfig(name="Forex Anchor",    symbol_a="AUDUSD", symbol_b="NZDUSD", pair_index=1,
-               aliases_a=("AUDUSDm",), aliases_b=("NZDUSDm",),
-               max_spread_a=80.0,  max_spread_b=80.0,
-               hmm_min_hold=100),  # H=0.512 MR → slow HMM
-    PairConfig(name="EURJPY/CHFJPY",   symbol_a="EURJPY", symbol_b="CHFJPY", pair_index=2,
-               aliases_a=("EURJPYm",), aliases_b=("CHFJPYm",),
-               max_spread_a=80.0,  max_spread_b=80.0,
-               hmm_min_hold=100),  # H=0.528 MR → slow HMM
+               hmm_min_hold=20,    # HMM=20 — best from sweep
+               dwell_base=60.0, dwell_anchor=0.3, dwell_min=30.0, dwell_max=300.0),
+    PairConfig(name="Oil Spread",      symbol_a="XTIUSD", symbol_b="XBRUSD", pair_index=1,
+               aliases_a=("XTIUSD","WTI","USOIL","CrudeOIL","USOILm","WTIm","XTIUSD.","OIL.WTI"),
+               aliases_b=("XBRUSD","BRENT","UKOIL","BrentOIL","UKOILm","BRNm","XBRUSD.","OIL.BRENT"),
+               max_spread_a=150.0, max_spread_b=150.0,
+               hmm_min_hold=5,     # HMM=5 — best from sweep
+               dwell_base=1800.0, dwell_anchor=0.3, dwell_min=900.0, dwell_max=9000.0),
 ]
 
 
@@ -808,22 +796,23 @@ class TradingEngine:
     # DYNAMIC DWELL (Hurst-adaptive minimum hold time)
     # =========================================================================
 
-    def _calculate_dynamic_dwell(self, hurst_value: float) -> float:
+    def _calculate_dynamic_dwell(self, hurst_value: float, cfg: PairConfig = None) -> float:
         """
         Calculate Hurst-adaptive minimum hold time (seconds).
+        Uses PER-PAIR dwell parameters from PairConfig (v5.6.3).
 
-        Formula: dwell = DWELL_BASE × (H / DWELL_HURST_ANCHOR)
-        Clamped to [DWELL_MIN, DWELL_MAX].
+        Formula: dwell = dwell_base * (H / dwell_anchor)
+        Clamped to [dwell_min, dwell_max].
 
-        Examples (with defaults base=60, anchor=0.3):
-            H=0.15 → 30s  (super fast MR, minimum prop-firm-safe hold)
-            H=0.30 → 60s  (normal MR, standard dwell)
-            H=0.45 → 90s  (slow/trending, longer patience)
-            H=0.60 → 120s (drifting, hold longer)
-            H≥0.90 → 300s (capped at ceiling)
+        Index (base=60):  H=0.5 -> 100s (2 bars)
+        Oil (base=1800):  H=0.5 -> 3000s (50 bars) — eliminates bid-ask bounce
         """
-        raw_dwell = self.DWELL_BASE_SECONDS * (hurst_value / self.DWELL_HURST_ANCHOR)
-        return max(self.DWELL_MIN_SECONDS, min(self.DWELL_MAX_SECONDS, raw_dwell))
+        if cfg is not None:
+            raw = cfg.dwell_base * (hurst_value / cfg.dwell_anchor)
+            return max(cfg.dwell_min, min(cfg.dwell_max, raw))
+        # Fallback to class-level defaults
+        raw = self.DWELL_BASE_SECONDS * (hurst_value / self.DWELL_HURST_ANCHOR)
+        return max(self.DWELL_MIN_SECONDS, min(self.DWELL_MAX_SECONDS, raw))
 
     # =========================================================================
     # ENTRY / EXIT
@@ -848,7 +837,7 @@ class TradingEngine:
         # Re-entry cooldown: block re-entry for dynamic dwell period after closing
         if state.last_close_time is not None:
             now = datetime.utcnow()
-            cooldown_seconds = self._calculate_dynamic_dwell(state.last_hurst)
+            cooldown_seconds = self._calculate_dynamic_dwell(state.last_hurst, cfg)
             elapsed = (now - state.last_close_time).total_seconds()
             if elapsed < cooldown_seconds:
                 return  # Still in re-entry cooldown
@@ -916,7 +905,7 @@ class TradingEngine:
             state.entry_time = datetime.utcnow()
             state.ticket_a = result_a.ticket
             state.ticket_b = result_b.ticket
-            dwell = self._calculate_dynamic_dwell(state.last_hurst)
+            dwell = self._calculate_dynamic_dwell(state.last_hurst, cfg)
             logger.info(
                 f"  FILLED: {cfg.name} spread entered | tickets={result_a.ticket},{result_b.ticket} | "
                 f"Dwell={dwell:.0f}s (H={state.last_hurst:.3f}) | EntrySpread={state.entry_spread:.6f}"
@@ -943,7 +932,7 @@ class TradingEngine:
         if state.entry_time is not None:
             now = datetime.utcnow()
             hold_seconds = (now - state.entry_time).total_seconds()
-            dwell_required = self._calculate_dynamic_dwell(state.last_hurst)
+            dwell_required = self._calculate_dynamic_dwell(state.last_hurst, cfg)
             if hold_seconds < dwell_required:
                 return  # Still within minimum dwell — hold the position
 
@@ -1003,7 +992,7 @@ class TradingEngine:
         # Calculate hold duration and dwell for logging
         now = datetime.utcnow()
         hold_seconds = (now - state.entry_time).total_seconds() if state.entry_time else 0.0
-        dwell_required = self._calculate_dynamic_dwell(state.last_hurst)
+        dwell_required = self._calculate_dynamic_dwell(state.last_hurst, cfg)
 
         logger.info(
             f"EXIT {cfg.name} | {'WIN' if is_win else 'LOSS'} | {reason} | "
@@ -1310,7 +1299,8 @@ class TradingEngine:
     # Minimum stop distance per asset class (points from current price).
     # Must exceed broker's STOPS_LEVEL to avoid "Invalid stops" rejection.
     MIN_STOP_DISTANCE = {
-        'INDEX': 500.0,    # Indices: 500 points minimum (NAS100, DAX40)
+        'INDEX': 500.0,
+        'COMMODITY': 5.0,      # Oil: 500 points (XTIUSD ~$70, 5.0 = ~7%)    # Indices: 500 points minimum (NAS100, DAX40)
         'FOREX': 0.0050,   # Forex: 50 pips minimum (AUDUSD, EURUSD etc.)
         'FOREX_JPY': 0.500, # JPY pairs: 50 pips minimum (1 pip = 0.01 for JPY)
     }
@@ -1324,6 +1314,10 @@ class TradingEngine:
                        'EURJPYm', 'CHFJPYm', 'GBPJPYm', 'USDJPYm')
         if symbol in jpy_symbols:
             return 'FOREX_JPY'
+        commodity_symbols = ('XTIUSD', 'XBRUSD', 'WTI', 'BRENT', 'USOIL', 'UKOIL',
+                             'CrudeOIL', 'BrentOIL', 'USOILm', 'UKOILm', 'WTIm', 'BRNm')
+        if symbol in commodity_symbols:
+            return 'COMMODITY'
         forex_symbols = ('AUDUSD', 'NZDUSD', 'EURUSD', 'GBPUSD', 'USDCAD', 'USDCHF',
                          'AUDUSDm', 'NZDUSDm', 'EURUSDm', 'GBPUSDm')
         if symbol in forex_symbols:

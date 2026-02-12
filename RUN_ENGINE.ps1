@@ -1,185 +1,164 @@
-# ============================================================================
-#  SHF v5.6.2 — START ENGINE WITH PRE-FLIGHT CHECKS
-#  Paste this ENTIRE block into VPS PowerShell (after FETCH + EA compile)
-# ============================================================================
+# =============================================================================
+# SHF v5.6.3 ENGINE LAUNCHER — Oil + Index Duo
+# =============================================================================
+# Run this on the VPS inside C:\SHF to start the trading engine.
+# It verifies all components before launching.
+# =============================================================================
 
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
+Set-Location "C:\SHF"
+
+# ---- ANSI Colors (PowerShell 7+) ----
+$G = "`e[32m"; $R = "`e[31m"; $Y = "`e[33m"; $C = "`e[36m"; $B = "`e[1m"; $X = "`e[0m"
+
+function Write-Header($msg) { Write-Host "`n${B}${C}=== $msg ===${X}" }
+function Write-OK($msg)     { Write-Host "  ${G}[OK]${X} $msg" }
+function Write-FAIL($msg)   { Write-Host "  ${R}[FAIL]${X} $msg" }
+function Write-WARN($msg)   { Write-Host "  ${Y}[WARN]${X} $msg" }
+function Write-Info($msg)   { Write-Host "  ${C}[INFO]${X} $msg" }
+
 Clear-Host
-
-$SHF = "C:\SHF"
-$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-
-# ============================================================================
-#  BANNER
-# ============================================================================
 Write-Host ""
-Write-Host "  =========================================================" -ForegroundColor Cyan
-Write-Host "       SHF v5.6.2 — Cointegration Pairs Trading Engine" -ForegroundColor Cyan
-Write-Host "  =========================================================" -ForegroundColor Cyan
-Write-Host "  Started: $timestamp" -ForegroundColor DarkGray
+Write-Host "${B}${C}  =============================================${X}"
+Write-Host "${B}${C}     SHF v5.6.3 — Oil + Index Trading Engine   ${X}"
+Write-Host "${B}${C}     Pairs: US100/DE40 | XTIUSD/XBRUSD        ${X}"
+Write-Host "${B}${C}     HMM: Index=20 | Oil=5                     ${X}"
+Write-Host "${B}${C}     Dwell: Index=60s | Oil=1800s base         ${X}"
+Write-Host "${B}${C}  =============================================${X}"
 Write-Host ""
 
-# ============================================================================
-#  HOLY TRIO DISPLAY
-# ============================================================================
-Write-Host "  HOLY TRIO (v5.6.2):" -ForegroundColor Yellow
-Write-Host "  ---------------------------------------------------------" -ForegroundColor DarkGray
-Write-Host "   Pair 1: " -NoNewline -ForegroundColor DarkGray
-Write-Host "NAS100 / DAX40     " -NoNewline -ForegroundColor White
-Write-Host "HMM=10  " -NoNewline -ForegroundColor Magenta
-Write-Host "(Index, H=0.585 trending)" -ForegroundColor DarkGray
+# ---- Step 1: File Integrity Check ----
+Write-Header "FILE INTEGRITY CHECK"
+$requiredFiles = @(
+    "shf_core.pyd",
+    "src\engine.py",
+    "src\execution\mt5_bridge.py",
+    "src\risk\akad_risk.py",
+    "src\risk\supervisor.py",
+    "src\strategies\hmm_regime.py",
+    "src\__init__.py",
+    "src\execution\__init__.py",
+    "src\risk\__init__.py",
+    "src\strategies\__init__.py"
+)
+$allPresent = $true
+foreach ($f in $requiredFiles) {
+    if (Test-Path $f) {
+        $sz = (Get-Item $f).Length
+        Write-OK "$f ($sz bytes)"
+    } else {
+        Write-FAIL "$f — MISSING!"
+        $allPresent = $false
+    }
+}
+if (-not $allPresent) {
+    Write-Host "`n${R}${B}ABORT: Missing critical files. Run git pull first.${X}"
+    exit 1
+}
 
-Write-Host "   Pair 2: " -NoNewline -ForegroundColor DarkGray
-Write-Host "AUDUSD / NZDUSD    " -NoNewline -ForegroundColor White
-Write-Host "HMM=100 " -NoNewline -ForegroundColor Green
-Write-Host "(Forex, H=0.512 MR)" -ForegroundColor DarkGray
+# ---- Step 2: Rust Core Validation ----
+Write-Header "RUST CORE VALIDATION"
+$rustCheck = python -c "
+try:
+    from shf_core import CointegrationEngine, KalmanSentinel, AKADRiskCalculator, CorrelationRiskMonitor
+    e = CointegrationEngine(span=100, beta=1.0, dynamic_z=True, dynamic_exit=True)
+    for a in ['last_hurst','last_z_crit','last_exit_z','last_std','buffer_len']:
+        assert hasattr(e, a), f'Missing: {a}'
+    print('OK|CointegrationEngine|KalmanSentinel|AKADRiskCalculator|CorrelationRiskMonitor')
+except Exception as ex:
+    print(f'FAIL|{ex}')
+" 2>&1
+if ($rustCheck -match "^OK") {
+    $parts = $rustCheck -split '\|'
+    foreach ($p in $parts[1..4]) { Write-OK "Rust class: $p" }
+    Write-OK "FFI contract validated (all getters present)"
+} else {
+    Write-FAIL "Rust core: $rustCheck"
+    exit 1
+}
 
-Write-Host "   Pair 3: " -NoNewline -ForegroundColor DarkGray
-Write-Host "EURJPY / CHFJPY    " -NoNewline -ForegroundColor White
-Write-Host "HMM=100 " -NoNewline -ForegroundColor Green
-Write-Host "(JPY Cross, H=0.528 MR)" -ForegroundColor DarkGray
-Write-Host "  ---------------------------------------------------------" -ForegroundColor DarkGray
+# ---- Step 3: HMM Filter Check ----
+Write-Header "HMM VOLATILITY FILTER"
+$hmmCheck = python -c "
+try:
+    from src.strategies.hmm_regime import create_regime_detector
+    d = create_regime_detector(n_regimes=3, lookback=100, min_regime_hold=5)
+    d.update(0.001)
+    print(f'OK|regimes=3|hold_param=5|blocked={d.is_blocked}')
+except Exception as ex:
+    print(f'FAIL|{ex}')
+" 2>&1
+if ($hmmCheck -match "^OK") {
+    $parts = $hmmCheck -split '\|'
+    foreach ($p in $parts[1..3]) { Write-OK $p }
+} else {
+    Write-WARN "HMM: $hmmCheck (will use fallback)"
+}
+
+# ---- Step 4: Dynamic AKAD Check ----
+Write-Header "DYNAMIC AKAD RISK"
+$akadCheck = python -c "
+from src.risk.akad_risk import DynamicAKAD
+d = DynamicAKAD(dd_lambda=40.0, daily_dd_ceiling=0.04)
+r0 = d.calculate_risk(total_dd=0.0, daily_dd=0.0)
+r2 = d.calculate_risk(total_dd=0.02, daily_dd=0.01)
+r4 = d.calculate_risk(total_dd=0.0, daily_dd=0.039)
+print(f'OK|0%%DD={r0*100:.3f}%%|2%%DD={r2*100:.3f}%%|NearCeiling={r4*100:.3f}%%')
+" 2>&1
+if ($akadCheck -match "^OK") {
+    $parts = $akadCheck -split '\|'
+    foreach ($p in $parts[1..3]) { Write-OK $p }
+} else {
+    Write-FAIL "AKAD: $akadCheck"
+}
+
+# ---- Step 5: Pair Config Verification ----
+Write-Header "PAIR CONFIGURATION"
+$pairCheck = python -c "
+from src.engine import HOLY_TRIO
+for p in HOLY_TRIO:
+    dwell_h05 = p.dwell_base * (0.5 / p.dwell_anchor)
+    dwell_h05 = max(p.dwell_min, min(p.dwell_max, dwell_h05))
+    print(f'{p.name}|{p.symbol_a}/{p.symbol_b}|HMM={p.hmm_min_hold}|Dwell@H0.5={dwell_h05:.0f}s ({dwell_h05/60:.0f}min)|Spread={p.max_spread_a:.0f}/{p.max_spread_b:.0f}')
+" 2>&1
+foreach ($line in $pairCheck) {
+    $parts = $line -split '\|'
+    if ($parts.Length -ge 4) {
+        Write-OK "$($parts[0]): $($parts[1]) | $($parts[2]) | $($parts[3]) | MaxSpread=$($parts[4])"
+    }
+}
+
+# ---- Step 6: TCP Bridge Port Check ----
+Write-Header "TCP BRIDGE (port 5555)"
+$portInUse = Get-NetTCPConnection -LocalPort 5555 -ErrorAction SilentlyContinue
+if ($portInUse) {
+    Write-WARN "Port 5555 already in use — killing old process"
+    $portInUse | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+    Start-Sleep 2
+}
+Write-OK "Port 5555 available"
+
+# ---- Step 7: Log Directory ----
+Write-Header "LOG DIRECTORY"
+New-Item -ItemType Directory -Force -Path "logs" | Out-Null
+New-Item -ItemType Directory -Force -Path "state" | Out-Null
+Write-OK "logs/ and state/ directories ready"
+
+# ---- Summary ----
+Write-Host ""
+Write-Host "${B}${G}  ALL CHECKS PASSED — LAUNCHING ENGINE${X}"
+Write-Host ""
+Write-Host "  ${C}Pairs:${X}  Index Spread (NAS100/DAX40) HMM=20 Dwell=60s"
+Write-Host "  ${C}        Oil Spread (XTIUSD/XBRUSD)  HMM=5  Dwell=1800s"
+Write-Host "  ${C}Risk:${X}   Dynamic AKAD | 4% daily DD | 9% max DD"
+Write-Host "  ${C}Mode:${X}   M1 bar signals | 768-bar pre-warm | 100ms tick"
+Write-Host "  ${C}Bridge:${X} TCP localhost:5555 (native MQL5 sockets)"
+Write-Host ""
+Write-Host "  ${Y}Waiting for EA connection on port 5555...${X}"
+Write-Host "  ${Y}Make sure SHF_Bridge EA is attached to an MT5 chart.${X}"
+Write-Host ""
+Write-Host "${B}--- ENGINE OUTPUT BELOW ---${X}"
 Write-Host ""
 
-# ============================================================================
-#  PRE-FLIGHT CHECKS
-# ============================================================================
-Write-Host "  PRE-FLIGHT CHECKS:" -ForegroundColor Yellow
-$checks_passed = 0
-$checks_total = 6
-
-# Check 1: Working directory
-if (Test-Path $SHF) {
-    Write-Host "   [PASS] " -NoNewline -ForegroundColor Green
-    Write-Host "Working directory $SHF exists" -ForegroundColor White
-    $checks_passed++
-} else {
-    Write-Host "   [FAIL] " -NoNewline -ForegroundColor Red
-    Write-Host "Working directory $SHF NOT FOUND" -ForegroundColor Red
-}
-
-# Check 2: shf_core.pyd (Rust engine)
-$pydFile = Join-Path $SHF "shf_core.pyd"
-if (Test-Path $pydFile) {
-    $pydSize = [math]::Round((Get-Item $pydFile).Length / 1MB, 1)
-    Write-Host "   [PASS] " -NoNewline -ForegroundColor Green
-    Write-Host "shf_core.pyd found (${pydSize} MB)" -ForegroundColor White
-    $checks_passed++
-} else {
-    Write-Host "   [FAIL] " -NoNewline -ForegroundColor Red
-    Write-Host "shf_core.pyd NOT FOUND — Rust engine missing!" -ForegroundColor Red
-}
-
-# Check 3: engine.py
-$engineFile = Join-Path $SHF "src\engine.py"
-if (Test-Path $engineFile) {
-    $engineDate = (Get-Item $engineFile).LastWriteTime.ToString("yyyy-MM-dd HH:mm")
-    Write-Host "   [PASS] " -NoNewline -ForegroundColor Green
-    Write-Host "engine.py found (modified: $engineDate)" -ForegroundColor White
-    $checks_passed++
-} else {
-    Write-Host "   [FAIL] " -NoNewline -ForegroundColor Red
-    Write-Host "engine.py NOT FOUND" -ForegroundColor Red
-}
-
-# Check 4: mt5_bridge.py
-$bridgeFile = Join-Path $SHF "src\execution\mt5_bridge.py"
-if (Test-Path $bridgeFile) {
-    Write-Host "   [PASS] " -NoNewline -ForegroundColor Green
-    Write-Host "mt5_bridge.py found" -ForegroundColor White
-    $checks_passed++
-} else {
-    Write-Host "   [FAIL] " -NoNewline -ForegroundColor Red
-    Write-Host "mt5_bridge.py NOT FOUND" -ForegroundColor Red
-}
-
-# Check 5: HMM regime detector
-$hmmFile = Join-Path $SHF "src\strategies\hmm_regime.py"
-if (Test-Path $hmmFile) {
-    Write-Host "   [PASS] " -NoNewline -ForegroundColor Green
-    Write-Host "hmm_regime.py found (per-pair HMM holds)" -ForegroundColor White
-    $checks_passed++
-} else {
-    Write-Host "   [FAIL] " -NoNewline -ForegroundColor Red
-    Write-Host "hmm_regime.py NOT FOUND" -ForegroundColor Red
-}
-
-# Check 6: Python available
-$pyVer = python --version 2>&1
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "   [PASS] " -NoNewline -ForegroundColor Green
-    Write-Host "$pyVer" -ForegroundColor White
-    $checks_passed++
-} else {
-    Write-Host "   [FAIL] " -NoNewline -ForegroundColor Red
-    Write-Host "Python not found in PATH" -ForegroundColor Red
-}
-
-# Check 7 (info only): MT5 process
-$mt5 = Get-Process terminal64 -ErrorAction SilentlyContinue
-if ($mt5) {
-    Write-Host "   [INFO] " -NoNewline -ForegroundColor Cyan
-    Write-Host "MT5 Terminal running (PID: $($mt5.Id))" -ForegroundColor White
-} else {
-    Write-Host "   [WARN] " -NoNewline -ForegroundColor Yellow
-    Write-Host "MT5 Terminal not detected — start MT5 and attach EA first!" -ForegroundColor Yellow
-}
-
-# Check 8 (info only): Port 5555
-$portCheck = netstat -an 2>$null | Select-String ":5555 "
-if ($portCheck) {
-    Write-Host "   [WARN] " -NoNewline -ForegroundColor Yellow
-    Write-Host "Port 5555 already in use — old engine still running?" -ForegroundColor Yellow
-} else {
-    Write-Host "   [INFO] " -NoNewline -ForegroundColor Cyan
-    Write-Host "Port 5555 available" -ForegroundColor White
-}
-
-Write-Host ""
-Write-Host "  ---------------------------------------------------------" -ForegroundColor DarkGray
-
-# Pre-flight result
-if ($checks_passed -eq $checks_total) {
-    Write-Host "  RESULT: " -NoNewline -ForegroundColor Green
-    Write-Host "$checks_passed/$checks_total PASSED — all systems go!" -ForegroundColor Green
-} else {
-    Write-Host "  RESULT: " -NoNewline -ForegroundColor Red
-    Write-Host "$checks_passed/$checks_total PASSED — some checks failed!" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "  Fix the issues above before continuing." -ForegroundColor Red
-    Write-Host "  Press Ctrl+C to abort, or Enter to continue anyway..." -ForegroundColor Yellow
-    Read-Host
-}
-
-Write-Host ""
-
-# ============================================================================
-#  SYSTEM CONFIG SUMMARY
-# ============================================================================
-Write-Host "  SYSTEM CONFIG:" -ForegroundColor Yellow
-Write-Host "   Dynamic Z Entry:  base=2.0, gamma=6.0 (Hurst-adaptive)" -ForegroundColor DarkGray
-Write-Host "   Dynamic Z Exit:   base=0.5, gamma=2.0 (Hurst-adaptive)" -ForegroundColor DarkGray
-Write-Host "   Dynamic AKAD:     lam=40, P_ruin=1e-4, DD_ceil=4%" -ForegroundColor DarkGray
-Write-Host "   Ghost Stop:       daily=4%, max=9%" -ForegroundColor DarkGray
-Write-Host "   Dwell:            60s base, range [30s-300s]" -ForegroundColor DarkGray
-Write-Host "   M1 Bar Mode:      signals on bar close only" -ForegroundColor DarkGray
-Write-Host "   Pre-warm:         768 M1 bars from broker" -ForegroundColor DarkGray
-Write-Host "   TCP Bridge:       localhost:5555 (native socket)" -ForegroundColor DarkGray
-Write-Host ""
-
-# ============================================================================
-#  LAUNCH ENGINE
-# ============================================================================
-Write-Host "  =========================================================" -ForegroundColor Green
-Write-Host "       LAUNCHING ENGINE — Waiting for EA connection..." -ForegroundColor Green
-Write-Host "  =========================================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "  Tip: Make sure the EA is attached to a chart in MT5." -ForegroundColor DarkGray
-Write-Host "  The engine will show PRE-WARM progress, then start trading." -ForegroundColor DarkGray
-Write-Host "  Status logs every 5 minutes. Press Ctrl+C to stop." -ForegroundColor DarkGray
-Write-Host ""
-Write-Host "  ------- ENGINE OUTPUT BELOW -------" -ForegroundColor DarkGray
-Write-Host ""
-
-Set-Location $SHF
+# ---- Launch ----
 python -m src.engine

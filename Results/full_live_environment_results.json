@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-02-12T10:12:57.012441",
+  "config": "Full live environment test with real costs",
+  "cost_model": {
+    "Index Spread": {
+      "spread_a": 1.0,
+      "spread_b": 1.0,
+      "commission_rt": 4.0,
+      "commission_pct": 0.0
+    },
+    "Forex Anchor": {
+      "spread_a": 5.0,
+      "spread_b": 7.0,
+      "commission_rt": 4.0,
+      "commission_pct": 0.0
+    },
+    "EURJPY/CHFJPY": {
+      "spread_a": 6.2,
+      "spread_b": 9.4,
+      "commission_rt": 4.0,
+      "commission_pct": 0.0
+    },
+    "Oil Spread": {
+      "spread_a": 4.0,
+      "spread_b": 5.0,
+      "commission_rt": 0.0,
+      "commission_pct": 0.0003
+    }
+  },
+  "recommendations": {
+    "Index Spread": {
+      "hmm": 20,
+      "net_pnl": 3855.08,
+      "pf": 1.67
+    },
+    "Oil Spread": {
+      "hmm": 20,
+      "net_pnl": 119441.76,
+      "pf": 10.03
+    }
+  }
+}

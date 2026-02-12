@@ -11,7 +11,7 @@
 //+------------------------------------------------------------------+
 #property copyright "SHF Trading Systems"
 #property link      ""
-#property version   "5.61"
+#property version   "5.63"
 #property strict
 
 input string InpHost        = "127.0.0.1";  // Python server host
@@ -40,7 +40,7 @@ int OnInit()
    
    EventSetMillisecondTimer(InpTimerMs);
    
-   PrintFormat("SHF Bridge v5.61 (Native TCP) | Port=%d | Timer=%dms | Magic=%d",
+   PrintFormat("SHF Bridge v5.63 (Native TCP) | Port=%d | Timer=%dms | Magic=%d",
                InpPort, InpTimerMs, InpMagic);
    PrintFormat("Detected %d symbols: %s", g_num_symbols, SymbolListStr());
    
@@ -55,20 +55,20 @@ void DetectSymbols()
    // Try multiple name variants for each asset
    string index_a_variants[] = {"US100","NAS100","USTEC","US100.cash","NAS100.cash","USTEC.cash"};
    string index_b_variants[] = {"DE40","DAX40","GER40","DE40.cash","DAX40.cash","GER40.cash"};
-   string fx_a1[] = {"AUDUSD","AUDUSDm","AUDUSD.","AUDUSD_"};
-   string fx_b1[] = {"NZDUSD","NZDUSDm","NZDUSD.","NZDUSD_"};
-   string fx_a2[] = {"EURJPY","EURJPYm","EURJPY.","EURJPY_"};
-   string fx_b2[] = {"CHFJPY","CHFJPYm","CHFJPY.","CHFJPY_"};
+   string oil_a[] = {"XTIUSD","WTI","USOIL","CrudeOIL","USOILm","WTIm","XTIUSD.","OIL.WTI"};
+   string oil_b[] = {"XBRUSD","BRENT","UKOIL","BrentOIL","UKOILm","BRNm","XBRUSD.","OIL.BRENT"};
+   // v5.6.3: Only Oil + Index duo (forex dropped — costs eat the edge)
+
    
    ArrayResize(g_symbols, 0);
    g_num_symbols = 0;
    
    AddFirstValid(index_a_variants);
    AddFirstValid(index_b_variants);
-   AddFirstValid(fx_a1);
-   AddFirstValid(fx_b1);
-   AddFirstValid(fx_a2);
-   AddFirstValid(fx_b2);
+   AddFirstValid(oil_a);
+   AddFirstValid(oil_b);
+
+
 }
 
 //+------------------------------------------------------------------+

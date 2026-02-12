@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-02-12T10:51:20.744509",
+  "config": {
+    "index_dwell": {
+      "base": 60.0,
+      "min": 30.0,
+      "max": 300.0
+    },
+    "oil_dwell": {
+      "base": 1800.0,
+      "min": 900.0,
+      "max": 9000.0
+    },
+    "costs": {
+      "Index Spread": {
+        "spread_a": 1.0,
+        "spread_b": 1.0,
+        "comm_rt": 0.0,
+        "comm_pct": 0.0
+      },
+      "Oil Spread": {
+        "spread_a": 4.0,
+        "spread_b": 5.0,
+        "comm_rt": 0.0,
+        "comm_pct": 0.0003
+      }
+    }
+  },
+  "best": {
+    "Index Spread": {
+      "hmm": 20,
+      "net": 4376.64,
+      "pf": 1.75,
+      "trades": 98
+    },
+    "Oil Spread": {
+      "hmm": 5,
+      "net": 28388.49,
+      "pf": 4.7,
+      "trades": 659
+    }
+  },
+  "portfolio_net": 32765.13
+}
