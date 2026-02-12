@@ -954,15 +954,29 @@ class TradingEngine:
         """Close both legs of a spread position."""
         cfg = state.config
 
+        # Query ACTUAL MT5 profit BEFORE closing (broker P&L includes spread costs)
+        actual_profit = 0.0
+        try:
+            positions = self._bridge.get_positions()
+            for pos in positions:
+                if pos.ticket in (state.ticket_a, state.ticket_b):
+                    actual_profit += pos.profit + pos.swap
+        except Exception as e:
+            logger.warning(f"Could not query MT5 profit before close: {e}")
+
         # Close both legs
         closed_a = self._bridge.close_position(state.ticket_a) if state.ticket_a else True
         closed_b = self._bridge.close_position(state.ticket_b) if state.ticket_b else True
 
-        # Determine win/loss from ACTUAL spread P&L (not Z-score proxy!)
-        # spread_pnl = (exit_spread - entry_spread) * direction
-        # This matches the backtest: pnl = (spread - es) * pos * elots * notional
-        spread_pnl = (state.last_spread - state.entry_spread) * state.position
-        is_win = spread_pnl > 0
+        # Determine win/loss from ACTUAL MT5 profit (includes spreads, swaps, commissions)
+        # Falls back to spread math only if MT5 query failed
+        if actual_profit != 0.0:
+            is_win = actual_profit > 0
+        else:
+            # Fallback: use spread math
+            spread_pnl = (state.last_spread - state.entry_spread) * state.position
+            actual_profit = spread_pnl  # For logging only
+            is_win = spread_pnl > 0
 
         state.total_trades += 1
         if is_win:
@@ -996,7 +1010,7 @@ class TradingEngine:
 
         logger.info(
             f"EXIT {cfg.name} | {'WIN' if is_win else 'LOSS'} | {reason} | "
-            f"SpreadPnL={spread_pnl:+.6f} (entry={state.entry_spread:.6f} exit={state.last_spread:.6f}) | "
+            f"MT5 P&L=${actual_profit:+.2f} | Spread={state.entry_spread:.6f}->{state.last_spread:.6f} | "
             f"H={state.last_hurst:.3f} Z_exit={state.last_exit_z:.3f} | "
             f"Hold={hold_seconds:.1f}s Dwell={dwell_required:.0f}s | "
             f"Record: {state.wins}W/{state.losses}L ({wr:.0f}%)"
