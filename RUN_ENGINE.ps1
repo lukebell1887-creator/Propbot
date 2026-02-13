@@ -224,4 +224,34 @@ Write-Host "--- ENGINE OUTPUT BELOW ---" -ForegroundColor White
 Write-Host ""
 
 # ---- Launch ----
-python -m src.engine
+# Run Python DETACHED from console stdout to prevent ANY freeze.
+# All output goes to logs/trading.log (file handler) AND logs/console.log (stdout).
+# The console tails the log file so you can still watch it live.
+# If the console freezes/disconnects, Python keeps running independently.
+Write-Host ""
+Write-Host "  Engine output is logged to: logs/trading.log" -ForegroundColor Yellow
+Write-Host "  Console mirror:             logs/console.log" -ForegroundColor Yellow
+Write-Host "  Press Ctrl+C to stop watching (engine keeps running)" -ForegroundColor Yellow
+Write-Host ""
+
+# Start engine as a background job, redirect stdout/stderr to console.log
+$engineProcess = Start-Process -FilePath "python" -ArgumentList "-u -m src.engine" `
+    -WorkingDirectory "C:\SHF" -NoNewWindow -PassThru `
+    -RedirectStandardOutput "logs\console.log" -RedirectStandardError "logs\console_err.log"
+
+Write-Host "  Engine PID: $($engineProcess.Id)" -ForegroundColor Green
+Write-Host "  Engine is running detached — safe from console freezes" -ForegroundColor Green
+Write-Host ""
+Write-Host "--- LIVE LOG TAIL (Ctrl+C to stop watching, engine keeps running) ---" -ForegroundColor Cyan
+Write-Host ""
+
+# Wait a moment for the log file to be created
+Start-Sleep 2
+
+# Tail the log file so the user can watch
+try {
+    Get-Content "logs\console.log" -Wait -Tail 50
+} catch {
+    Write-Host "Log tail stopped. Engine is still running (PID: $($engineProcess.Id))." -ForegroundColor Yellow
+    Write-Host "To stop the engine: Stop-Process -Id $($engineProcess.Id)" -ForegroundColor Yellow
+}
