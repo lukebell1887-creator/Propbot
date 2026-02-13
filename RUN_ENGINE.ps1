@@ -8,57 +8,6 @@
 $ErrorActionPreference = "Stop"
 Set-Location "C:\SHF"
 
-# =============================================================================
-# ANTI-FREEZE: Disable QuickEdit Mode + Prevent Windows Sleep
-# =============================================================================
-try {
-    $key = 'HKCU:\Console'
-    Set-ItemProperty -Path $key -Name QuickEdit -Value 0 -ErrorAction SilentlyContinue
-    Add-Type -TypeDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public class ConsoleHelper {
-    [DllImport("kernel32.dll", SetLastError = true)]
-    public static extern IntPtr GetStdHandle(int nStdHandle);
-    [DllImport("kernel32.dll", SetLastError = true)]
-    public static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
-    [DllImport("kernel32.dll", SetLastError = true)]
-    public static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
-    public static void DisableQuickEdit() {
-        IntPtr handle = GetStdHandle(-10);
-        uint mode;
-        GetConsoleMode(handle, out mode);
-        mode &= ~(uint)0x0040;
-        mode &= ~(uint)0x0020;
-        mode |= (uint)0x0080;
-        SetConsoleMode(handle, mode);
-    }
-}
-"@ -ErrorAction SilentlyContinue
-    [ConsoleHelper]::DisableQuickEdit()
-    Write-Host "  [ANTI-FREEZE] QuickEdit mode DISABLED" -ForegroundColor Green
-} catch {
-    Write-Host "  [WARN] Could not disable QuickEdit" -ForegroundColor Yellow
-}
-
-try {
-    Add-Type -TypeDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public class SleepPreventer {
-    [DllImport("kernel32.dll")]
-    public static extern uint SetThreadExecutionState(uint esFlags);
-    public static void PreventSleep() {
-        SetThreadExecutionState(0x80000001);
-    }
-}
-"@ -ErrorAction SilentlyContinue
-    [SleepPreventer]::PreventSleep()
-    Write-Host "  [ANTI-FREEZE] Windows sleep prevention ACTIVE" -ForegroundColor Green
-} catch {
-    Write-Host "  [WARN] Could not prevent sleep" -ForegroundColor Yellow
-}
-
 function Write-Header($msg) {
     Write-Host ""
     Write-Host "=== $msg ===" -ForegroundColor Cyan
@@ -83,8 +32,18 @@ Write-Host "     SHF v5.6.4 - Oil + Index Trading Engine   " -ForegroundColor Cy
 Write-Host "     Pairs: US100/DE40 | XTIUSD/XBRUSD        " -ForegroundColor Cyan
 Write-Host "     HMM: Index=20 | Oil=5                     " -ForegroundColor Cyan
 Write-Host "     Dwell: Index=60s | Oil=1800s base         " -ForegroundColor Cyan
+Write-Host "     Mode: HIDDEN WINDOW (freeze-proof)        " -ForegroundColor Cyan
 Write-Host "  =============================================" -ForegroundColor Cyan
 Write-Host ""
+
+# Prevent Windows sleep via registry (simple, no Add-Type needed)
+try {
+    powercfg /change standby-timeout-ac 0
+    powercfg /change hibernate-timeout-ac 0
+    Write-OK "Windows sleep/hibernate DISABLED"
+} catch {
+    Write-WARN "Could not change power settings"
+}
 
 # ---- Step 1: File Integrity Check ----
 Write-Header "FILE INTEGRITY CHECK"
@@ -216,21 +175,24 @@ Write-Host ""
 Write-Host "  Make sure SHF_Bridge EA is attached to an MT5 chart." -ForegroundColor Yellow
 
 # =============================================================================
-# LAUNCH ENGINE — HIDDEN WINDOW (FREEZE-PROOF)
+# LAUNCH ENGINE IN HIDDEN WINDOW (FREEZE-PROOF)
 # =============================================================================
 # Python runs inside a hidden CMD window with stdout piped to a log file.
-# This PowerShell window only TAILS the log. Even if this console freezes,
-# disconnects, or you close RDP — Python keeps running independently.
+# This console only tails the log. Even if this console freezes, disconnects,
+# or you close RDP — the Python engine keeps running independently.
+# QuickEdit, console buffer, mouse clicks — NONE of it can affect the engine.
 # =============================================================================
 
 Write-Host ""
 Write-Host "  Engine runs in HIDDEN window — immune to console freezes" -ForegroundColor Green
-Write-Host "  All output goes to: logs/console.log + logs/trading.log" -ForegroundColor Yellow
+Write-Host "  Output: logs/console.log + logs/trading.log" -ForegroundColor Yellow
 Write-Host ""
 
 # Clear old console log
-if (Test-Path "logs\console.log") { Remove-Item "logs\console.log" -Force }
-"" | Out-File "logs\console.log" -Encoding utf8
+if (Test-Path "logs\console.log") {
+    Remove-Item "logs\console.log" -Force
+}
+New-Item -Path "logs\console.log" -ItemType File -Force | Out-Null
 
 # Launch Python in a HIDDEN CMD window — completely detached from this console
 $cmdArgs = '/c cd /d C:\SHF && python -u -m src.engine >> logs\console.log 2>&1'
@@ -245,17 +207,17 @@ if ($pyProc) {
     Write-Host "  Engine PID: $enginePid" -ForegroundColor Green
     Write-Host "  Engine is RUNNING in hidden window" -ForegroundColor Green
 } else {
-    Write-Host "  [WARN] Could not find python process — check logs\console_err.log" -ForegroundColor Red
+    Write-Host "  [WARN] Python process not found - check logs\console.log" -ForegroundColor Red
 }
 
 Write-Host ""
 Write-Host "  ================================================" -ForegroundColor Cyan
-Write-Host "  LIVE LOG TAIL (engine keeps running if you stop)" -ForegroundColor Cyan
+Write-Host "  LIVE LOG TAIL" -ForegroundColor Cyan
 Write-Host "  ================================================" -ForegroundColor Cyan
-Write-Host "  Ctrl+C = stop watching only (engine stays alive)" -ForegroundColor Yellow
-Write-Host "  To KILL engine: Get-Process python | Stop-Process" -ForegroundColor Yellow
-Write-Host "  To RE-WATCH:    Get-Content logs\console.log -Wait -Tail 50" -ForegroundColor Yellow
+Write-Host "  Ctrl+C = stop watching (engine keeps running)" -ForegroundColor Yellow
+Write-Host "  Kill engine:  Get-Process python | Stop-Process" -ForegroundColor Yellow
+Write-Host "  Re-watch log: Get-Content C:\SHF\logs\console.log -Wait -Tail 50" -ForegroundColor Yellow
 Write-Host ""
 
-# Tail the console log file — safe to Ctrl+C this without killing engine
+# Tail the console log file
 Get-Content "logs\console.log" -Wait -Tail 100
