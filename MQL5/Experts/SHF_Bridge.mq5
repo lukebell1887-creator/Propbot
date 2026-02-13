@@ -1,6 +1,15 @@
 //+------------------------------------------------------------------+
-//| SHF_Bridge.mq5 — SHF v5.6 Native TCP Socket Bridge              |
+//| SHF_Bridge.mq5 — SHF v5.6.4 Native TCP Socket Bridge            |
 //| Zero external dependencies — uses MQL5 built-in SocketXXX()     |
+//|                                                                    |
+//| v5.6.4 CHANGES (Python-side engine update):                       |
+//|   - Amplitude Gate: blocks garbage Oil trades where expected       |
+//|     profit < hurdle x cost (hurdle=1.0)                           |
+//|   - Opportunity Multiplier: scales Oil lots up to 2x on big Z    |
+//|   - Corrected formula: (|Z| - exit_z) x sigma = actual capture   |
+//|   - Time-of-day cost adjustment (night=2.5x, Asian=1.5x)        |
+//|   - Index: no gate (costs too small to matter)                    |
+//|   - Bridge itself unchanged — all new logic in engine.py          |
 //|                                                                    |
 //| Architecture:                                                      |
 //|   Python = TCP Server (localhost:5555)                             |

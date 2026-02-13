@@ -95,6 +95,17 @@ class PairConfig:
     dwell_anchor: float = 0.3    # Hurst anchor value
     dwell_min: float = 30.0      # Floor seconds
     dwell_max: float = 300.0     # Ceiling seconds
+    # Amplitude Gate + Opportunity Multiplier (v5.6.4)
+    # Blocks trades where expected profit < hurdle × cost
+    # Scales lots up (to max amp_max_mult) when ratio is high
+    amp_hurdle: float = 0.0      # 0 = disabled, 1.0+ = expected_profit must be hurdle× cost
+    amp_max_mult: float = 1.0    # Max lot multiplier (1.0 = no scaling, 2.0 = up to 2× lots)
+    notional: float = 100000.0   # Notional value for P&L calculation
+    # Cost model per pair
+    spread_cost_a: float = 1.0   # Spread cost per fill, leg A
+    spread_cost_b: float = 1.0   # Spread cost per fill, leg B
+    commission_pct: float = 0.0  # Commission as fraction (0.0003 = 0.03%)
+    commission_notional: float = 0.0  # Notional per lot for commission calc
     # Resolved at runtime (actual broker names)
     resolved_a: str = ""
     resolved_b: str = ""
@@ -110,13 +121,19 @@ HOLY_TRIO: List[PairConfig] = [
                aliases_b=("DAX40","GER40","DE40.cash","DAX40.cash","GER40.cash"),
                max_spread_a=200.0, max_spread_b=200.0,
                hmm_min_hold=20,    # HMM=20 — best from sweep
-               dwell_base=60.0, dwell_anchor=0.3, dwell_min=30.0, dwell_max=300.0),
+               dwell_base=60.0, dwell_anchor=0.3, dwell_min=30.0, dwell_max=300.0,
+               # Amplitude gate: DISABLED for Index (costs are tiny, gate never triggers)
+               amp_hurdle=0.0, amp_max_mult=1.0, notional=150_000.0,
+               spread_cost_a=1.0, spread_cost_b=1.0, commission_pct=0.0, commission_notional=0.0),
     PairConfig(name="Oil Spread",      symbol_a="XTIUSD", symbol_b="XBRUSD", pair_index=1,
                aliases_a=("XTIUSD","WTI","USOIL","CrudeOIL","USOILm","WTIm","XTIUSD.","OIL.WTI"),
                aliases_b=("XBRUSD","BRENT","UKOIL","BrentOIL","UKOILm","BRNm","XBRUSD.","OIL.BRENT"),
                max_spread_a=150.0, max_spread_b=150.0,
                hmm_min_hold=5,     # HMM=5 — best from sweep
-               dwell_base=1800.0, dwell_anchor=0.3, dwell_min=900.0, dwell_max=9000.0),
+               dwell_base=1800.0, dwell_anchor=0.3, dwell_min=900.0, dwell_max=9000.0,
+               # Amplitude gate: H=1.0 blocks garbage, M=2.0 scales up big moves
+               amp_hurdle=1.0, amp_max_mult=2.0, notional=100_000.0,
+               spread_cost_a=4.0, spread_cost_b=5.0, commission_pct=0.0003, commission_notional=6500.0),
 ]
 
 
@@ -955,11 +972,70 @@ class TradingEngine:
         # Position sizing
         lots = max(0.01, round(balance * final_risk / 1000, 2))  # Simplified sizing
 
+        # =====================================================================
+        # AMPLITUDE GATE + OPPORTUNITY MULTIPLIER (v5.6.4)
+        # Blocks garbage trades where expected profit < hurdle × cost
+        # Scales lots up when ratio is high (more chips on strong setups)
+        # Uses corrected formula: (|Z| - exit_z) × sigma — actual captured move
+        # =====================================================================
+        amp_mult = 1.0  # Default: no scaling
+        if cfg.amp_hurdle > 0:
+            spread_sigma = 0.0
+            if state.coint_engine is not None:
+                try:
+                    spread_sigma = state.coint_engine.last_std
+                except AttributeError:
+                    pass
+
+            if spread_sigma > 0:
+                # Corrected expected profit: only capture (|Z| - exit_z) sigma of move
+                z_captured = max(0.0, abs(state.last_z) - state.last_exit_z)
+                expected_profit = z_captured * spread_sigma * lots * cfg.notional
+
+                # Cost model: spread × 4 fills + commission
+                base_spread_cost = (cfg.spread_cost_a + cfg.spread_cost_b) * 2.0  # 4 fills (open+close both legs)
+                commission_cost = cfg.commission_pct * cfg.commission_notional * lots * 2.0 if cfg.commission_pct > 0 else 0.0
+
+                # Time-of-day spread multiplier (wider spreads at night/rollover)
+                broker_hour = self._get_broker_now().hour
+                if broker_hour < 2 or broker_hour >= 22:
+                    tod_mult = 2.5  # Night session
+                elif broker_hour < 8:
+                    tod_mult = 1.5  # Asian session
+                else:
+                    tod_mult = 1.0  # London/NY session
+
+                total_cost = (base_spread_cost * tod_mult + commission_cost) * lots
+
+                # Amplitude ratio
+                ratio = expected_profit / total_cost if total_cost > 0 else 999.0
+
+                if ratio < cfg.amp_hurdle:
+                    # BLOCK: expected profit doesn't justify the cost
+                    logger.info(
+                        f"AMP GATE BLOCKED: {cfg.name} | Z={state.last_z:.2f} "
+                        f"sigma={spread_sigma:.6f} | ExpProfit=${expected_profit:.2f} "
+                        f"Cost=${total_cost:.2f} | Ratio={ratio:.2f} < hurdle={cfg.amp_hurdle}"
+                    )
+                    return  # Skip this trade
+
+                # OPPORTUNITY MULTIPLIER: scale lots based on ratio strength
+                if cfg.amp_max_mult > 1.0 and ratio > cfg.amp_hurdle:
+                    excess = (ratio - cfg.amp_hurdle) / cfg.amp_hurdle  # Normalised excess
+                    amp_mult = min(cfg.amp_max_mult, 1.0 + 0.5 * excess)
+                    lots = max(0.01, round(lots * amp_mult, 2))
+
+                logger.info(
+                    f"AMP GATE PASSED: {cfg.name} | Ratio={ratio:.2f} "
+                    f"(hurdle={cfg.amp_hurdle}) | AmpMult={amp_mult:.2f} | "
+                    f"FinalLots={lots} | ExpP=${expected_profit:.2f} Cost=${total_cost:.2f}"
+                )
+
         logger.info(
             f"ENTRY {cfg.name} | Dir={'LONG' if direction > 0 else 'SHORT'} | "
             f"Z={state.last_z:.2f} Z_crit={state.last_z_crit:.2f} | "
             f"H={state.last_hurst:.3f} | Risk={final_risk*100:.3f}% | "
-            f"CorrMult={corr_mult:.2f} | Lots={lots}"
+            f"CorrMult={corr_mult:.2f} | AmpMult={amp_mult:.2f} | Lots={lots}"
         )
 
         # Calculate server-side hard stops (Huber 4.815σ catastrophe net)
