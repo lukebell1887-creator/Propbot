@@ -5,6 +5,7 @@ Monitors drawdown, consecutive losses, and triggers emergency actions.
 """
 
 import logging
+import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Optional
@@ -84,6 +85,8 @@ class RiskSupervisor:
         self._cooldown_minutes = cooldown_minutes
         self._consecutive_losses = 0
         self._is_halted = False
+        self._halt_time: float = 0.0       # Wall-clock when halt started
+        self._halt_resumed: bool = False    # True after auto-resume (for engine to detect)
 
         logger.info(
             f"RiskSupervisor initialized | Balance=${initial_balance:.2f} | "
@@ -134,10 +137,17 @@ class RiskSupervisor:
         if self._consecutive_losses >= self._max_consecutive_losses:
             alert = RiskAlert(
                 action=RiskAction.HALT,
-                message=f"{self._consecutive_losses} consecutive losses → {self._cooldown_minutes}min cooldown",
+                message=f"{self._consecutive_losses} consecutive losses -> {self._cooldown_minutes}min cooldown",
                 severity=2,
             )
             self._is_halted = True
+            self._halt_time = time.time()
+            self._halt_resumed = False
+            logger.warning(
+                f"HALT ACTIVATED: {self._consecutive_losses} consecutive losses | "
+                f"Cooldown: {self._cooldown_minutes} minutes | "
+                f"Auto-resume at: +{self._cooldown_minutes:.0f}min"
+            )
             if self._on_alert:
                 self._on_alert(alert)
             return alert
@@ -149,10 +159,47 @@ class RiskSupervisor:
 
     @property
     def is_halted(self) -> bool:
-        return self._is_halted
+        """
+        Check if trading is halted. Auto-resumes after cooldown_minutes.
+        
+        Returns True if halted AND cooldown has NOT expired.
+        Returns False (and auto-resumes) if cooldown HAS expired.
+        """
+        if not self._is_halted:
+            return False
+        
+        # Check if cooldown has expired
+        elapsed = time.time() - self._halt_time
+        cooldown_seconds = self._cooldown_minutes * 60.0
+        
+        if elapsed >= cooldown_seconds:
+            # Cooldown expired — auto-resume
+            self._is_halted = False
+            self._consecutive_losses = 0
+            self._halt_resumed = True  # Signal to engine: "I just resumed"
+            logger.info(
+                f"HALT EXPIRED: {self._cooldown_minutes:.0f}min cooldown complete | "
+                f"Trading auto-resumed | Engines need re-warm"
+            )
+            return False
+        
+        return True  # Still in cooldown
+
+    @property
+    def just_resumed(self) -> bool:
+        """
+        True if the supervisor just auto-resumed from a halt.
+        Engine should check this to trigger re-warm, then clear it.
+        """
+        return self._halt_resumed
+
+    def clear_resumed(self) -> None:
+        """Clear the just_resumed flag after engine has handled re-warm."""
+        self._halt_resumed = False
 
     def resume(self) -> None:
-        """Resume trading after cooldown."""
+        """Manual resume — same as auto but immediate."""
         self._is_halted = False
         self._consecutive_losses = 0
-        logger.info("RiskSupervisor: Trading resumed after cooldown")
+        self._halt_resumed = True
+        logger.info("RiskSupervisor: Trading manually resumed")

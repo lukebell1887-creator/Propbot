@@ -645,6 +645,16 @@ class TradingEngine:
                 return
             if self._risk_supervisor.is_halted:
                 return  # In consecutive-loss cooldown — skip this tick
+            
+            # v5.64: Detect auto-resume after halt cooldown expired
+            # Re-warm all pairs with fresh M1 history so engines have current data
+            if self._risk_supervisor.just_resumed:
+                logger.info(
+                    "HALT RESUME DETECTED: Re-warming all pairs with fresh M1 history..."
+                )
+                self._prewarm_pairs()
+                self._risk_supervisor.clear_resumed()
+                logger.info("HALT RESUME: Re-warm complete — engines have fresh data")
 
         # Process each pair (pass daily_dd for Dynamic AKAD)
         for name, state in self._pairs.items():
