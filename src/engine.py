@@ -33,6 +33,32 @@ try:
 except ImportError:
     HMM_AVAILABLE = False
 
+# =============================================================================
+# WINDOWS ANTI-FREEZE: Disable QuickEdit Mode
+# =============================================================================
+# On Windows, if QuickEdit is enabled (default), clicking in the PowerShell/CMD
+# window enters "selection mode" which FREEZES the entire Python process until
+# the user presses Enter. This is the #1 cause of random multi-hour freezes.
+# We disable it at import time so it's always off.
+try:
+    import ctypes
+    kernel32 = ctypes.windll.kernel32
+    # Get console input handle
+    hStdin = kernel32.GetStdHandle(-10)  # STD_INPUT_HANDLE
+    # Get current console mode
+    mode = ctypes.c_ulong()
+    kernel32.GetConsoleMode(hStdin, ctypes.byref(mode))
+    # Disable ENABLE_QUICK_EDIT_MODE (0x0040) and ENABLE_INSERT_MODE (0x0020)
+    # Keep other flags intact
+    ENABLE_QUICK_EDIT = 0x0040
+    ENABLE_INSERT_MODE = 0x0020
+    new_mode = mode.value & ~ENABLE_QUICK_EDIT & ~ENABLE_INSERT_MODE
+    # Enable ENABLE_EXTENDED_FLAGS (0x0080) — required for the above to take effect
+    new_mode |= 0x0080
+    kernel32.SetConsoleMode(hStdin, new_mode)
+except Exception:
+    pass  # Not on Windows or no console — ignore silently
+
 # Configure logging
 Path('logs').mkdir(exist_ok=True)
 logging.basicConfig(
@@ -568,10 +594,15 @@ class TradingEngine:
                 logger.critical(f"COMA: Closed {open_count} pair(s). All positions flat.")
             else:
                 logger.warning(f"COMA: No open positions — no damage. Resuming.")
-            # Force re-warm: reset bar counters so the engine re-calibrates
-            logger.critical("COMA: Forcing 200-bar re-warm before next trade")
-            for state in self._pairs.values():
-                state.m1_bar_count = max(0, state.m1_bar_count - 200)
+            # Full re-warm: fetch fresh 768 M1 bars from broker to replace stale data
+            logger.critical("COMA: Full re-warm with fresh M1 history from broker...")
+            try:
+                self._prewarm_pairs()
+                logger.critical("COMA: Re-warm complete — engines have fresh data. Resuming.")
+            except Exception as e:
+                logger.critical(f"COMA: Re-warm failed ({e}) — resetting bar counters as fallback")
+                for state in self._pairs.values():
+                    state.m1_bar_count = max(0, state.m1_bar_count - 200)
             # Skip this tick entirely — let the next tick process normally
             return
         # ═══ END COMA DETECTOR ═══════════════════════════════════════════════

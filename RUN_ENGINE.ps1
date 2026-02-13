@@ -7,6 +7,62 @@
 $ErrorActionPreference = "Stop"
 Set-Location "C:\SHF"
 
+# =============================================================================
+# ANTI-FREEZE: Disable QuickEdit Mode + Prevent Windows Sleep
+# =============================================================================
+# QuickEdit: Clicking in a PowerShell window pauses the ENTIRE process.
+# This is the #1 cause of random multi-hour freezes on Windows VPS.
+# We disable it before launching the engine.
+try {
+    $key = 'HKCU:\Console'
+    Set-ItemProperty -Path $key -Name QuickEdit -Value 0 -ErrorAction SilentlyContinue
+    # Also disable via Win32 API for THIS console session
+    Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class ConsoleHelper {
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr GetStdHandle(int nStdHandle);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+    public static void DisableQuickEdit() {
+        IntPtr handle = GetStdHandle(-10);
+        uint mode;
+        GetConsoleMode(handle, out mode);
+        mode &= ~(uint)0x0040; // ENABLE_QUICK_EDIT_MODE
+        mode &= ~(uint)0x0020; // ENABLE_INSERT_MODE
+        mode |= (uint)0x0080;  // ENABLE_EXTENDED_FLAGS
+        SetConsoleMode(handle, mode);
+    }
+}
+"@ -ErrorAction SilentlyContinue
+    [ConsoleHelper]::DisableQuickEdit()
+    Write-Host "  [ANTI-FREEZE] QuickEdit mode DISABLED for this session" -ForegroundColor Green
+} catch {
+    Write-Host "  [WARN] Could not disable QuickEdit: $_" -ForegroundColor Yellow
+}
+
+# Prevent Windows from sleeping while engine runs (ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
+try {
+    Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class SleepPreventer {
+    [DllImport("kernel32.dll")]
+    public static extern uint SetThreadExecutionState(uint esFlags);
+    public static void PreventSleep() {
+        SetThreadExecutionState(0x80000001); // ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+    }
+}
+"@ -ErrorAction SilentlyContinue
+    [SleepPreventer]::PreventSleep()
+    Write-Host "  [ANTI-FREEZE] Windows sleep prevention ACTIVE" -ForegroundColor Green
+} catch {
+    Write-Host "  [WARN] Could not prevent sleep: $_" -ForegroundColor Yellow
+}
+
 function Write-Header($msg) {
     Write-Host ""
     Write-Host "=== $msg ===" -ForegroundColor Cyan
