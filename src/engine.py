@@ -203,6 +203,7 @@ class TradingEngine:
 
     # Delta Staleness Guard (timezone-agnostic)
     STALE_FEED_TIMEOUT = 5.0  # seconds — if no new tick for this long, data is stale
+    COMA_THRESHOLD = 60.0  # seconds — if tick loop was frozen > this, we were in a coma
 
     # Broker Time Sync interval (don't hammer every tick)
     BROKER_TIME_SYNC_INTERVAL = 60.0  # seconds between GET_SERVER_TIME calls
@@ -516,6 +517,7 @@ class TradingEngine:
     async def run(self) -> None:
         """Main trading loop — 100ms tick."""
         self._running = True
+        self._last_tick_wall = time.time()  # Coma detector baseline
         logger.info("Starting v5.6 trading loop (100ms tick)...")
 
         try:
@@ -529,6 +531,50 @@ class TradingEngine:
 
     async def _tick(self) -> None:
         """Single tick — process all pairs."""
+
+        # ═══ COMA DETECTOR ═══════════════════════════════════════════════════
+        # Detects OS-level sleep/freeze that pauses the entire process.
+        # If wall clock jumped > COMA_THRESHOLD since last tick, we were frozen.
+        now_wall = time.time()
+        gap = now_wall - getattr(self, '_last_tick_wall', now_wall)
+        self._last_tick_wall = now_wall
+        if gap > self.COMA_THRESHOLD:
+            logger.critical(
+                f"COMA DETECTED: Process was frozen for {gap:.0f}s ({gap/3600:.1f}h)! "
+                f"Last tick was {gap:.0f}s ago."
+            )
+            # Emergency close ALL open positions — they were unmanaged
+            open_count = 0
+            for state in self._pairs.values():
+                if state.position != 0:
+                    pair_name = state.config.name
+                    logger.critical(
+                        f"COMA EMERGENCY CLOSE: {pair_name} has open position "
+                        f"(dir={state.position}) — closing immediately"
+                    )
+                    try:
+                        if state.ticket_a:
+                            self._bridge.close_position(state.ticket_a)
+                        if state.ticket_b:
+                            self._bridge.close_position(state.ticket_b)
+                        logger.critical(f"COMA CLOSE: {pair_name} positions closed")
+                    except Exception as e:
+                        logger.critical(f"COMA CLOSE FAILED: {pair_name} — {e}")
+                    state.position = 0
+                    state.ticket_a = 0
+                    state.ticket_b = 0
+                    open_count += 1
+            if open_count > 0:
+                logger.critical(f"COMA: Closed {open_count} pair(s). All positions flat.")
+            else:
+                logger.warning(f"COMA: No open positions — no damage. Resuming.")
+            # Force re-warm: reset bar counters so the engine re-calibrates
+            logger.critical("COMA: Forcing 200-bar re-warm before next trade")
+            for state in self._pairs.values():
+                state.m1_bar_count = max(0, state.m1_bar_count - 200)
+            # Skip this tick entirely — let the next tick process normally
+            return
+        # ═══ END COMA DETECTOR ═══════════════════════════════════════════════
         # Heartbeat — tolerant of brief EA restarts (chart timeframe changes etc.)
         if not self._bridge.heartbeat():
             self._hb_fail_count = getattr(self, '_hb_fail_count', 0) + 1
