@@ -1,7 +1,8 @@
 # =============================================================================
-# SHF v5.6.3 ENGINE LAUNCHER - Oil + Index Duo
+# SHF v5.6.4 ENGINE LAUNCHER - Oil + Index Duo
 # =============================================================================
 # PowerShell 5.1 compatible (no ANSI escapes, ASCII only)
+# Engine runs in a HIDDEN window — immune to console freezes/QuickEdit
 # =============================================================================
 
 $ErrorActionPreference = "Stop"
@@ -10,13 +11,9 @@ Set-Location "C:\SHF"
 # =============================================================================
 # ANTI-FREEZE: Disable QuickEdit Mode + Prevent Windows Sleep
 # =============================================================================
-# QuickEdit: Clicking in a PowerShell window pauses the ENTIRE process.
-# This is the #1 cause of random multi-hour freezes on Windows VPS.
-# We disable it before launching the engine.
 try {
     $key = 'HKCU:\Console'
     Set-ItemProperty -Path $key -Name QuickEdit -Value 0 -ErrorAction SilentlyContinue
-    # Also disable via Win32 API for THIS console session
     Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -31,20 +28,19 @@ public class ConsoleHelper {
         IntPtr handle = GetStdHandle(-10);
         uint mode;
         GetConsoleMode(handle, out mode);
-        mode &= ~(uint)0x0040; // ENABLE_QUICK_EDIT_MODE
-        mode &= ~(uint)0x0020; // ENABLE_INSERT_MODE
-        mode |= (uint)0x0080;  // ENABLE_EXTENDED_FLAGS
+        mode &= ~(uint)0x0040;
+        mode &= ~(uint)0x0020;
+        mode |= (uint)0x0080;
         SetConsoleMode(handle, mode);
     }
 }
 "@ -ErrorAction SilentlyContinue
     [ConsoleHelper]::DisableQuickEdit()
-    Write-Host "  [ANTI-FREEZE] QuickEdit mode DISABLED for this session" -ForegroundColor Green
+    Write-Host "  [ANTI-FREEZE] QuickEdit mode DISABLED" -ForegroundColor Green
 } catch {
-    Write-Host "  [WARN] Could not disable QuickEdit: $_" -ForegroundColor Yellow
+    Write-Host "  [WARN] Could not disable QuickEdit" -ForegroundColor Yellow
 }
 
-# Prevent Windows from sleeping while engine runs (ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 try {
     Add-Type -TypeDefinition @"
 using System;
@@ -53,14 +49,14 @@ public class SleepPreventer {
     [DllImport("kernel32.dll")]
     public static extern uint SetThreadExecutionState(uint esFlags);
     public static void PreventSleep() {
-        SetThreadExecutionState(0x80000001); // ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+        SetThreadExecutionState(0x80000001);
     }
 }
 "@ -ErrorAction SilentlyContinue
     [SleepPreventer]::PreventSleep()
     Write-Host "  [ANTI-FREEZE] Windows sleep prevention ACTIVE" -ForegroundColor Green
 } catch {
-    Write-Host "  [WARN] Could not prevent sleep: $_" -ForegroundColor Yellow
+    Write-Host "  [WARN] Could not prevent sleep" -ForegroundColor Yellow
 }
 
 function Write-Header($msg) {
@@ -83,7 +79,7 @@ function Write-WARN($msg) {
 Clear-Host
 Write-Host ""
 Write-Host "  =============================================" -ForegroundColor Cyan
-Write-Host "     SHF v5.6.3 - Oil + Index Trading Engine   " -ForegroundColor Cyan
+Write-Host "     SHF v5.6.4 - Oil + Index Trading Engine   " -ForegroundColor Cyan
 Write-Host "     Pairs: US100/DE40 | XTIUSD/XBRUSD        " -ForegroundColor Cyan
 Write-Host "     HMM: Index=20 | Oil=5                     " -ForegroundColor Cyan
 Write-Host "     Dwell: Index=60s | Oil=1800s base         " -ForegroundColor Cyan
@@ -213,45 +209,53 @@ Write-Host "  ALL CHECKS PASSED - LAUNCHING ENGINE" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Pairs:  Index (NAS100/DAX40) HMM=20 Dwell=60s" -ForegroundColor Cyan
 Write-Host "          Oil (XTIUSD/XBRUSD)  HMM=5  Dwell=1800s" -ForegroundColor Cyan
-Write-Host "  Risk:   Dynamic AKAD | 4% daily DD | 9% max DD" -ForegroundColor Cyan
+Write-Host "  Risk:   Dynamic AKAD | 4pct daily DD | 9pct max DD" -ForegroundColor Cyan
 Write-Host "  Mode:   M1 bar signals | 768-bar pre-warm | 100ms tick" -ForegroundColor Cyan
 Write-Host "  Bridge: TCP localhost:5555" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Waiting for EA connection on port 5555..." -ForegroundColor Yellow
 Write-Host "  Make sure SHF_Bridge EA is attached to an MT5 chart." -ForegroundColor Yellow
+
+# =============================================================================
+# LAUNCH ENGINE — HIDDEN WINDOW (FREEZE-PROOF)
+# =============================================================================
+# Python runs inside a hidden CMD window with stdout piped to a log file.
+# This PowerShell window only TAILS the log. Even if this console freezes,
+# disconnects, or you close RDP — Python keeps running independently.
+# =============================================================================
+
 Write-Host ""
-Write-Host "--- ENGINE OUTPUT BELOW ---" -ForegroundColor White
+Write-Host "  Engine runs in HIDDEN window — immune to console freezes" -ForegroundColor Green
+Write-Host "  All output goes to: logs/console.log + logs/trading.log" -ForegroundColor Yellow
 Write-Host ""
 
-# ---- Launch ----
-# Run Python DETACHED from console stdout to prevent ANY freeze.
-# All output goes to logs/trading.log (file handler) AND logs/console.log (stdout).
-# The console tails the log file so you can still watch it live.
-# If the console freezes/disconnects, Python keeps running independently.
-Write-Host ""
-Write-Host "  Engine output is logged to: logs/trading.log" -ForegroundColor Yellow
-Write-Host "  Console mirror:             logs/console.log" -ForegroundColor Yellow
-Write-Host "  Press Ctrl+C to stop watching (engine keeps running)" -ForegroundColor Yellow
-Write-Host ""
+# Clear old console log
+if (Test-Path "logs\console.log") { Remove-Item "logs\console.log" -Force }
+"" | Out-File "logs\console.log" -Encoding utf8
 
-# Start engine as a background job, redirect stdout/stderr to console.log
-$engineProcess = Start-Process -FilePath "python" -ArgumentList "-u -m src.engine" `
-    -WorkingDirectory "C:\SHF" -NoNewWindow -PassThru `
-    -RedirectStandardOutput "logs\console.log" -RedirectStandardError "logs\console_err.log"
+# Launch Python in a HIDDEN CMD window — completely detached from this console
+$cmdArgs = '/c cd /d C:\SHF && python -u -m src.engine >> logs\console.log 2>&1'
+Start-Process cmd -ArgumentList $cmdArgs -WindowStyle Hidden
 
-Write-Host "  Engine PID: $($engineProcess.Id)" -ForegroundColor Green
-Write-Host "  Engine is running detached — safe from console freezes" -ForegroundColor Green
-Write-Host ""
-Write-Host "--- LIVE LOG TAIL (Ctrl+C to stop watching, engine keeps running) ---" -ForegroundColor Cyan
-Write-Host ""
+Start-Sleep 3
 
-# Wait a moment for the log file to be created
-Start-Sleep 2
-
-# Tail the log file so the user can watch
-try {
-    Get-Content "logs\console.log" -Wait -Tail 50
-} catch {
-    Write-Host "Log tail stopped. Engine is still running (PID: $($engineProcess.Id))." -ForegroundColor Yellow
-    Write-Host "To stop the engine: Stop-Process -Id $($engineProcess.Id)" -ForegroundColor Yellow
+# Find and display the engine PID
+$pyProc = Get-Process python -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($pyProc) {
+    $enginePid = $pyProc.Id
+    Write-Host "  Engine PID: $enginePid" -ForegroundColor Green
+    Write-Host "  Engine is RUNNING in hidden window" -ForegroundColor Green
+} else {
+    Write-Host "  [WARN] Could not find python process — check logs\console_err.log" -ForegroundColor Red
 }
+
+Write-Host ""
+Write-Host "  ================================================" -ForegroundColor Cyan
+Write-Host "  LIVE LOG TAIL (engine keeps running if you stop)" -ForegroundColor Cyan
+Write-Host "  ================================================" -ForegroundColor Cyan
+Write-Host "  Ctrl+C = stop watching only (engine stays alive)" -ForegroundColor Yellow
+Write-Host "  To KILL engine: Get-Process python | Stop-Process" -ForegroundColor Yellow
+Write-Host "  To RE-WATCH:    Get-Content logs\console.log -Wait -Tail 50" -ForegroundColor Yellow
+Write-Host ""
+
+# Tail the console log file — safe to Ctrl+C this without killing engine
+Get-Content "logs\console.log" -Wait -Tail 100
