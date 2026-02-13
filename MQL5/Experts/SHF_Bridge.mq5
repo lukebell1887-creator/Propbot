@@ -11,7 +11,7 @@
 //+------------------------------------------------------------------+
 #property copyright "SHF Trading Systems"
 #property link      ""
-#property version   "5.63"
+#property version   "5.64"
 #property strict
 
 input string InpHost        = "127.0.0.1";  // Python server host
@@ -32,6 +32,10 @@ datetime g_last_connect_attempt = 0;
 int    g_timer_count = 0;          // For rate-limiting command checks
 bool   g_has_pending_cmd = false;  // True when Python sent bytes
 
+// Dead-Python failsafe: track when connection was lost
+datetime g_disconnect_time = 0;    // When we lost connection (0 = connected/never lost)
+bool   g_failsafe_fired = false;   // True once we've emergency-closed (don't repeat)
+
 //+------------------------------------------------------------------+
 int OnInit()
 {
@@ -40,7 +44,7 @@ int OnInit()
    
    EventSetMillisecondTimer(InpTimerMs);
    
-   PrintFormat("SHF Bridge v5.63 (Native TCP) | Port=%d | Timer=%dms | Magic=%d",
+   PrintFormat("SHF Bridge v5.64 (Native TCP) | Port=%d | Timer=%dms | Magic=%d",
                InpPort, InpTimerMs, InpMagic);
    PrintFormat("Detected %d symbols: %s", g_num_symbols, SymbolListStr());
    
@@ -120,6 +124,66 @@ void OnTimer()
 {
    if(!g_connected)
    {
+      // ═══ DEAD-PYTHON FAILSAFE (v5.64) ═══════════════════════════════
+      // If Python crashed/died and we have open positions with our magic
+      // number, close them ALL after 30 seconds of failed reconnection.
+      // This prevents orphaned positions sitting open indefinitely.
+      if(g_disconnect_time > 0 && !g_failsafe_fired)
+      {
+         long seconds_disconnected = (long)TimeCurrent() - (long)g_disconnect_time;
+         if(seconds_disconnected >= 30)
+         {
+            // Check for open positions with our magic number
+            int orphan_count = 0;
+            for(int i = PositionsTotal()-1; i >= 0; i--)
+            {
+               ulong ticket = PositionGetTicket(i);
+               if(ticket == 0) continue;
+               if(PositionGetInteger(POSITION_MAGIC) != InpMagic) continue;
+               
+               string sym = PositionGetString(POSITION_SYMBOL);
+               long pt = PositionGetInteger(POSITION_TYPE);
+               
+               MqlTradeRequest req = {};
+               MqlTradeResult  res = {};
+               req.action = TRADE_ACTION_DEAL;
+               req.position = ticket;
+               req.symbol = sym;
+               req.volume = PositionGetDouble(POSITION_VOLUME);
+               req.deviation = (ulong)InpMaxSlippage;
+               req.type_filling = GetSymbolFillingMode(sym);
+               if(pt == POSITION_TYPE_BUY)
+               { req.type = ORDER_TYPE_SELL; req.price = SymbolInfoDouble(sym, SYMBOL_BID); }
+               else
+               { req.type = ORDER_TYPE_BUY; req.price = SymbolInfoDouble(sym, SYMBOL_ASK); }
+               
+               bool r = OrderSend(req, res);
+               if(!r || res.retcode != TRADE_RETCODE_DONE)
+               { req.type_filling = ORDER_FILLING_FOK; r = OrderSend(req, res); }
+               if(!r || res.retcode != TRADE_RETCODE_DONE)
+               { req.type_filling = ORDER_FILLING_RETURN; r = OrderSend(req, res); }
+               
+               if(r && res.retcode == TRADE_RETCODE_DONE)
+               {
+                  PrintFormat("FAILSAFE CLOSED: ticket=%d %s %.2f lots (Python dead %ds)",
+                              ticket, sym, req.volume, seconds_disconnected);
+                  orphan_count++;
+               }
+               else
+               {
+                  PrintFormat("FAILSAFE CLOSE FAILED: ticket=%d %s retcode=%d — MANUAL CLOSE REQUIRED",
+                              ticket, sym, res.retcode);
+               }
+            }
+            
+            g_failsafe_fired = true;  // Don't repeat — one shot only
+            if(orphan_count > 0)
+               PrintFormat("DEAD-PYTHON FAILSAFE: Closed %d orphaned positions after %ds disconnect",
+                           orphan_count, seconds_disconnected);
+         }
+      }
+      // ═══ END DEAD-PYTHON FAILSAFE ════════════════════════════════════
+      
       if((long)TimeCurrent() - (long)g_last_connect_attempt >= 2)
          TryConnect();
       return;
@@ -134,9 +198,9 @@ void OnTimer()
       return;
    }
    
-   // Check for commands only every 5th tick (500ms) to avoid
-   // SocketRead interfering with SocketSend on some MT5 builds
-   if(g_timer_count % 5 == 0)
+   // v5.64: Check commands every 2nd tick (200ms) instead of 5th (500ms)
+   // Cuts Leg A execution latency by 60% — Leg B is already fast via OnTick
+   if(g_timer_count % 2 == 0)
    {
       if(!CheckAndProcessCommand())
       {
@@ -186,6 +250,8 @@ void TryConnect()
    g_connected = true;
    g_reconnect_count = 0;
    g_timer_count = 0;
+   g_disconnect_time = 0;      // v5.64: Reset failsafe countdown
+   g_failsafe_fired = false;   // v5.64: Allow failsafe to fire again on next disconnect
    PrintFormat("Connected to Python server %s:%d", InpHost, InpPort);
 }
 
@@ -200,6 +266,7 @@ void Disconnect()
    if(g_connected)
    {
       g_connected = false;
+      g_disconnect_time = TimeCurrent();  // v5.64: Start failsafe countdown
       Print("Disconnected from Python server");
    }
 }
@@ -461,7 +528,52 @@ string HandleOrderSend(string data)
       }
    }
    
-   if(result && res.retcode == TRADE_RETCODE_DONE)
+   // v5.64: Price-refresh retry on REQUOTE / PRICE_CHANGED / INVALID_PRICE
+   // If the market moved during execution, grab the fresh price and retry (max 2 attempts)
+   if(!result || (res.retcode != TRADE_RETCODE_DONE && res.retcode != TRADE_RETCODE_DONE_PARTIAL))
+   {
+      bool is_price_error = (res.retcode == TRADE_RETCODE_REQUOTE ||
+                             res.retcode == TRADE_RETCODE_PRICE_CHANGED ||
+                             res.retcode == TRADE_RETCODE_INVALID_PRICE);
+      bool is_market_order = (order_type == ORDER_TYPE_BUY || order_type == ORDER_TYPE_SELL);
+      
+      if(is_price_error && is_market_order)
+      {
+         for(int retry = 1; retry <= 2; retry++)
+         {
+            // Refresh price from current market
+            if(order_type == ORDER_TYPE_BUY)
+               req.price = SymbolInfoDouble(symbol, SYMBOL_ASK);
+            else
+               req.price = SymbolInfoDouble(symbol, SYMBOL_BID);
+            
+            // Reset to best filling mode for fresh attempt
+            req.type_filling = GetSymbolFillingMode(symbol);
+            
+            PrintFormat("PRICE RETRY %d/2: %s %s @ %.5f (was %s)",
+                        retry, symbol, type_str, req.price, RetcodeDesc(res.retcode));
+            
+            result = OrderSend(req, res);
+            if(result && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_DONE_PARTIAL))
+               break;  // Success!
+            
+            // Try alternative filling modes on this retry too
+            if(!result || (res.retcode != TRADE_RETCODE_DONE && res.retcode != TRADE_RETCODE_DONE_PARTIAL))
+            {
+               if(req.type_filling == ORDER_FILLING_IOC)
+               { req.type_filling = ORDER_FILLING_FOK; result = OrderSend(req, res); }
+               if(result && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_DONE_PARTIAL))
+                  break;
+               if(req.type_filling != ORDER_FILLING_RETURN)
+               { req.type_filling = ORDER_FILLING_RETURN; result = OrderSend(req, res); }
+               if(result && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_DONE_PARTIAL))
+                  break;
+            }
+         }
+      }
+   }
+   
+   if(result && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_DONE_PARTIAL))
    {
       // Use res.order (position ticket), NOT res.deal (deal ticket)
       // PositionSelectByTicket() needs the position ticket to close later
