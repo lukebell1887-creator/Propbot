@@ -1,7 +1,7 @@
 # SHF Trading System — Complete System Bible (v5.6.4)
 
-**Last Updated**: 13 February 2026
-**Version**: 5.6.4 — Oil + Index Duo | Hidden-Window Freeze-Proof Launch | Coma Recovery | Timed Halt
+**Last Updated**: 14 February 2026
+**Version**: 5.6.4 — Oil + Index Duo | Amplitude Gate | Opportunity Multiplier | Hidden-Window Freeze-Proof
 **Status**: LIVE ON VPS — 2/2 pairs active (NAS100/DAX40 + XTIUSD/XBRUSD)
 **Broker**: FivePercentOnline-Real (Fintokei prop firm) | **VPS**: 78.141.192.253 | **Path**: `C:\SHF`
 **Account**: $4,889.35 (started $5,000) | Challenge target: pass evaluation, scale to 400K
@@ -14,7 +14,7 @@
 2. [Architecture Overview](#2-architecture-overview)
 3. [Signal Flow](#3-signal-flow)
 4. [Core Components (Detailed)](#4-core-components)
-5. [Risk Management (17 Layers)](#5-risk-management)
+5. [Risk Management (19 Layers)](#5-risk-management)
 6. [Pair Selection — The Full Journey](#6-pair-selection)
 7. [Version History — Everything We Tried](#7-version-history)
 8. [Live Deployment & Infrastructure](#8-live-deployment)
@@ -154,6 +154,17 @@ M1 Bar Closes (from EA via TCP, every 60 seconds)
 +----------------------------------------------------+
 | SIGNAL DECISION                                      |
 |   |Z| > Z_crit -> ENTRY   |Z| < Z_exit -> EXIT      |
++----------------------------------------------------+
+    |
+    v
++----------------------------------------------------+
+| AMPLITUDE GATE (Oil only, v5.6.4)                    |
+|   expected = (|Z| - exit_z) x sigma x point_value   |
+|   cost = session-adjusted cost per lot               |
+|   ratio = expected / cost                            |
+|   ratio < 1.0 -> BLOCKED (garbage trade)             |
+|   ratio >= 1.0 -> PASSED, lots x min(2.0, ratio)    |
+|   Index: gate DISABLED (costs negligible)            |
 +----------------------------------------------------+
     |
     v
@@ -356,7 +367,7 @@ Uses Huber-robust OU sigma (IRLS with MAD scale). Stored on broker server -- sur
 
 ---
 
-## 5. Risk Management (17 Layers)
+## 5. Risk Management (19 Layers)
 
 | # | Layer | Protection | Location | Speed |
 |---|-------|------------|----------|-------|
@@ -377,6 +388,8 @@ Uses Huber-robust OU sigma (IRLS with MAD scale). Stored on broker server -- sur
 | 15 | Consecutive Loss | 5 losses -> 60min halt (auto) | Python | O(1) |
 | 16 | Coma Detector | >60s freeze -> re-warm all | Python | O(1) |
 | 17 | Execution Reconciliation | 3-state Widowmaker audit | Python | ~3s |
+| 18 | Amplitude Gate (Oil) | Block trades where E[profit] < cost | Python | O(1) |
+| 19 | Opportunity Multiplier (Oil) | Scale lots 1-2x on high-conviction | Python | O(1) |
 
 ---
 
@@ -519,9 +532,12 @@ This section documents every pair we tested, why we kept or dropped it, and the 
 - Oil bid-ask bounce discovery and mitigation
 - Realistic broker cost modelling (spread, fill costs, commission, session multipliers)
 
-### v5.6.4 — Freeze-Proof Operations (CRITICAL STABILITY FIX)
-**Date**: Feb 13, 2026
-**What**: Fixed production freezes caused by Windows QuickEdit mode and console interaction pausing the Python process. Multiple operational hardening improvements.
+### v5.6.4 — Freeze-Proof Operations + Amplitude Gate + Opportunity Multiplier
+**Date**: Feb 13-14, 2026
+
+#### Phase 1: Freeze-Proof Operations (CRITICAL STABILITY FIX)
+
+Fixed production freezes caused by Windows QuickEdit mode and console interaction pausing the Python process. Multiple operational hardening improvements.
 
 **Fixes applied**:
 1. **Hidden window launch**: Engine runs in `Start-Process cmd -WindowStyle Hidden`, completely detached from any console. PowerShell only tails the log file. Even if RDP disconnects, engine keeps running.
@@ -531,6 +547,73 @@ This section documents every pair we tested, why we kept or dropped it, and the 
 5. **Windows sleep prevention**: `powercfg` disables standby/hibernate on VPS.
 
 **Root cause of production freezes**: Windows QuickEdit mode -- clicking in a PowerShell window enters "selection mode" which pauses the ENTIRE Python process until Enter is pressed. On a VPS with RDP, any accidental mouse click in the console window could freeze the bot for hours. The hidden window approach makes this impossible.
+
+#### Phase 2: The Dukascopy Investigation — "Why Are We Down?"
+
+With the bot live and account at ~$4,889 (down ~$111 from $5,000 start), we needed to understand whether this was normal variance or a systemic problem. The 3.5-month MT5 backtest data window was too short to be confident.
+
+**Step 1: Fetching 2 years of independent data from Dukascopy**
+
+We downloaded 2 full years (Feb 2024 - Feb 2026) of M1 bid data from Dukascopy for all 4 symbols:
+- `USATECHIDXUSD` (NAS100 equivalent) + `DEUIDXEUR` (DAX40 equivalent)
+- `LIGHTCMDUSD` (WTI/XTIUSD equivalent) + `BRENTCMDUSD` (Brent/XBRUSD equivalent)
+
+Scripts: `download_2year_dukascopy.py` -> `convert_duka_raw.py` -> `convert_final.py`
+
+**Step 2: The spreads are different**
+
+Critical discovery: Dukascopy spreads and Fintokei spreads are NOT the same. Different data vendors, different liquidity providers, different bid-ask dynamics. The raw spread values differed enough that a backtest on Dukascopy data couldn't be directly compared to live Fintokei execution.
+
+This meant our original backtest numbers (PF=4.70 on Oil, $28K profit) were based on Fintokei's specific spread characteristics and couldn't be validated against Dukascopy as a 1:1 comparison.
+
+**Step 3: The Silver Lining — Amplitude Gate Discovery**
+
+While investigating the spread differences, we realised something important: **many Oil trades were garbage** — the Z-score was barely above threshold, and the expected dollar profit was smaller than the execution cost. These marginal trades were dragging down performance.
+
+The fix wasn't about the data source — it was about **not taking shit trades**:
+
+**Amplitude Gate**: Before entering any Oil trade, calculate the expected dollar profit:
+```
+expected_profit = (|Z| - exit_z) x sigma x multiplier
+```
+Where `(|Z| - exit_z)` is the Z-distance the spread is expected to travel back, and `sigma` is the Welford standard deviation of the spread. If `expected_profit < hurdle x cost`, **block the trade**.
+
+**Opportunity Multiplier**: On the flip side, when Oil Z is WELL above threshold (big move), scale lots UP:
+```
+amp_ratio = expected_profit / cost
+amp_mult = min(max_mult, amp_ratio / hurdle)   # 1.0x to 2.0x
+```
+
+This means:
+- **Garbage trades** (ratio < 1.0): BLOCKED entirely
+- **Marginal trades** (ratio 1.0-2.0): Standard lots (1.0x)
+- **High-conviction trades** (ratio > 2.0): Lots scaled up to 2.0x
+
+**Time-of-day cost adjustment**: Oil spreads are wider at night and during Asian session:
+```
+Night (21:00-06:00 broker):  cost x 2.5
+Asian (06:00-08:00 broker):  cost x 1.5
+London/NY (08:00-21:00):     cost x 1.0
+```
+
+#### Production Config (Amplitude Gate)
+
+| Parameter | Oil | Index |
+|-----------|-----|-------|
+| Amplitude Gate | ENABLED | DISABLED (costs too small to matter) |
+| Hurdle | 1.0 (expected profit must exceed cost) | N/A |
+| Max Multiplier | 2.0x | N/A |
+| Cost per lot | ~$87 base (session-adjusted) | ~$5 |
+| Formula | `(|Z| - exit_z) x sigma x point_value` | N/A |
+
+**Impact**: Blocks all marginal Oil entries where the Z-move wouldn't cover costs, while scaling up position size on high-conviction moves where the expected profit is multiples of cost. Index trades pass through unchanged since their costs are negligible.
+
+#### Key Lessons from the Investigation
+
+1. **Backtest data source matters**: Dukascopy and Fintokei have different spread characteristics. You cannot validate one broker's edge with another broker's data.
+2. **Being down early is normal**: $111 loss on a $5,000 account (2.2%) over a few days of live trading is well within expected variance.
+3. **The real fix wasn't data — it was filtering**: Instead of chasing "better" backtest data, we turned the investigation into an actionable improvement: don't take trades where the math says costs will eat the profit.
+4. **Amplitude gate is broker-adaptive**: Because it uses the LIVE spread/cost data, it automatically adjusts to whatever broker conditions exist — no need for separate Dukascopy vs Fintokei calibration.
 
 ---
 
@@ -786,7 +869,9 @@ powershell -ExecutionPolicy Bypass -File C:\SHF\RUN_ENGINE.ps1
 3. **Do NOT lower oil dwell below 1800s base** -- you'll re-introduce bid-ask bounce trades.
 4. **Do NOT run the engine in a visible console window** -- Windows QuickEdit WILL freeze it eventually.
 5. **Do NOT feed ticks to CointegrationEngine** -- signals must compute on M1 bar close only (v5.6.1 fix).
+6. **Do NOT disable the Oil amplitude gate** -- without it, marginal trades where cost > expected profit will bleed the account. Hurdle=1.0 is the minimum.
+7. **Do NOT trust Dukascopy data to validate Fintokei edge** -- different LPs, different spreads. Backtest on broker-specific data only.
 
 ---
 
-*This document is the single source of truth for the SHF v5.6.4 production system as of 13 February 2026.*
+*This document is the single source of truth for the SHF v5.6.4 production system as of 14 February 2026.*
