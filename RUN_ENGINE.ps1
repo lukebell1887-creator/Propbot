@@ -30,7 +30,7 @@ Write-Host ""
 Write-Host "  =============================================" -ForegroundColor Cyan
 Write-Host "     SHF v5.6.4 - Oil + Index Trading Engine   " -ForegroundColor Cyan
 Write-Host "     Pairs: US100/DE40 | XTIUSD/XBRUSD        " -ForegroundColor Cyan
-Write-Host "     HMM: Index=20 | Oil=5                     " -ForegroundColor Cyan
+Write-Host "     HMM: Index=20 | Oil=10                    " -ForegroundColor Cyan
 Write-Host "     Dwell: Index=60s | Oil=1800s base         " -ForegroundColor Cyan
 Write-Host "     Mode: HIDDEN WINDOW (freeze-proof)        " -ForegroundColor Cyan
 Write-Host "  =============================================" -ForegroundColor Cyan
@@ -167,7 +167,7 @@ Write-Host ""
 Write-Host "  ALL CHECKS PASSED - LAUNCHING ENGINE" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Pairs:  Index (NAS100/DAX40) HMM=20 Dwell=60s" -ForegroundColor Cyan
-Write-Host "          Oil (XTIUSD/XBRUSD)  HMM=5  Dwell=1800s" -ForegroundColor Cyan
+Write-Host "          Oil (XTIUSD/XBRUSD)  HMM=10 Dwell=1800s" -ForegroundColor Cyan
 Write-Host "  Risk:   Dynamic AKAD | 4pct daily DD | 9pct max DD" -ForegroundColor Cyan
 Write-Host "  Mode:   M1 bar signals | 768-bar pre-warm | 100ms tick" -ForegroundColor Cyan
 Write-Host "  Bridge: TCP localhost:5555" -ForegroundColor Cyan
