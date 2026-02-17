@@ -100,14 +100,14 @@ class PairDef:
     dwell_base: float; dwell_anchor: float; dwell_min: float; dwell_max: float
 
 PAIRS = [
-    PairDef("Index Spread", "US100","DE40", "US100_M1.csv","DE40_M1.csv", 0,
-            notional=150_000.0,
-            dwell_base=INDEX_DWELL_BASE, dwell_anchor=INDEX_DWELL_ANCHOR,
-            dwell_min=INDEX_DWELL_MIN, dwell_max=INDEX_DWELL_MAX),
     PairDef("Oil Spread", "XTIUSD","XBRUSD", "XTIUSD_M1.csv","XBRUSD_M1.csv", 1,
             notional=100_000.0,
             dwell_base=OIL_DWELL_BASE, dwell_anchor=OIL_DWELL_ANCHOR,
             dwell_min=OIL_DWELL_MIN, dwell_max=OIL_DWELL_MAX),
+    PairDef("Index Spread", "US100","DE40", "US100_M1.csv","DE40_M1.csv", 0,
+            notional=150_000.0,
+            dwell_base=INDEX_DWELL_BASE, dwell_anchor=INDEX_DWELL_ANCHOR,
+            dwell_min=INDEX_DWELL_MIN, dwell_max=INDEX_DWELL_MAX),
 ]
 
 # ============================================================================
@@ -168,7 +168,7 @@ def load_pair(p):
 # ============================================================================
 # SIMULATION — EXACT LIVE BOT LOGIC + COSTS
 # ============================================================================
-def run_pair(df, pdef, hmm_hold):
+def run_pair(df, pdef, hmm_hold, amp_hurdle=0.0, amp_max_mult=1.0):
     balance = STARTING_BALANCE; peak = STARTING_BALANCE; daily_start = STARTING_BALANCE
     daily_date = None; ghost = False; ghost_info = ""
     dakad = DynamicAKAD()
@@ -185,7 +185,7 @@ def run_pair(df, pdef, hmm_hold):
     pos = 0; ez = 0.0; es = 0.0; ebar = 0; elots = 0.0
     lspread = 0.0; pspread = 0.0; sent_abort = False
     last_close_bar = -9999; last_close_h = 0.5
-    entry_hour = 0; hmm_blocks = 0; dwell_blocks = 0; rollover_blocks = 0
+    entry_hour = 0; hmm_blocks = 0; dwell_blocks = 0; rollover_blocks = 0; amp_blocks = 0
 
     for bar in range(n):
         if ghost: break
@@ -247,6 +247,28 @@ def run_pair(df, pdef, hmm_hold):
             risk = dakad.calc(cdd, ddd)
             corr.compute_risk(); cm = corr.last_risk_multiplier
             lots = max(0.01, round(balance * risk * cm / 1000.0, 2))
+
+            # ── AMPLITUDE GATE + OPPORTUNITY MULTIPLIER ──────────────
+            # CORRECTED: use (|Z| - exit_z) = actual captured Z-move (matches live engine.py)
+            if amp_hurdle > 0.0:
+                sigma = eng.last_std
+                z_captured = max(0.0, abs(z) - exz)  # Only the Z-distance from entry to exit
+                expected_profit = z_captured * sigma * lots * pdef.notional
+                trade_cost = calc_trade_cost(pdef.name, lots, bt.hour)
+                if trade_cost > 0:
+                    amp_ratio = expected_profit / (trade_cost * amp_hurdle)
+                else:
+                    amp_ratio = 999.0  # No cost = always pass
+
+                if amp_ratio < 1.0:
+                    amp_blocks += 1; continue  # Not enough juice
+
+                # Opportunity multiplier: scale lots up for bigger moves
+                if amp_max_mult > 1.0:
+                    opp_mult = min(amp_max_mult, 1.0 + 0.5 * (amp_ratio - 1.0))
+                    lots = max(0.01, round(lots * opp_mult, 2))
+            # ── END AMPLITUDE GATE ───────────────────────────────────
+
             pos = s; ez = z; es = spread; ebar = bar; elots = lots
             entry_hour = bt.hour
 
@@ -278,6 +300,7 @@ def run_pair(df, pdef, hmm_hold):
                 'total_costs':0,'return_pct':0,'max_dd_pct':0,'avg_hold':0,
                 'ghost':ghost,'ghost_info':ghost_info,'hmm_blocks':hmm_blocks,
                 'dwell_blocks':dwell_blocks,'rollover_blocks':rollover_blocks,
+                'amp_blocks':amp_blocks,
                 'exit_reasons':{},'trades_per_month':0,'days':0}
 
     pnls = [t['pnl'] for t in trades]
@@ -311,7 +334,7 @@ def run_pair(df, pdef, hmm_hold):
         'max_dd_pct': round(mdd/STARTING_BALANCE*100,2),
         'avg_hold': round(avg_hold,1), 'ghost': ghost, 'ghost_info': ghost_info,
         'hmm_blocks': hmm_blocks, 'dwell_blocks': dwell_blocks,
-        'rollover_blocks': rollover_blocks,
+        'rollover_blocks': rollover_blocks, 'amp_blocks': amp_blocks,
         'exit_reasons': exit_reasons,
         'trades_per_month': round(total/months,1) if months > 0 else 0,
         'days': days,
@@ -359,87 +382,94 @@ def main():
             print(f"    {p.name:<16} FAILED: {e}")
 
     # =========================================================================
-    # MAIN GRID
+    # AMPLITUDE GATE + OPPORTUNITY MULTIPLIER SWEEP
     # =========================================================================
-    hmm_values = [100, 20, 10, 5]
-    all_results = {}
+    # HMM values to test per pair:
+    #   Oil: test BOTH 5 (current live) and 10 (previous test optimum) to compare
+    #   Index: 20 (both test and live agree)
+    hmm_per_pair = {"Oil Spread": [5, 10], "Index Spread": [20]}
+
+    hurdle_values = [0.0, 1.0, 1.5, 2.0, 2.5, 3.0]
+    mult_values = [1.0, 1.5, 2.0]
+    amp_results = {}
 
     print(f"\n\n{'='*130}")
-    print("RESULTS: EACH PAIR × HMM SWEEP — WITH REAL COSTS + PER-PAIR DWELL")
+    print("AMPLITUDE GATE + OPPORTUNITY MULTIPLIER SWEEP (HMM 5 & 10 for Oil, 20 for Index)")
+    print(f"  NOTE: Amplitude gate now uses CORRECTED formula: (|Z| - exit_z) x sigma")
     print(f"{'='*130}")
-    print(f"\n  {'Pair':<16} {'HMM':>4} {'Trades':>7} {'Tr/Mo':>6} {'NetWR':>7} {'GrossWR':>8} {'PF':>7} "
-          f"{'GrossP&L':>12} {'Costs':>10} {'NetP&L':>12} {'Return':>8} {'MaxDD':>7} {'AvgHold':>8} {'$/Trade':>9} {'Ghost'}")
-    print(f"  {'-'*145}")
+    print(f"\n  {'Pair':<16} {'HMM':>4} {'Hrdl':>5} {'Mult':>5} {'Trades':>7} {'Tr/Mo':>6} {'NetWR':>7} {'GrossWR':>8} {'PF':>7} "
+          f"{'GrossP&L':>12} {'Costs':>10} {'NetP&L':>12} {'Return':>8} {'MaxDD':>7} {'$/Trade':>9} {'AmpBlk':>7}")
+    print(f"  {'-'*155}")
 
     for pair_name, (df, pdef) in pair_data.items():
-        best_pnl = -999999; best_hmm = 0
-        for hmm_val in hmm_values:
-            t0 = time.time()
-            r = run_pair(df, pdef, hmm_val)
-            elapsed = time.time() - t0
-            key = f"{pair_name}|HMM={hmm_val}"
-            all_results[key] = r
+        hmm_vals = hmm_per_pair.get(pair_name, [20])
+        best_pnl = -999999; best_cfg = ""
 
-            ghost_str = f" {r['ghost_info']}" if r['ghost'] else ""
-            dpt = r['net_pnl'] / r['trades'] if r['trades'] > 0 else 0
-            marker = ""
-            if r['net_pnl'] > best_pnl and r['trades'] >= 3:
-                best_pnl = r['net_pnl']; best_hmm = hmm_val
-                marker = " <<<"
+        for hmm_val in hmm_vals:
+            for hurdle in hurdle_values:
+                for mult in mult_values:
+                    # Skip redundant: no gate means multiplier is irrelevant
+                    if hurdle == 0.0 and mult > 1.0:
+                        continue
 
-            print(f"  {pair_name:<16} {hmm_val:>4} {r['trades']:>7} {r.get('trades_per_month',0):>5.0f} "
-                  f"{r['wr']:>6.1f}% {r['gross_wr']:>7.1f}% {r['pf']:>7.2f} "
-                  f"${r['gross_pnl']:>11,.2f} ${r['total_costs']:>9,.2f} ${r['net_pnl']:>11,.2f} "
-                  f"{r['return_pct']:>7.2f}% {r['max_dd_pct']:>6.2f}% {r['avg_hold']:>7.1f} "
-                  f"${dpt:>8.2f}{ghost_str}{marker}")
+                    t0 = time.time()
+                    r = run_pair(df, pdef, hmm_val, amp_hurdle=hurdle, amp_max_mult=mult)
+                    elapsed = time.time() - t0
 
-        print(f"  {'':>16} BEST HMM={best_hmm} → Net ${best_pnl:>,.2f}")
-        print(f"  {'-'*145}")
+                    key = f"{pair_name}|H{hmm_val}|A{hurdle}|M{mult}"
+                    amp_results[key] = r
 
-    # =========================================================================
-    # FILTER STATS
-    # =========================================================================
-    print(f"\n\n{'='*130}")
-    print("FILTER STATISTICS (how many entries blocked by each filter)")
-    print(f"{'='*130}")
-    print(f"\n  {'Pair':<16} {'HMM':>4} {'HMM Blocks':>11} {'Dwell Blocks':>13} {'Rollover':>10} {'Exit Reasons'}")
-    print(f"  {'-'*100}")
-    for pair_name in [p.name for p in PAIRS if p.name in pair_data]:
-        for hmm_val in hmm_values:
-            key = f"{pair_name}|HMM={hmm_val}"
-            if key not in all_results: continue
-            r = all_results[key]
-            er_str = ", ".join(f"{k}={v}" for k, v in r.get('exit_reasons',{}).items())
-            print(f"  {pair_name:<16} {hmm_val:>4} {r.get('hmm_blocks',0):>11} {r.get('dwell_blocks',0):>13} "
-                  f"{r.get('rollover_blocks',0):>10}   {er_str}")
+                    dpt = r['net_pnl'] / r['trades'] if r['trades'] > 0 else 0
+                    marker = ""
+                    if r['net_pnl'] > best_pnl and r['trades'] >= 3:
+                        best_pnl = r['net_pnl']; best_cfg = f"hmm={hmm_val} hurdle={hurdle} mult={mult}"
+                        marker = " <<<"
+
+                    ghost_str = f" {r['ghost_info']}" if r['ghost'] else ""
+                    ab = r.get('amp_blocks', 0)
+
+                    print(f"  {pair_name:<16} {hmm_val:>4} {hurdle:>5.1f} {mult:>5.1f} {r['trades']:>7} {r.get('trades_per_month',0):>5.0f} "
+                          f"{r['wr']:>6.1f}% {r['gross_wr']:>7.1f}% {r['pf']:>7.2f} "
+                          f"${r['gross_pnl']:>11,.2f} ${r['total_costs']:>9,.2f} ${r['net_pnl']:>11,.2f} "
+                          f"{r['return_pct']:>7.2f}% {r['max_dd_pct']:>6.2f}% "
+                          f"${dpt:>8.2f} {ab:>6}{ghost_str}{marker}")
+
+            print(f"  {'':>16} --- HMM={hmm_val} best so far: {best_cfg} ---")
+
+        print(f"  {'':>16} BEST OVERALL: {best_cfg} -> Net ${best_pnl:>,.2f}")
+        print(f"  {'-'*155}")
 
     # =========================================================================
-    # BEST COMBO RECOMMENDATION
+    # BEST AMPLITUDE CONFIG PER PAIR
     # =========================================================================
     print(f"\n\n{'='*130}")
-    print("RECOMMENDED LIVE CONFIG")
+    print("BEST AMPLITUDE GATE CONFIG PER PAIR")
     print(f"{'='*130}")
 
     best_combos = {}
     for pair_name in [p.name for p in PAIRS if p.name in pair_data]:
-        best_r = None; best_h = 0; best_n = -999999
-        for hmm_val in hmm_values:
-            key = f"{pair_name}|HMM={hmm_val}"
-            if key in all_results:
-                r = all_results[key]
-                if r['trades'] >= 3 and r['net_pnl'] > best_n:
-                    best_n = r['net_pnl']; best_h = hmm_val; best_r = r
+        best_r = None; best_n = -999999; best_hurdle = 0; best_mult = 1.0; best_hmm = 0
+        for key, r in amp_results.items():
+            if key.startswith(pair_name) and r['trades'] >= 3 and r['net_pnl'] > best_n:
+                best_n = r['net_pnl']; best_r = r
+                # Parse hmm, hurdle and mult from key
+                parts = key.split('|')
+                for p in parts:
+                    if p.startswith('H'): best_hmm = int(p[1:])
+                    if p.startswith('A'): best_hurdle = float(p[1:])
+                    if p.startswith('M'): best_mult = float(p[1:])
         if best_r:
-            best_combos[pair_name] = (best_h, best_r)
+            best_combos[pair_name] = (best_hmm, best_hurdle, best_mult, best_r)
 
     total_net = 0; total_trades = 0
-    for pair_name, (hmm_val, r) in sorted(best_combos.items(), key=lambda x: -x[1][1]['net_pnl']):
+    for pair_name, (hmm_val, hurdle, mult, r) in sorted(best_combos.items(), key=lambda x: -x[1][3]['net_pnl']):
         total_net += r['net_pnl']; total_trades += r['trades']
         dpt = r['net_pnl'] / r['trades'] if r['trades'] > 0 else 0
         pdef = [p for p in PAIRS if p.name == pair_name][0]
         print(f"\n  {pair_name}:")
         print(f"    HMM hold = {hmm_val}")
-        print(f"    Dwell: base={pdef.dwell_base}s, at H=0.5 → {pdef.dwell_base*(0.5/pdef.dwell_anchor)/60:.0f} bars")
+        print(f"    Amplitude Hurdle = {hurdle}x | Opp Multiplier Cap = {mult}x")
+        print(f"    Amp Blocks: {r.get('amp_blocks',0)}")
         print(f"    Trades: {r['trades']} ({r.get('trades_per_month',0):.0f}/month)")
         print(f"    WR: {r['wr']}% net, {r['gross_wr']}% gross")
         print(f"    PF: {r['pf']}")
@@ -451,7 +481,9 @@ def main():
         print(f"    $/trade:   ${dpt:.2f}")
         if r['ghost']: print(f"    GHOST: {r['ghost_info']}")
 
-    days_span = max(r['days'] for _, r in best_combos.values()) if best_combos else 0
+    days_span = 0
+    for _, (_, _, _, r) in best_combos.items():
+        days_span = max(days_span, r.get('days', 0))
     months_span = days_span / 30.0
 
     print(f"\n  {'='*60}")
@@ -474,8 +506,8 @@ def main():
                           'comm_rt': v.commission_rt, 'comm_pct': v.commission_pct}
                       for k, v in PAIR_COSTS.items()},
         },
-        'best': {p: {'hmm': h, 'net': r['net_pnl'], 'pf': r['pf'], 'trades': r['trades']}
-                 for p, (h, r) in best_combos.items()},
+        'best': {p: {'hmm': h, 'hurdle': hrd, 'mult': m, 'net': r['net_pnl'], 'pf': r['pf'], 'trades': r['trades']}
+                 for p, (h, hrd, m, r) in best_combos.items()},
         'portfolio_net': round(total_net, 2),
     }
     out = Path("Results/oil_index_live_results.json")

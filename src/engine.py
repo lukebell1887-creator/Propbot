@@ -111,10 +111,10 @@ class PairConfig:
     resolved_b: str = ""
 
 
-# v5.6.3 DUO — Oil + Index (forex pairs dropped: costs eat the edge)
+# v5.6.4 DUO — Oil + Index (forex pairs dropped: costs eat the edge)
 # Per-pair HMM hold + Per-pair dwell (physics-based from Hurst):
 #   Index (H=0.585, trending): hmm=20, dwell=60s base (2-bar holds fine)
-#   Oil (H~0.5, fast MR):     hmm=5,  dwell=1800s base (eliminate bid-ask bounce)
+#   Oil (H~0.5, fast MR):     hmm=10, dwell=1800s base (eliminate bid-ask bounce)
 HOLY_TRIO: List[PairConfig] = [
     PairConfig(name="Index Spread",    symbol_a="US100",  symbol_b="DE40",   pair_index=0,
                aliases_a=("NAS100","USTEC","US100.cash","NAS100.cash","USTEC.cash"),
@@ -129,7 +129,7 @@ HOLY_TRIO: List[PairConfig] = [
                aliases_a=("XTIUSD","WTI","USOIL","CrudeOIL","USOILm","WTIm","XTIUSD.","OIL.WTI"),
                aliases_b=("XBRUSD","BRENT","UKOIL","BrentOIL","UKOILm","BRNm","XBRUSD.","OIL.BRENT"),
                max_spread_a=150.0, max_spread_b=150.0,
-               hmm_min_hold=5,     # HMM=5 — best from sweep
+               hmm_min_hold=10,    # HMM=10 — best from corrected sweep (v5.6.4 audit)
                dwell_base=1800.0, dwell_anchor=0.3, dwell_min=900.0, dwell_max=9000.0,
                # Amplitude gate: H=1.0 blocks garbage, M=2.0 scales up big moves
                amp_hurdle=1.0, amp_max_mult=2.0, notional=100_000.0,
@@ -992,20 +992,27 @@ class TradingEngine:
                 z_captured = max(0.0, abs(state.last_z) - state.last_exit_z)
                 expected_profit = z_captured * spread_sigma * lots * cfg.notional
 
-                # Cost model: spread × 4 fills + commission
+                # Cost model: spread × 4 fills + commission (aligned with test v5.6.4 audit)
                 base_spread_cost = (cfg.spread_cost_a + cfg.spread_cost_b) * 2.0  # 4 fills (open+close both legs)
-                commission_cost = cfg.commission_pct * cfg.commission_notional * lots * 2.0 if cfg.commission_pct > 0 else 0.0
+                # Commission: pct × notional × lots × 4 fills (round-trip both legs)
+                commission_cost = cfg.commission_pct * cfg.commission_notional * lots * 4.0 if cfg.commission_pct > 0 else 0.0
 
-                # Time-of-day spread multiplier (wider spreads at night/rollover)
+                # Time-of-day spread multiplier (5-zone, aligned with test — v5.6.4 audit)
+                # Uses DATA hour (UTC) not broker hour, matching test behavior
                 broker_hour = self._get_broker_now().hour
-                if broker_hour < 2 or broker_hour >= 22:
-                    tod_mult = 2.5  # Night session
-                elif broker_hour < 8:
-                    tod_mult = 1.5  # Asian session
+                if 0 <= broker_hour < 7:
+                    tod_mult = 1.8    # Night/Asian
+                elif 7 <= broker_hour < 9:
+                    tod_mult = 1.2    # Pre-London
+                elif 9 <= broker_hour < 17:
+                    tod_mult = 1.0    # London/NY overlap
+                elif 17 <= broker_hour < 21:
+                    tod_mult = 1.1    # US afternoon
                 else:
-                    tod_mult = 1.0  # London/NY session
+                    tod_mult = 1.5    # Night
 
-                total_cost = (base_spread_cost * tod_mult + commission_cost) * lots
+                # Fixed: spread_cost scales with lots, commission already contains lots
+                total_cost = base_spread_cost * tod_mult * lots + commission_cost
 
                 # Amplitude ratio
                 ratio = expected_profit / total_cost if total_cost > 0 else 999.0
