@@ -10,7 +10,7 @@ $DST = "C:\SHF"
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  Updating SHF to Native TCP Bridge" -ForegroundColor Cyan
+Write-Host "  Updating SHF v5.7 — Gold/Silver" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 
 # Step 1: Update Python bridge

@@ -1,4 +1,4 @@
-"""SHF Trading Engine v5.6.3 - Oil + Index Duo"""
+"""SHF Trading Engine v5.7 - Gold/Silver Pairs (Optuna Optimal)"""
 
 import asyncio
 import logging
@@ -111,29 +111,21 @@ class PairConfig:
     resolved_b: str = ""
 
 
-# v5.6.4 DUO — Oil + Index (forex pairs dropped: costs eat the edge)
-# Per-pair HMM hold + Per-pair dwell (physics-based from Hurst):
-#   Index (H=0.585, trending): hmm=20, dwell=60s base (2-bar holds fine)
-#   Oil (H~0.5, fast MR):     hmm=10, dwell=1800s base (eliminate bid-ask bounce)
+# v5.7 GOLD/SILVER — Optimal config from Optuna + 2yr Dukascopy validation
+# Gold/Silver ratio mean-reverts 2-3x per year with high win rate
+# Dukascopy (tight ECN) found April 2024 window; MT5 found December 2025 window
+# Prop firm pricing is looser → expect MORE opportunities than Dukascopy backtest
 HOLY_TRIO: List[PairConfig] = [
-    PairConfig(name="Index Spread",    symbol_a="US100",  symbol_b="DE40",   pair_index=0,
-               aliases_a=("NAS100","USTEC","US100.cash","NAS100.cash","USTEC.cash"),
-               aliases_b=("DAX40","GER40","DE40.cash","DAX40.cash","GER40.cash"),
-               max_spread_a=200.0, max_spread_b=200.0,
-               hmm_min_hold=20,    # HMM=20 — best from sweep
-               dwell_base=60.0, dwell_anchor=0.3, dwell_min=30.0, dwell_max=300.0,
-               # Amplitude gate: DISABLED for Index (costs are tiny, gate never triggers)
-               amp_hurdle=0.0, amp_max_mult=1.0, notional=150_000.0,
-               spread_cost_a=1.0, spread_cost_b=1.0, commission_pct=0.0, commission_notional=0.0),
-    PairConfig(name="Oil Spread",      symbol_a="XTIUSD", symbol_b="XBRUSD", pair_index=1,
-               aliases_a=("XTIUSD","WTI","USOIL","CrudeOIL","USOILm","WTIm","XTIUSD.","OIL.WTI"),
-               aliases_b=("XBRUSD","BRENT","UKOIL","BrentOIL","UKOILm","BRNm","XBRUSD.","OIL.BRENT"),
-               max_spread_a=150.0, max_spread_b=150.0,
-               hmm_min_hold=10,    # HMM=10 — best from corrected sweep (v5.6.4 audit)
-               dwell_base=1800.0, dwell_anchor=0.3, dwell_min=900.0, dwell_max=9000.0,
-               # Amplitude gate: H=1.0 blocks garbage, M=2.0 scales up big moves
-               amp_hurdle=1.0, amp_max_mult=2.0, notional=100_000.0,
-               spread_cost_a=4.0, spread_cost_b=5.0, commission_pct=0.0003, commission_notional=6500.0),
+    PairConfig(name="Gold Silver",     symbol_a="XAUUSD", symbol_b="XAGUSD", pair_index=0,
+               aliases_a=("XAUUSD","GOLD","GOLDm","XAUUSD.","XAUUSDm"),
+               aliases_b=("XAGUSD","SILVER","SILVERm","XAGUSD.","XAGUSDm"),
+               max_spread_a=500.0, max_spread_b=50.0,
+               hmm_min_hold=36,    # HMM=36 — Optuna optimal
+               dwell_base=558.0, dwell_anchor=0.3, dwell_min=180.0, dwell_max=3600.0,
+               # Amplitude gate: H=2.86 strong filter, M=2.49 scales up big setups
+               amp_hurdle=2.86, amp_max_mult=2.49, notional=225_000.0,
+               # Cost model: gold spread ~$30/lot, silver ~$3/lot, commission 0.0009%
+               spread_cost_a=30.0, spread_cost_b=3.0, commission_pct=0.000009, commission_notional=225000.0),
 ]
 
 
@@ -208,12 +200,12 @@ class TradingEngine:
     v5.6 Pairs Trading Engine — Dynamic Z Entry + Dynamic Z Exit + Correlation Risk
     """
 
-    # v5.6 Parameters
+    # v5.7 Parameters — OPTIMAL from Optuna
     WELFORD_SPAN = 100
-    Z_BASE = 2.0
+    Z_BASE = 2.393
     GAMMA = 6.0
     HURST_WINDOW = 512
-    EXIT_Z_BASE = 0.5
+    EXIT_Z_BASE = 0.432
     EXIT_GAMMA = 2.0
 
     # AKAD Parameters
@@ -287,7 +279,7 @@ class TradingEngine:
         self._initial_balance = 0.0
         self._last_status_log: float = 0.0  # Wall-clock of last status log
 
-        logger.info("SHF v5.6 Engine initialized")
+        logger.info("SHF v5.7 Engine initialized — Gold/Silver (XAUUSD/XAGUSD)")
         logger.info(f"  Rust available: {RUST_AVAILABLE}")
         logger.info(f"  HMM available: {HMM_AVAILABLE}")
         logger.info(f"  Dynamic Z: base={self.Z_BASE}, gamma={self.GAMMA}")
@@ -561,7 +553,7 @@ class TradingEngine:
         """Main trading loop — 100ms tick."""
         self._running = True
         self._last_tick_wall = time.time()  # Coma detector baseline
-        logger.info("Starting v5.6 trading loop (100ms tick)...")
+        logger.info("Starting v5.7 trading loop (100ms tick)...")
 
         try:
             while self._running and not self._shutdown_requested:
@@ -1483,17 +1475,22 @@ class TradingEngine:
     # Minimum stop distance per asset class (points from current price).
     # Must exceed broker's STOPS_LEVEL to avoid "Invalid stops" rejection.
     MIN_STOP_DISTANCE = {
-        'INDEX': 500.0,
-        'COMMODITY': 5.0,      # Oil: 500 points (XTIUSD ~$70, 5.0 = ~7%)    # Indices: 500 points minimum (NAS100, DAX40)
-        'FOREX': 0.0050,   # Forex: 50 pips minimum (AUDUSD, EURUSD etc.)
-        'FOREX_JPY': 0.500, # JPY pairs: 50 pips minimum (1 pip = 0.01 for JPY)
+        'INDEX': 500.0,        # Indices: 500 points minimum (NAS100, DAX40)
+        'COMMODITY': 5.0,      # Oil: 5.0 (XTIUSD ~$70, 5.0 = ~7%)
+        'PRECIOUS': 50.0,      # Gold: $50 (~1.7%), Silver: $1.50 (~4.7%)
+        'FOREX': 0.0050,       # Forex: 50 pips minimum (AUDUSD, EURUSD etc.)
+        'FOREX_JPY': 0.500,    # JPY pairs: 50 pips minimum (1 pip = 0.01 for JPY)
     }
 
     # Minimum Welford buffer length before we trust the sigma for hard stops
     MIN_BUFFER_FOR_STOPS = 200
 
     def _get_asset_class(self, symbol: str) -> str:
-        """Determine asset class from symbol name (JPY pairs need different stop distances)."""
+        """Determine asset class from symbol name."""
+        precious_symbols = ('XAUUSD', 'XAGUSD', 'GOLD', 'SILVER', 'GOLDm', 'SILVERm',
+                            'XAUUSDm', 'XAGUSDm', 'XAUUSD.', 'XAGUSD.')
+        if symbol in precious_symbols:
+            return 'PRECIOUS'
         jpy_symbols = ('EURJPY', 'CHFJPY', 'GBPJPY', 'USDJPY', 'AUDJPY', 'NZDJPY', 'CADJPY',
                        'EURJPYm', 'CHFJPYm', 'GBPJPYm', 'USDJPYm')
         if symbol in jpy_symbols:
@@ -1605,7 +1602,7 @@ class TradingEngine:
     def _save_state(self) -> None:
         """Save engine state for recovery."""
         state = {
-            'version': '5.6',
+            'version': '5.7',
             'timestamp': datetime.utcnow().isoformat(),
             'pairs': {
                 name: {
@@ -1627,7 +1624,7 @@ class TradingEngine:
 
     async def _shutdown(self) -> None:
         """Graceful shutdown."""
-        logger.info("Shutting down v5.6 engine...")
+        logger.info("Shutting down v5.7 engine...")
         self._running = False
         self._save_state()
         if self._bridge:

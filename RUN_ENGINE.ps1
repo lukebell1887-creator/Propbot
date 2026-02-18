@@ -1,5 +1,5 @@
 # =============================================================================
-# SHF v5.6.4 ENGINE LAUNCHER - Oil + Index Duo
+# SHF v5.7 ENGINE LAUNCHER - Gold/Silver (XAUUSD/XAGUSD)
 # =============================================================================
 # PowerShell 5.1 compatible (no ANSI escapes, ASCII only)
 # Engine runs in a HIDDEN window — immune to console freezes/QuickEdit
@@ -28,10 +28,10 @@ function Write-WARN($msg) {
 Clear-Host
 Write-Host ""
 Write-Host "  =============================================" -ForegroundColor Cyan
-Write-Host "     SHF v5.6.4 - Oil + Index Trading Engine   " -ForegroundColor Cyan
-Write-Host "     Pairs: US100/DE40 | XTIUSD/XBRUSD        " -ForegroundColor Cyan
-Write-Host "     HMM: Index=20 | Oil=10                    " -ForegroundColor Cyan
-Write-Host "     Dwell: Index=60s | Oil=1800s base         " -ForegroundColor Cyan
+Write-Host "     SHF v5.7 - Gold/Silver Trading Engine     " -ForegroundColor Cyan
+Write-Host "     Pair: XAUUSD / XAGUSD                    " -ForegroundColor Cyan
+Write-Host "     Z=2.393 ExitZ=0.432 HMM=36               " -ForegroundColor Cyan
+Write-Host "     Dwell=558s Hurdle=2.86 Mult=2.49          " -ForegroundColor Cyan
 Write-Host "     Mode: HIDDEN WINDOW (freeze-proof)        " -ForegroundColor Cyan
 Write-Host "  =============================================" -ForegroundColor Cyan
 Write-Host ""
@@ -166,8 +166,8 @@ Write-OK "logs/ and state/ directories ready"
 Write-Host ""
 Write-Host "  ALL CHECKS PASSED - LAUNCHING ENGINE" -ForegroundColor Green
 Write-Host ""
-Write-Host "  Pairs:  Index (NAS100/DAX40) HMM=20 Dwell=60s" -ForegroundColor Cyan
-Write-Host "          Oil (XTIUSD/XBRUSD)  HMM=10 Dwell=1800s" -ForegroundColor Cyan
+Write-Host "  Pair:   Gold/Silver (XAUUSD/XAGUSD) HMM=36" -ForegroundColor Cyan
+Write-Host "          Z=2.393 ExitZ=0.432 Dwell=558s Hurdle=2.86" -ForegroundColor Cyan
 Write-Host "  Risk:   Dynamic AKAD | 4pct daily DD | 9pct max DD" -ForegroundColor Cyan
 Write-Host "  Mode:   M1 bar signals | 768-bar pre-warm | 100ms tick" -ForegroundColor Cyan
 Write-Host "  Bridge: TCP localhost:5555" -ForegroundColor Cyan
