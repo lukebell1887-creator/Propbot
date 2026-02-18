@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//| SHF_Bridge.mq5 — SHF v5.6.4 Native TCP Socket Bridge            |
+//| SHF_Bridge.mq5 — SHF v5.7 Native TCP Socket Bridge              |
 //| Zero external dependencies — uses MQL5 built-in SocketXXX()     |
 //|                                                                    |
 //| v5.6.4 CHANGES (Python-side engine update):                       |
@@ -20,7 +20,7 @@
 //+------------------------------------------------------------------+
 #property copyright "SHF Trading Systems"
 #property link      ""
-#property version   "5.64"
+#property version   "5.70"
 #property strict
 
 input string InpHost        = "127.0.0.1";  // Python server host
@@ -65,23 +65,15 @@ int OnInit()
 //+------------------------------------------------------------------+
 void DetectSymbols()
 {
-   // Try multiple name variants for each asset
-   string index_a_variants[] = {"US100","NAS100","USTEC","US100.cash","NAS100.cash","USTEC.cash"};
-   string index_b_variants[] = {"DE40","DAX40","GER40","DE40.cash","DAX40.cash","GER40.cash"};
-   string oil_a[] = {"XTIUSD","WTI","USOIL","CrudeOIL","USOILm","WTIm","XTIUSD.","OIL.WTI"};
-   string oil_b[] = {"XBRUSD","BRENT","UKOIL","BrentOIL","UKOILm","BRNm","XBRUSD.","OIL.BRENT"};
-   // v5.6.3: Only Oil + Index duo (forex dropped — costs eat the edge)
-
+   // v5.7: Gold/Silver pair (Optuna optimal)
+   string gold[]   = {"XAUUSD","GOLD","GOLDm","XAUUSD.","XAUUSDm"};
+   string silver[] = {"XAGUSD","SILVER","SILVERm","XAGUSD.","XAGUSDm"};
    
    ArrayResize(g_symbols, 0);
    g_num_symbols = 0;
    
-   AddFirstValid(index_a_variants);
-   AddFirstValid(index_b_variants);
-   AddFirstValid(oil_a);
-   AddFirstValid(oil_b);
-
-
+   AddFirstValid(gold);
+   AddFirstValid(silver);
 }
 
 //+------------------------------------------------------------------+
