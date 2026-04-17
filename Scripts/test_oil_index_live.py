@@ -57,7 +57,7 @@ OIL_DWELL_BASE = 1800.0;   OIL_DWELL_ANCHOR = 0.3
 OIL_DWELL_MIN = 900.0;     OIL_DWELL_MAX = 9000.0
 
 # ============================================================================
-# COST MODEL — Real broker specs
+# COST MODEL — Real broker specs (5%ers)
 # ============================================================================
 @dataclass
 class PairCost:
@@ -73,6 +73,29 @@ PAIR_COSTS = {
 
 OIL_NOTIONAL_PER_LOT = 6500.0  # 100 barrels × ~$65
 
+# ============================================================================
+# SWAP COSTS — 5%ers actual specs
+# ============================================================================
+# Contract size = 100 barrels, point = 0.001
+# Swap in $ per lot per night = swap_points × point_size × contract_size
+# XTIUSD: long=-70pts, short=-40pts → long=-$7.00/lot, short=-$4.00/lot
+# XBRUSD: long=-70pts, short=-40pts → long=-$7.00/lot, short=-$4.00/lot
+# Both legs always negative! Pair always pays swap on BOTH sides.
+# For LONG spread (buy XTIUSD + sell XBRUSD): $7.00 + $4.00 = $11.00/lot/night
+# For SHORT spread (sell XTIUSD + buy XBRUSD): $4.00 + $7.00 = $11.00/lot/night
+# Friday night = 10× (covers Saturday + Sunday)
+# Mon-Thu nights = 1×
+PAIR_SWAPS = {
+    "Oil Spread": {
+        'per_lot_per_night': 11.0,   # $11.00 combined both legs
+        'friday_mult': 10,            # 10× on Friday night (covers weekend)
+    },
+    "Index Spread": {
+        'per_lot_per_night': 0.0,    # Unknown — set to 0 for now
+        'friday_mult': 10,
+    },
+}
+
 def get_spread_multiplier(hour):
     if 0 <= hour < 7: return 1.8
     elif 7 <= hour < 9: return 1.2
@@ -81,6 +104,7 @@ def get_spread_multiplier(hour):
     else: return 1.5
 
 def calc_trade_cost(pair_name, lots, hour):
+    """Spread + commission cost (no swap — swap calculated separately)."""
     pc = PAIR_COSTS[pair_name]
     mult = get_spread_multiplier(hour)
     spread_cost = (pc.spread_a_per_fill * 2 + pc.spread_b_per_fill * 2) * lots * mult
@@ -89,6 +113,39 @@ def calc_trade_cost(pair_name, lots, hour):
     else:
         comm = pc.commission_rt * lots
     return spread_cost + comm
+
+def calc_swap_cost(pair_name, lots, entry_time, exit_time):
+    """Calculate swap cost for holding position from entry_time to exit_time.
+    Swap is charged once per overnight hold (midnight crossing).
+    Friday night = 10× (covers the weekend)."""
+    sc = PAIR_SWAPS.get(pair_name)
+    if not sc or sc['per_lot_per_night'] <= 0:
+        return 0.0
+
+    swap_per_night = sc['per_lot_per_night'] * lots
+    friday_mult = sc['friday_mult']
+
+    # Count midnight crossings between entry and exit
+    entry_date = entry_time.date() if hasattr(entry_time, 'date') else entry_time
+    exit_date = exit_time.date() if hasattr(exit_time, 'date') else exit_time
+
+    if entry_date == exit_date:
+        return 0.0  # Same day — no swap
+
+    total_swap = 0.0
+    current_date = entry_date
+    from datetime import timedelta
+    while current_date < exit_date:
+        # This night = current_date → next day
+        day_of_week = current_date.weekday()  # Mon=0, Fri=4
+        if day_of_week == 4:  # Friday night
+            total_swap += swap_per_night * friday_mult
+        elif day_of_week < 5:  # Mon-Thu night (skip Sat/Sun — no swap charged)
+            total_swap += swap_per_night
+        # Skip Sat(5) and Sun(6) — swap already covered by Friday's 10×
+        current_date += timedelta(days=1)
+
+    return total_swap
 
 # ============================================================================
 # PAIR DEFINITIONS
@@ -185,7 +242,7 @@ def run_pair(df, pdef, hmm_hold, amp_hurdle=0.0, amp_max_mult=1.0):
     pos = 0; ez = 0.0; es = 0.0; ebar = 0; elots = 0.0
     lspread = 0.0; pspread = 0.0; sent_abort = False
     last_close_bar = -9999; last_close_h = 0.5
-    entry_hour = 0; hmm_blocks = 0; dwell_blocks = 0; rollover_blocks = 0; amp_blocks = 0
+    entry_hour = 0; entry_time = None; hmm_blocks = 0; dwell_blocks = 0; rollover_blocks = 0; amp_blocks = 0
 
     for bar in range(n):
         if ghost: break
@@ -219,12 +276,14 @@ def run_pair(df, pdef, hmm_hold, amp_hurdle=0.0, amp_max_mult=1.0):
             if pos != 0:
                 gross = (spread-es)*pos*elots*pdef.notional
                 cost = calc_trade_cost(pdef.name, elots, entry_hour)
+                swap = calc_swap_cost(pdef.name, elots, entry_time, bt) if entry_time else 0.0
+                cost += swap
                 pnl = gross - cost; balance += pnl; peak = max(peak,balance)
                 w = pnl > 0; dakad.record(w)
                 if not w: consec+=1
                 else: consec=0
                 if consec>=MAX_CONSEC_LOSSES: gcool=bar+COOLDOWN_BARS; consec=0
-                trades.append({'pnl':pnl,'gross':gross,'cost':cost,'hold':bar-ebar,'hour':entry_hour,'reason':'SENTINEL'})
+                trades.append({'pnl':pnl,'gross':gross,'cost':cost,'swap':swap,'hold':bar-ebar,'hour':entry_hour,'reason':'SENTINEL'})
                 pos=0; last_close_bar=bar; last_close_h=h
             continue
         if sent_abort and not abort: sent_abort = False
@@ -270,7 +329,7 @@ def run_pair(df, pdef, hmm_hold, amp_hurdle=0.0, amp_max_mult=1.0):
             # ── END AMPLITUDE GATE ───────────────────────────────────
 
             pos = s; ez = z; es = spread; ebar = bar; elots = lots
-            entry_hour = bt.hour
+            entry_hour = bt.hour; entry_time = bt
 
         # EXIT
         elif pos != 0:
@@ -286,12 +345,14 @@ def run_pair(df, pdef, hmm_hold, amp_hurdle=0.0, amp_max_mult=1.0):
             if ex:
                 gross = (spread-es)*pos*elots*pdef.notional
                 cost = calc_trade_cost(pdef.name, elots, entry_hour)
+                swap = calc_swap_cost(pdef.name, elots, entry_time, bt) if entry_time else 0.0
+                cost += swap
                 pnl = gross - cost; balance += pnl; peak = max(peak,balance)
                 w = pnl > 0; dakad.record(w)
                 if not w: consec+=1
                 else: consec=0
                 if consec>=MAX_CONSEC_LOSSES: gcool=bar+COOLDOWN_BARS; consec=0
-                trades.append({'pnl':pnl,'gross':gross,'cost':cost,'hold':bar-ebar,'hour':entry_hour,'reason':reason})
+                trades.append({'pnl':pnl,'gross':gross,'cost':cost,'swap':swap,'hold':bar-ebar,'hour':entry_hour,'reason':reason})
                 pos=0; last_close_bar=bar; last_close_h=h
 
     total = len(trades)
@@ -342,6 +403,8 @@ def run_pair(df, pdef, hmm_hold, amp_hurdle=0.0, amp_max_mult=1.0):
         'avg_loss': round(np.mean(losses),2) if losses else 0,
         'avg_gross_win': round(np.mean([g for g in gross_pnls if g > 0]),2) if gross_wins else 0,
         'avg_cost': round(sum(t['cost'] for t in trades)/total,2),
+        'total_swap': round(sum(t.get('swap',0) for t in trades),2),
+        'trades_with_swap': sum(1 for t in trades if t.get('swap',0) > 0),
     }
 
 
@@ -474,7 +537,7 @@ def main():
         print(f"    WR: {r['wr']}% net, {r['gross_wr']}% gross")
         print(f"    PF: {r['pf']}")
         print(f"    Gross P&L: ${r['gross_pnl']:,.2f}")
-        print(f"    Costs:     ${r['total_costs']:,.2f}")
+        print(f"    Costs:     ${r['total_costs']:,.2f} (incl swap: ${r.get('total_swap',0):,.2f} on {r.get('trades_with_swap',0)} trades)")
         print(f"    Net P&L:   ${r['net_pnl']:,.2f} ({r['return_pct']}%)")
         print(f"    MaxDD:     {r['max_dd_pct']}%")
         print(f"    Avg hold:  {r['avg_hold']:.0f} bars ({r['avg_hold']:.0f} min)")

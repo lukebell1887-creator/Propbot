@@ -1,0 +1,113 @@
+{
+  "trades": 575,
+  "net_pnl": -135.32423895549434,
+  "pct_return": -2.706484779109924,
+  "pf": 0.8064606174626084,
+  "win_rate": 0.4643478260869565,
+  "avg_winner_R": 0.9506832000501382,
+  "avg_loser_R": -1.0262369802357492,
+  "expectancy_R": -0.10825839217256317,
+  "max_dd_pct": 3.4798285783044185,
+  "equity": 4864.675761044504,
+  "peak": 5040.061252886496,
+  "gross_costs": 0.0,
+  "by_symbol": {
+    "DE40": 63,
+    "US100": 229,
+    "XAUUSD": 283
+  },
+  "by_edge": {
+    "DE40_h06_lag3_mom": {
+      "n": 30,
+      "wins": 11,
+      "net_pnl": -0.9813341900000159,
+      "sum_R": -8.067064029513501,
+      "wr": 0.36666666666666664,
+      "expectancy_R": -0.2689021343171167
+    },
+    "US100_h14_lag1_mom": {
+      "n": 47,
+      "wins": 24,
+      "net_pnl": 6.6367928259998,
+      "sum_R": -4.2047197105273355,
+      "wr": 0.5106382978723404,
+      "expectancy_R": -0.08946212150058161
+    },
+    "XAU_h14_lag5_rev": {
+      "n": 227,
+      "wins": 104,
+      "net_pnl": -110.21120797999765,
+      "sum_R": -20.381897279105768,
+      "wr": 0.4581497797356828,
+      "expectancy_R": -0.08978809374055405
+    },
+    "DE40_h20_lag3_mom": {
+      "n": 33,
+      "wins": 16,
+      "net_pnl": -0.3607613244999447,
+      "sum_R": -2.990166272896418,
+      "wr": 0.48484848484848486,
+      "expectancy_R": -0.09061109917867932
+    },
+    "US100_h21_lag1_rev": {
+      "n": 59,
+      "wins": 30,
+      "net_pnl": -0.7298095460001058,
+      "sum_R": -4.900914649984698,
+      "wr": 0.5084745762711864,
+      "expectancy_R": -0.08306634999974065
+    },
+    "US100_h21_lag10_mom": {
+      "n": 30,
+      "wins": 11,
+      "net_pnl": -1.6552342740001036,
+      "sum_R": -10.982893000943717,
+      "wr": 0.36666666666666664,
+      "expectancy_R": -0.3660964333647906
+    },
+    "XAU_h21_fade1sigma": {
+      "n": 56,
+      "wins": 26,
+      "net_pnl": -27.006031559996245,
+      "sum_R": -4.270789723708721,
+      "wr": 0.4642857142857143,
+      "expectancy_R": -0.0762641022090843
+    },
+    "US100_h23_lag1_mom": {
+      "n": 93,
+      "wins": 45,
+      "net_pnl": -1.0166529070000614,
+      "sum_R": -6.450130832543657,
+      "wr": 0.4838709677419355,
+      "expectancy_R": -0.06935624551122212
+    }
+  },
+  "disabled_edges": [
+    "US100_h23_lag1_mom",
+    "US100_h14_lag1_mom",
+    "US100_h21_lag1_rev",
+    "US100_h21_lag10_mom",
+    "DE40_h06_lag3_mom",
+    "DE40_h20_lag3_mom",
+    "XAU_h14_lag5_rev",
+    "XAU_h21_fade1sigma"
+  ],
+  "start_equity": 5000.0,
+  "final_equity": 4864.675761044504,
+  "bt_start": "2025-11-15T21:22:00",
+  "bt_end": "2026-02-13T21:22:00",
+  "bars_seen": 250620,
+  "passed_profit_target": false,
+  "failed_total_dd": false,
+  "profit_target_hit_on": null,
+  "total_dd_hit_on": null,
+  "rules": {
+    "name": "MTB Level 1",
+    "initial_balance": 5000.0,
+    "profit_target_pct": 0.06,
+    "max_daily_loss_pct": 0.04,
+    "max_total_loss_pct": 0.06,
+    "weekend_hold_allowed": true,
+    "news_trading_allowed": true
+  }
+}

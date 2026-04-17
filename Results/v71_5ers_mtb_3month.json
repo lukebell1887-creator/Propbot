@@ -1,0 +1,47 @@
+{
+  "trades": 63,
+  "net_pnl": -304.932589157017,
+  "pct_return": -6.098651783140449,
+  "pf": 0.36379302776094485,
+  "win_rate": 0.31746031746031744,
+  "avg_winner_R": 0.7862978912011104,
+  "avg_loser_R": -0.7631961614645312,
+  "expectancy_R": -0.2712932876024227,
+  "max_dd_pct": 6.121270521944963,
+  "equity": 4695.067410842978,
+  "peak": 5001.204678574706,
+  "gross_costs": 15.140438194444446,
+  "by_symbol": {
+    "US100": 23,
+    "DE40": 15,
+    "XAUUSD": 25
+  },
+  "start_equity": 5000.0,
+  "final_equity": 4695.067410842978,
+  "rules": {
+    "name": "MTB Level 1",
+    "initial_balance": 5000.0,
+    "profit_target_pct": 0.06,
+    "max_daily_loss_pct": 0.04,
+    "max_total_loss_pct": 0.06,
+    "weekend_hold_allowed": true,
+    "news_trading_allowed": true,
+    "daily_dd_limit_used": 0.04,
+    "total_dd_limit_used": 0.06
+  },
+  "passed_profit_target": false,
+  "failed_total_dd": true,
+  "profit_target_hit_on": null,
+  "total_dd_hit_on": "2026-01-01T23:00:00",
+  "bt_start": "2025-11-15T21:22:00",
+  "bt_end": "2026-02-13T21:22:00",
+  "bars_seen": 250620,
+  "strategy_mode": "orb",
+  "orb_config": {
+    "require_nr": false,
+    "require_kalman_agree": true,
+    "tp1_R": 1.0,
+    "tp2_R": 2.0,
+    "max_hold_minutes": 180
+  }
+}

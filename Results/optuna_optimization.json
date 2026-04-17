@@ -1,0 +1,119 @@
+{
+  "Gold_Silver": {
+    "notional": 390911.1463474507,
+    "optimal_params": {
+      "z_entry": 2.3933,
+      "exit_z": 0.4324,
+      "dwell": 9.32,
+      "hmm_hold": 36,
+      "amp_hurdle": 2.8578,
+      "amp_max_mult": 2.488
+    },
+    "fixed_result": {
+      "score": 20926.52746296474,
+      "trades": 11,
+      "wr": 81.8,
+      "pf": 95.45,
+      "net": 38048.23,
+      "avg": 3458.93,
+      "dd": 0.25,
+      "ghost": false,
+      "trpm": 3.1,
+      "mopct": 10.87,
+      "months": 3.5
+    },
+    "adaptive_result": {
+      "score": 20926.52746296474,
+      "trades": 11,
+      "wr": 81.8,
+      "pf": 95.45,
+      "net": 38048.23,
+      "avg": 3458.93,
+      "dd": 0.25,
+      "ghost": false,
+      "trpm": 3.1,
+      "mopct": 10.87,
+      "months": 3.5
+    },
+    "adaptive_wins": "False",
+    "adapt_adjustments": 0
+  },
+  "Oil_Spread": {
+    "notional": 6195.735688510471,
+    "optimal_params": {
+      "z_entry": 3.4367,
+      "exit_z": 0.3414,
+      "dwell": 16.09,
+      "hmm_hold": 36,
+      "amp_hurdle": 0.276,
+      "amp_max_mult": 1.7212
+    },
+    "fixed_result": {
+      "score": -8.30622425010806,
+      "trades": 3,
+      "wr": 0.0,
+      "pf": 0.0,
+      "net": -55.37,
+      "avg": -18.46,
+      "dd": 0.06,
+      "ghost": false,
+      "trpm": 0.8,
+      "mopct": -0.02,
+      "months": 3.6
+    },
+    "adaptive_result": {
+      "score": -8.30622425010806,
+      "trades": 3,
+      "wr": 0.0,
+      "pf": 0.0,
+      "net": -55.37,
+      "avg": -18.46,
+      "dd": 0.06,
+      "ghost": false,
+      "trpm": 0.8,
+      "mopct": -0.02,
+      "months": 3.6
+    },
+    "adaptive_wins": "False",
+    "adapt_adjustments": 0
+  },
+  "NAS_DAX": {
+    "notional": 24845.9704038293,
+    "optimal_params": {
+      "z_entry": 2.7412,
+      "exit_z": 0.7314,
+      "dwell": 6.17,
+      "hmm_hold": 11,
+      "amp_hurdle": 0.1267,
+      "amp_max_mult": 1.9788
+    },
+    "fixed_result": {
+      "score": 65.46261860719241,
+      "trades": 7,
+      "wr": 57.1,
+      "pf": 3.61,
+      "net": 187.04,
+      "avg": 26.72,
+      "dd": 0.07,
+      "ghost": false,
+      "trpm": 2.0,
+      "mopct": 0.05,
+      "months": 3.5
+    },
+    "adaptive_result": {
+      "score": 65.46261860719241,
+      "trades": 7,
+      "wr": 57.1,
+      "pf": 3.61,
+      "net": 187.04,
+      "avg": 26.72,
+      "dd": 0.07,
+      "ghost": false,
+      "trpm": 2.0,
+      "mopct": 0.05,
+      "months": 3.5
+    },
+    "adaptive_wins": "False",
+    "adapt_adjustments": 0
+  }
+}

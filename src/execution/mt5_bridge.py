@@ -424,6 +424,46 @@ class MT5Bridge:
                                 handler(tick)
                         except Exception as e:
                             logger.error(f"Tick handler error: {e}")
+
+                # v13: Dispatch bar handlers for newly-closed M1 bars
+                for bd in msg.get('b', []) or []:
+                    try:
+                        sym = bd.get('symbol', '')
+                        tf  = bd.get('timeframe', 'M1')
+                        key = f"{sym}_{tf}"
+                        # Accept handlers registered under exact key OR symbol-only
+                        handlers = (
+                            self._bar_handlers.get(key, [])
+                            + self._bar_handlers.get(sym, [])
+                        )
+                        if not handlers:
+                            continue
+                        try:
+                            bar_time = datetime.strptime(
+                                bd.get('time', ''), "%Y.%m.%d %H:%M:%S"
+                            )
+                        except Exception:
+                            try:
+                                bar_time = datetime.strptime(
+                                    bd.get('time', ''), "%Y.%m.%d %H:%M"
+                                )
+                            except Exception:
+                                bar_time = datetime.utcnow()
+                        bar = BarData(
+                            symbol=sym, timeframe=tf, time=bar_time,
+                            open=float(bd.get('open', 0)),
+                            high=float(bd.get('high', 0)),
+                            low=float(bd.get('low', 0)),
+                            close=float(bd.get('close', 0)),
+                            volume=float(bd.get('volume', 0)),
+                        )
+                        for h in handlers:
+                            try:
+                                h(bar)
+                            except Exception as e:
+                                logger.error(f"Bar handler error ({sym}): {e}")
+                    except Exception as e:
+                        logger.error(f"Bar dispatch error: {e}")
             else:
                 # This is a command response — put in queue
                 self._response_queue.put(msg)

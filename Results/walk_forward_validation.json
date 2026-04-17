@@ -1,0 +1,107 @@
+{
+  "Gold_Silver": {
+    "params": {
+      "z": 2.0,
+      "exit_z": 0.625,
+      "dwell": 15
+    },
+    "hmm_hold": 10,
+    "robust": true,
+    "train": {
+      "trades": 13,
+      "net_wr": 84.6,
+      "gross_wr": 84.6,
+      "pf": 18.59,
+      "net_pnl": 32135.92,
+      "gross_pnl": 35060.2,
+      "total_costs": 2924.28,
+      "total_swap": 0.0,
+      "avg_gross": 2696.94,
+      "avg_cost": 224.94,
+      "avg_net": 2471.99,
+      "avg_hold": 31.0,
+      "ghost": false,
+      "max_dd_pct": 1.38,
+      "trades_per_month": 5.2,
+      "monthly_pct": 12.85,
+      "days": 75,
+      "months": 2.5
+    },
+    "test": {
+      "trades": 4,
+      "net_wr": 50.0,
+      "gross_wr": 50.0,
+      "pf": 3.56,
+      "net_pnl": 8919.61,
+      "gross_pnl": 9299.45,
+      "total_costs": 379.84,
+      "total_swap": 0.0,
+      "avg_gross": 2324.86,
+      "avg_cost": 94.96,
+      "avg_net": 2229.9,
+      "avg_hold": 32.5,
+      "ghost": false,
+      "max_dd_pct": 3.48,
+      "trades_per_month": 4.1,
+      "monthly_pct": 9.23,
+      "days": 29,
+      "months": 1.0
+    }
+  },
+  "Oil_Spread": {
+    "params": null,
+    "hmm_hold": null,
+    "robust": false,
+    "train": null,
+    "test": null
+  },
+  "NAS_DAX": {
+    "params": {
+      "z": 2.5,
+      "exit_z": 0.25,
+      "dwell": 20
+    },
+    "hmm_hold": 20,
+    "robust": false,
+    "train": {
+      "trades": 7,
+      "net_wr": 71.4,
+      "gross_wr": 85.7,
+      "pf": 4.4,
+      "net_pnl": 261.96,
+      "gross_pnl": 387.67,
+      "total_costs": 125.71,
+      "total_swap": 0.0,
+      "avg_gross": 55.38,
+      "avg_cost": 17.96,
+      "avg_net": 37.42,
+      "avg_hold": 42.1,
+      "ghost": false,
+      "max_dd_pct": 0.06,
+      "trades_per_month": 2.8,
+      "monthly_pct": 0.1,
+      "days": 76,
+      "months": 2.5
+    },
+    "test": {
+      "trades": 6,
+      "net_wr": 33.3,
+      "gross_wr": 50.0,
+      "pf": 0.12,
+      "net_pnl": -499.76,
+      "gross_pnl": -401.73,
+      "total_costs": 98.03,
+      "total_swap": 0.0,
+      "avg_gross": -66.95,
+      "avg_cost": 16.34,
+      "avg_net": -83.29,
+      "avg_hold": 65.2,
+      "ghost": false,
+      "max_dd_pct": 0.55,
+      "trades_per_month": 6.4,
+      "monthly_pct": -0.54,
+      "days": 28,
+      "months": 0.9
+    }
+  }
+}

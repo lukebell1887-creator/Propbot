@@ -1,0 +1,354 @@
+
+Window: 2025-11-15 21:22:00 -> 2026-02-13 21:22:00
+
+
+========================================================
+  SYMBOL: US100
+========================================================
+  Loaded 84,392 bars
+
+--- US100  TP=2.0  SL=1.0 (TP=2.0R, SL=1.0R) ---
+  Base ORB WR: 32.3% on 62/62 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          WR=43.8%  n=16
+    OR-pct 25-50         WR=20.0%  n=15
+    OR-pct 50-75         WR=31.2%  n=16
+    OR-pct 75-101        WR=33.3%  n=15
+
+  By gap direction:
+    up gap > 0.3 OR      WR=36.1%  n=36
+    up gap 0-0.3 OR      n<10
+    dn gap 0-0.3 OR      n<10
+    dn gap > 0.3 OR      WR=21.1%  n=19
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=40.0%  n=10
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    n<10
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- US100  TP=1.5  SL=1.0 (TP=1.5R, SL=1.0R) ---
+  Base ORB WR: 37.1% on 62/62 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          WR=43.8%  n=16
+    OR-pct 25-50         WR=40.0%  n=15
+    OR-pct 50-75         WR=31.2%  n=16
+    OR-pct 75-101        WR=33.3%  n=15
+
+  By gap direction:
+    up gap > 0.3 OR      WR=41.7%  n=36
+    up gap 0-0.3 OR      n<10
+    dn gap 0-0.3 OR      n<10
+    dn gap > 0.3 OR      WR=26.3%  n=19
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=40.0%  n=10
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    n<10
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- US100  TP=1.0  SL=1.0 (TP=1.0R, SL=1.0R) ---
+  Base ORB WR: 43.5% on 62/62 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          WR=43.8%  n=16
+    OR-pct 25-50         WR=60.0%  n=15
+    OR-pct 50-75         WR=37.5%  n=16
+    OR-pct 75-101        WR=33.3%  n=15
+
+  By gap direction:
+    up gap > 0.3 OR      WR=47.2%  n=36
+    up gap 0-0.3 OR      n<10
+    dn gap 0-0.3 OR      n<10
+    dn gap > 0.3 OR      WR=36.8%  n=19
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=40.0%  n=10
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    n<10
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- US100  TP=1.0  SL=0.5 (TP=1.0R, SL=0.5R) ---
+  Base ORB WR: 27.4% on 62/62 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          WR=31.2%  n=16
+    OR-pct 25-50         WR=33.3%  n=15
+    OR-pct 50-75         WR=25.0%  n=16
+    OR-pct 75-101        WR=20.0%  n=15
+
+  By gap direction:
+    up gap > 0.3 OR      WR=27.8%  n=36
+    up gap 0-0.3 OR      n<10
+    dn gap 0-0.3 OR      n<10
+    dn gap > 0.3 OR      WR=31.6%  n=19
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=30.0%  n=10
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    n<10
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+========================================================
+  SYMBOL: XAUUSD
+========================================================
+  Loaded 86,195 bars
+
+--- XAUUSD  TP=2.0  SL=1.0 (TP=2.0R, SL=1.0R) ---
+  Base ORB WR: 28.6% on 49/63 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          n<10
+    OR-pct 25-50         WR=16.7%  n=12
+    OR-pct 50-75         WR=42.9%  n=14
+    OR-pct 75-101        WR=20.0%  n=15
+
+  By gap direction:
+    up gap > 0.3 OR      n<10
+    up gap 0-0.3 OR      WR=35.3%  n=17
+    dn gap 0-0.3 OR      WR=26.1%  n=23
+    dn gap > 0.3 OR      n<10
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=28.0%  n=25
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    WR=25.0%  n=12
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- XAUUSD  TP=1.5  SL=1.0 (TP=1.5R, SL=1.0R) ---
+  Base ORB WR: 38.2% on 55/63 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          n<10
+    OR-pct 25-50         WR=23.1%  n=13
+    OR-pct 50-75         WR=42.9%  n=14
+    OR-pct 75-101        WR=42.1%  n=19
+
+  By gap direction:
+    up gap > 0.3 OR      n<10
+    up gap 0-0.3 OR      WR=50.0%  n=20
+    dn gap 0-0.3 OR      WR=32.0%  n=25
+    dn gap > 0.3 OR      n<10
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=41.4%  n=29
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    WR=50.0%  n=16
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- XAUUSD  TP=1.0  SL=1.0 (TP=1.0R, SL=1.0R) ---
+  Base ORB WR: 42.1% on 57/63 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          n<10
+    OR-pct 25-50         WR=23.1%  n=13
+    OR-pct 50-75         WR=42.9%  n=14
+    OR-pct 75-101        WR=52.4%  n=21
+
+  By gap direction:
+    up gap > 0.3 OR      n<10
+    up gap 0-0.3 OR      WR=50.0%  n=20
+    dn gap 0-0.3 OR      WR=37.0%  n=27
+    dn gap > 0.3 OR      n<10
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=48.4%  n=31
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    WR=55.6%  n=18
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- XAUUSD  TP=1.0  SL=0.5 (TP=1.0R, SL=0.5R) ---
+  Base ORB WR: 22.6% on 62/63 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          n<10
+    OR-pct 25-50         WR=7.7%  n=13
+    OR-pct 50-75         WR=13.3%  n=15
+    OR-pct 75-101        WR=36.0%  n=25
+
+  By gap direction:
+    up gap > 0.3 OR      n<10
+    up gap 0-0.3 OR      WR=18.2%  n=22
+    dn gap 0-0.3 OR      WR=23.3%  n=30
+    dn gap > 0.3 OR      n<10
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=30.6%  n=36
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    WR=38.1%  n=21
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+========================================================
+  SYMBOL: DE40
+========================================================
+  Loaded 80,033 bars
+
+--- DE40  TP=2.0  SL=1.0 (TP=2.0R, SL=1.0R) ---
+  Base ORB WR: 28.3% on 60/60 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          WR=23.1%  n=13
+    OR-pct 25-50         WR=33.3%  n=12
+    OR-pct 50-75         WR=47.1%  n=17
+    OR-pct 75-101        WR=11.1%  n=18
+
+  By gap direction:
+    up gap > 0.3 OR      WR=35.7%  n=28
+    up gap 0-0.3 OR      WR=18.2%  n=11
+    dn gap 0-0.3 OR      n<10
+    dn gap > 0.3 OR      WR=31.2%  n=16
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=18.8%  n=16
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    n<10
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- DE40  TP=1.5  SL=1.0 (TP=1.5R, SL=1.0R) ---
+  Base ORB WR: 40.0% on 60/60 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          WR=30.8%  n=13
+    OR-pct 25-50         WR=33.3%  n=12
+    OR-pct 50-75         WR=58.8%  n=17
+    OR-pct 75-101        WR=33.3%  n=18
+
+  By gap direction:
+    up gap > 0.3 OR      WR=46.4%  n=28
+    up gap 0-0.3 OR      WR=18.2%  n=11
+    dn gap 0-0.3 OR      n<10
+    dn gap > 0.3 OR      WR=50.0%  n=16
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=25.0%  n=16
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    n<10
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- DE40  TP=1.0  SL=1.0 (TP=1.0R, SL=1.0R) ---
+  Base ORB WR: 48.3% on 60/60 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          WR=46.2%  n=13
+    OR-pct 25-50         WR=33.3%  n=12
+    OR-pct 50-75         WR=64.7%  n=17
+    OR-pct 75-101        WR=44.4%  n=18
+
+  By gap direction:
+    up gap > 0.3 OR      WR=57.1%  n=28
+    up gap 0-0.3 OR      WR=27.3%  n=11
+    dn gap 0-0.3 OR      n<10
+    dn gap > 0.3 OR      WR=56.2%  n=16
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=31.2%  n=16
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    n<10
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10
+
+--- DE40  TP=1.0  SL=0.5 (TP=1.0R, SL=0.5R) ---
+  Base ORB WR: 30.0% on 60/60 setups
+
+  By OR-width percentile:
+    OR-pct 0-25          WR=30.8%  n=13
+    OR-pct 25-50         WR=25.0%  n=12
+    OR-pct 50-75         WR=47.1%  n=17
+    OR-pct 75-101        WR=16.7%  n=18
+
+  By gap direction:
+    up gap > 0.3 OR      WR=35.7%  n=28
+    up gap 0-0.3 OR      WR=18.2%  n=11
+    dn gap 0-0.3 OR      n<10
+    dn gap > 0.3 OR      WR=31.2%  n=16
+
+  Combined: OR-pct > 0.5 AND |gap| < 0.5 OR:
+    WR=12.5%  n=16
+
+  Combined: OR-pct > 0.75 AND |gap| < 0.3 OR:
+    n<10
+
+  By weekday (OR-pct > 0.5):
+    Mon  n<10
+    Tue  n<10
+    Wed  n<10
+    Thu  n<10
+    Fri  n<10

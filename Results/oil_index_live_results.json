@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-12T10:51:20.744509",
+  "timestamp": "2026-02-19T08:13:12.108646",
   "config": {
     "index_dwell": {
       "base": 60.0,
@@ -27,18 +27,22 @@
     }
   },
   "best": {
+    "Oil Spread": {
+      "hmm": 10,
+      "hurdle": 1.0,
+      "mult": 2.0,
+      "net": 44532.58,
+      "pf": 4.42,
+      "trades": 647
+    },
     "Index Spread": {
       "hmm": 20,
-      "net": 4376.64,
-      "pf": 1.75,
-      "trades": 98
-    },
-    "Oil Spread": {
-      "hmm": 5,
-      "net": 28388.49,
-      "pf": 4.7,
-      "trades": 659
+      "hurdle": 3.0,
+      "mult": 2.0,
+      "net": 9867.1,
+      "pf": 1.89,
+      "trades": 106
     }
   },
-  "portfolio_net": 32765.13
+  "portfolio_net": 54399.68
 }

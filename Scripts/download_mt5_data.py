@@ -13,6 +13,8 @@ import sys
 
 # MT5 symbol name → CSV file name mapping
 SYMBOL_MAP = {
+    "XTIUSD": "XTIUSD",
+    "XBRUSD": "XBRUSD",
     "NAS100": "US100",
     "DAX40": "DE40",
     "AUDUSD": "AUDUSD",

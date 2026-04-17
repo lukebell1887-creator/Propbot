@@ -1,0 +1,22 @@
+{
+  "trades": 0,
+  "net_pnl": 0,
+  "equity": 100000.0,
+  "peak": 100000.0,
+  "pct_return": 0,
+  "pf": 0,
+  "win_rate": 0,
+  "expectancy_R": 0,
+  "avg_winner_R": 0,
+  "avg_loser_R": 0,
+  "avg_bars_held": 0,
+  "max_dd_pct": 0,
+  "gross_commissions": 0,
+  "by_symbol": {},
+  "by_side": {},
+  "by_exit_reason": {},
+  "by_hurst": {},
+  "by_confluence": {},
+  "start_equity": 100000.0,
+  "halted_permanently": false
+}

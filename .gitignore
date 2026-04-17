@@ -9,6 +9,8 @@ rust_core/target/
 # Data (too large for git — keep local)
 data/historical/*.csv
 data/historical_backup/
+data/duka_raw/
+data/test_duka/
 
 # Compiled binaries (rebuild from source)
 *.pyd

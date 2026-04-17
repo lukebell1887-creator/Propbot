@@ -1,26 +1,23 @@
 //+------------------------------------------------------------------+
-//| SHF_Bridge.mq5 — SHF v5.7 Native TCP Socket Bridge              |
+//| SHF_Bridge.mq5 — SHF v13 Native TCP Socket Bridge               |
 //| Zero external dependencies — uses MQL5 built-in SocketXXX()     |
 //|                                                                    |
-//| v5.6.4 CHANGES (Python-side engine update):                       |
-//|   - Amplitude Gate: blocks garbage Oil trades where expected       |
-//|     profit < hurdle x cost (hurdle=1.0)                           |
-//|   - Opportunity Multiplier: scales Oil lots up to 2x on big Z    |
-//|   - Corrected formula: (|Z| - exit_z) x sigma = actual capture   |
-//|   - Time-of-day cost adjustment (night=2.5x, Asian=1.5x)        |
-//|   - Index: no gate (costs too small to matter)                    |
-//|   - Bridge itself unchanged — all new logic in engine.py          |
+//| v13 CHANGES (SmartBB strategy):                                    |
+//|   - Universe: US100 / US500 / US30 / DE40 / USOIL (5%ers MTB)    |
+//|   - Bar streaming: new M1 close pushes in DATA field "b"         |
+//|   - Python engine aggregates M1 -> M5 for Bollinger + Hurst      |
+//|   - Dead-Python failsafe retained (closes all after 30s silence) |
 //|                                                                    |
 //| Architecture:                                                      |
-//|   Python = TCP Server (localhost:5555)                             |
-//|   MT5 EA = TCP Client (connects to Python)                        |
+//|   Python = TCP Server (bound 0.0.0.0:5555)                         |
+//|   MT5 EA = TCP Client  (connects to Python)                       |
 //|                                                                    |
 //| Protocol: Length-prefixed JSON over TCP                            |
 //|   [4 bytes big-endian length][JSON payload]                       |
 //+------------------------------------------------------------------+
 #property copyright "SHF Trading Systems"
 #property link      ""
-#property version   "5.70"
+#property version   "13.00"
 #property strict
 
 input string InpHost        = "127.0.0.1";  // Python server host
@@ -33,6 +30,9 @@ input int    InpTimeout     = 5000;          // Connection timeout (ms)
 // Auto-detected symbols
 string g_symbols[];
 int    g_num_symbols = 0;
+
+// v13: per-symbol last-M1-bar-time tracking for bar-close streaming
+datetime g_last_m1_time[];
 
 int    g_socket = INVALID_HANDLE;
 bool   g_connected = false;
@@ -65,15 +65,23 @@ int OnInit()
 //+------------------------------------------------------------------+
 void DetectSymbols()
 {
-   // v5.7: Gold/Silver pair (Optuna optimal)
-   string gold[]   = {"XAUUSD","GOLD","GOLDm","XAUUSD.","XAUUSDm"};
-   string silver[] = {"XAGUSD","SILVER","SILVERm","XAGUSD.","XAGUSDm"};
+   // v13 SmartBB universe — 5%ers MTB cheap (mostly zero-commission)
+   // Each row is a list of variant symbol names to try; first valid wins.
+   string us100[]  = {"US100","NAS100","USTEC","NAS100.","NDX100","US100.cash"};
+   string us500[]  = {"US500","SP500","SPX500","US500.","SPX","US500.cash"};
+   string us30[]   = {"US30","DJ30","US30.","WS30","DJIA","US30.cash"};
+   string de40[]   = {"DE40","DAX40","GER40","DAX","DE40.","GER40.cash"};
+   string usoil[]  = {"USOIL","WTI","OIL","CL","USOIL.","USOIL.cash","XTIUSD"};
    
    ArrayResize(g_symbols, 0);
+   ArrayResize(g_last_m1_time, 0);
    g_num_symbols = 0;
    
-   AddFirstValid(gold);
-   AddFirstValid(silver);
+   AddFirstValid(us100);
+   AddFirstValid(us500);
+   AddFirstValid(us30);
+   AddFirstValid(de40);
+   AddFirstValid(usoil);
 }
 
 //+------------------------------------------------------------------+
@@ -89,7 +97,9 @@ void AddFirstValid(string &variants[])
          {
             int idx = ArraySize(g_symbols);
             ArrayResize(g_symbols, idx + 1);
+            ArrayResize(g_last_m1_time, idx + 1);
             g_symbols[idx] = variants[i];
+            g_last_m1_time[idx] = 0;
             g_num_symbols++;
             PrintFormat("  Found: %s (bid=%.5f)", variants[i], tick.bid);
             return;
@@ -98,6 +108,40 @@ void AddFirstValid(string &variants[])
    }
    PrintFormat("  WARNING: No valid symbol found for variant group (first=%s)",
                ArraySize(variants) > 0 ? variants[0] : "?");
+}
+
+//+------------------------------------------------------------------+
+//| v13: Build JSON array of NEW closed M1 bars for all symbols       |
+//|      Returns "" if no new bars (so we don't pollute the DATA push)|
+//+------------------------------------------------------------------+
+string CollectNewM1Bars()
+{
+   string bars = "";
+   for(int i = 0; i < g_num_symbols; i++)
+   {
+      // Index 1 = most recently CLOSED bar (index 0 = forming bar)
+      datetime t1 = iTime(g_symbols[i], PERIOD_M1, 1);
+      if(t1 == 0 || t1 == g_last_m1_time[i]) continue;
+      
+      // Publish the new bar
+      g_last_m1_time[i] = t1;
+      
+      double o = iOpen(g_symbols[i],  PERIOD_M1, 1);
+      double h = iHigh(g_symbols[i],  PERIOD_M1, 1);
+      double l = iLow(g_symbols[i],   PERIOD_M1, 1);
+      double c = iClose(g_symbols[i], PERIOD_M1, 1);
+      long   v = iVolume(g_symbols[i],PERIOD_M1, 1);
+      
+      if(StringLen(bars) > 0) bars += ",";
+      bars += StringFormat(
+         "{\"symbol\":\"%s\",\"timeframe\":\"M1\",\"time\":\"%s\","
+         "\"open\":%.5f,\"high\":%.5f,\"low\":%.5f,\"close\":%.5f,\"volume\":%d}",
+         g_symbols[i],
+         TimeToString(t1, TIME_DATE|TIME_SECONDS),
+         o, h, l, c, (long)v
+      );
+   }
+   return bars;
 }
 
 //+------------------------------------------------------------------+
@@ -323,6 +367,9 @@ bool SendDataPush()
    MqlDateTime dt;
    TimeToStruct(st, dt);
    
+   // v13: collect newly-closed M1 bars since last push (empty array if none)
+   string bars = CollectNewM1Bars();
+   
    string json = StringFormat(
       "{\"mt\":\"DATA\","
       "\"q\":{%s},"
@@ -330,6 +377,7 @@ bool SendDataPush()
       "\"free_margin\":%.2f,\"margin_level\":%.2f,\"profit\":%.2f,"
       "\"currency\":\"%s\",\"leverage\":%d,\"server\":\"%s\"},"
       "\"p\":[%s],"
+      "\"b\":[%s],"
       "\"t\":{\"datetime\":\"%s\",\"timestamp\":%d,\"gmt_offset_seconds\":%d,"
       "\"year\":%d,\"month\":%d,\"day\":%d,"
       "\"hour\":%d,\"minute\":%d,\"second\":%d,\"day_of_week\":%d}}",
@@ -340,6 +388,7 @@ bool SendDataPush()
       AccountInfoString(ACCOUNT_CURRENCY), AccountInfoInteger(ACCOUNT_LEVERAGE),
       AccountInfoString(ACCOUNT_SERVER),
       positions,
+      bars,
       TimeToString(st, TIME_DATE|TIME_SECONDS), (long)st, gmt_off,
       dt.year, dt.mon, dt.day, dt.hour, dt.min, dt.sec, dt.day_of_week
    );

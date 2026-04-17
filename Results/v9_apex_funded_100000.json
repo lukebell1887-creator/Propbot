@@ -1,0 +1,54 @@
+{
+  "trades": 54,
+  "net_pnl": 12569.999899999963,
+  "pct_return": 12.569999900000026,
+  "pf": 1.6232367976381534,
+  "win_rate": 0.6296296296296297,
+  "expectancy_R": 0.21806683109281305,
+  "avg_winner_R": 0.9698878907049391,
+  "avg_loser_R": -1.0600289702478012,
+  "max_dd_pct": 3.1310295000000625,
+  "equity": 112569.99990000002,
+  "peak": 112624.8099,
+  "gross_costs": 0.0,
+  "by_filter": {
+    "DE40_0.00_1": {
+      "n": 25,
+      "wins": 18,
+      "net": 10202.963399999937,
+      "sum_R": 10.012189203000535,
+      "wr": 0.72,
+      "expR": 0.4004875681200214
+    },
+    "US100_0.00_1": {
+      "n": 29,
+      "wins": 16,
+      "net": 2367.0365000000265,
+      "sum_R": 1.7634196760113703,
+      "wr": 0.5517241379310345,
+      "expR": 0.060807575034874835
+    }
+  },
+  "by_symbol": {
+    "DE40": 25,
+    "US100": 29
+  },
+  "start_equity": 100000.0,
+  "final_equity": 112569.99990000002,
+  "bt_start": "2025-11-15T21:22:00",
+  "bt_end": "2026-02-13T21:22:00",
+  "bars_seen": 250620,
+  "passed_profit_target": true,
+  "failed_total_dd": false,
+  "profit_target_hit_on": "2026-01-09T00:00:00",
+  "total_dd_hit_on": null,
+  "rules": {
+    "name": "MTB Funded",
+    "initial_balance": 100000.0,
+    "profit_target_pct": 0.04,
+    "max_daily_loss_pct": 0.04,
+    "max_total_loss_pct": 0.06,
+    "weekend_hold_allowed": true,
+    "news_trading_allowed": true
+  }
+}
