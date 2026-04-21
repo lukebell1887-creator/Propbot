@@ -33,6 +33,12 @@ from Scripts.run_v15_live import (
     FIVEERS_SYMBOL_MAP, TIER1_SYMBOLS, setup_logging, banner,
 )
 
+# v18 default universe — XAUUSD REMOVED (negative bucket, high carry risk,
+# thin sample: only 5 trades in 186-trade OOS, and the ones it had were
+# either losses or marginal wins).  If you really want gold back in,
+# override with:  python Scripts\run_v18_live.py --symbols DE40,US30,US100,US500,XAUUSD
+V18_DEFAULT_SYMBOLS = ["DE40", "US30", "US100", "US500"]
+
 
 def main():
     p = argparse.ArgumentParser(description="SmartBB v18 live launcher")
@@ -42,7 +48,7 @@ def main():
     p.add_argument("--live", action="store_true")
     p.add_argument("--account-kill", type=float, default=0.08)
     p.add_argument("--magic",        type=int,   default=18000)
-    p.add_argument("--symbols",      default=",".join(TIER1_SYMBOLS))
+    p.add_argument("--symbols",      default=",".join(V18_DEFAULT_SYMBOLS))
     p.add_argument("--log-dir",      default="Results")
     p.add_argument("--warmup-bars",  type=int,   default=5000)
     p.add_argument("--warmup-sizer-from", type=str,
@@ -96,6 +102,7 @@ def main():
         sizer_cfg=sizer_cfg,
         calendar=TradingCalendar(),
         use_calendar=True,
+        telemetry_path=Path(args.log_dir) / "v18_live_telemetry.json",
     )
 
     # WARM-UP A: Kelly history
