@@ -19,8 +19,11 @@
 param(
     [double]$Risk = 0.5,
     [switch]$NoSizer,
-    [switch]$NoCalendar
+    [switch]$NoCalendar,
+    [int]$WarmupBars = 5000,
+    [double]$HeartbeatSec = 60.0
 )
+
 
 $ErrorActionPreference = "Stop"
 Set-Location "C:\PropBot"
@@ -63,8 +66,18 @@ Write-Host "[5/5] Starting v16 engine in LIVE mode - pre-flight running ..." -Fo
 Write-Host "      (Ctrl-C here or run .\STOP_BOT.ps1 to halt)" -ForegroundColor Yellow
 Write-Host ""
 
-$pyArgs = @("Scripts\run_v16_live.py", "--live", "--risk-scale", $Risk)
+$pyArgs = @(
+    "Scripts\run_v16_live.py", "--live",
+    "--risk-scale", $Risk,
+    "--warmup-bars", $WarmupBars,
+    "--heartbeat-sec", $HeartbeatSec
+)
 if ($NoSizer)    { $pyArgs += "--no-sizer" }
 if ($NoCalendar) { $pyArgs += "--no-calendar" }
 
+Write-Host ("       warmup-bars = {0}   heartbeat-sec = {1}" -f $WarmupBars, $HeartbeatSec)
+Write-Host ""
+
 python @pyArgs
+
+

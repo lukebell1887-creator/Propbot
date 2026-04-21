@@ -38,9 +38,11 @@ sys.path.insert(0, str(ROOT))
 from src.execution.mt5_bridge import MT5Bridge
 from src.live.v15_live import load_v15_params
 from src.live.v16_live import V16Live
+from src.live.warmup import warmup_engine_from_broker, warmup_sizer_from_backtest
 from src.smartbb_engine_v14 import SmartBBV14Config
 from src.dynamic_sizer_v16 import SizerConfig
 from src.trading_calendar import TradingCalendar, CalendarConfig
+
 
 # Import the pre-flight helpers from the v15 launcher (DRY).
 from Scripts.run_v15_live import (
@@ -128,7 +130,21 @@ def main():
     p.add_argument("--cold-start",        type=float, default=0.005)
     p.add_argument("--min-trades-kelly",  type=int,   default=10)
 
+    # Warm-up knobs (more info = better from bar 1)
+    p.add_argument("--warmup-bars",       type=int,   default=5000,
+                    help="pull N M1 bars from broker at startup to prime all "
+                         "indicators (default 5000 = ~3.5 days per symbol, "
+                         "0 disables warm-up)")
+    p.add_argument("--warmup-sizer-from", type=str,
+                    default="Results/v16_SC_100000_3m_trades.json",
+                    help="pre-load Kelly trade history from a backtest trades "
+                         "JSON so Kelly activates on day 1 (empty string "
+                         "disables)")
+    p.add_argument("--heartbeat-sec",     type=float, default=60.0,
+                    help="heartbeat + telemetry interval (seconds)")
+
     args = p.parse_args()
+
 
     # Derived flags
     args.use_sizer    = not args.no_sizer
@@ -203,12 +219,57 @@ def main():
         calendar=TradingCalendar(),
         use_dynamic_sizing=args.use_sizer,
         use_calendar=args.use_calendar,
+        telemetry_path=Path(args.log_dir) / "v16_live_telemetry.json",
     )
+
+    # ─────────────────────────────────────────────────────────────────
+    # WARM-UP STAGE A : Kelly history from latest backtest
+    # ─────────────────────────────────────────────────────────────────
+    if args.use_sizer and args.warmup_sizer_from:
+        banner("WARM-UP  A/B  Kelly trade history")
+        hist_path = Path(args.warmup_sizer_from)
+        if hist_path.exists():
+            counts = warmup_sizer_from_backtest(runner.sizer, hist_path)
+            total = sum(counts.values())
+            print(f"  ✅ loaded {total} historical R-values into sizer "
+                  f"from {hist_path}")
+            if total >= sizer_cfg.min_trades_for_kelly * len(syms) * 2:
+                print(f"  ✅ Kelly is ACTIVE from bar 1 "
+                      f"(≥ {sizer_cfg.min_trades_for_kelly} per side for all symbols)")
+            else:
+                print(f"  ⚠️  insufficient history — Kelly will use cold-start "
+                      f"until live trades accumulate")
+        else:
+            print(f"  ⚠️  {hist_path} not found — Kelly will start cold")
+    elif not args.use_sizer:
+        print("\n  (Kelly history warm-up skipped: --no-sizer)")
+
+    # ─────────────────────────────────────────────────────────────────
+    # WARM-UP STAGE B : engine indicators from broker M1 history
+    # ─────────────────────────────────────────────────────────────────
+    if args.warmup_bars > 0:
+        banner(f"WARM-UP  B/B  Engine indicators  ({args.warmup_bars} M1 bars/symbol)")
+        sym_map = {k: v for k, v in FIVEERS_SYMBOL_MAP.items() if k in syms}
+        streamed = warmup_engine_from_broker(
+            engine=runner.engine, bridge=bridge,
+            internal_to_broker=sym_map, bars_per_symbol=args.warmup_bars,
+        )
+        print(f"  ✅ warm-up complete — per-symbol bars streamed:")
+        for s, n in streamed.items():
+            days = n / 1440.0
+            ready_hint = "ALL GATES HOT" if n >= 6000 else (
+                "BB+Hurst hot, quantiles warming" if n >= 2000 else
+                "BB warming — may take live bars before ready"
+            )
+            print(f"     {s:<7} {n:>6,} bars  (~{days:4.1f} days)  {ready_hint}")
+    else:
+        print("\n  (engine warm-up skipped: --warmup-bars 0)")
 
     mode = "🔴 LIVE" if args.live else "🟡 DRY-RUN"
     log.info(f"{mode}  starting v16 runner — Ctrl-C to stop cleanly")
     try:
-        runner.run()
+        runner.run(heartbeat_sec=args.heartbeat_sec)
+
     except KeyboardInterrupt:
         log.warning("KeyboardInterrupt — shutting down gracefully")
     finally:
