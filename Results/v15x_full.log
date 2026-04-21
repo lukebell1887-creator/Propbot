@@ -1,0 +1,234 @@
+c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Results\v15x_full.log
+v15-X universe scan launched on 25 new pairs
+'\"python -u Scripts\v15x_universe_scan.py --symbols UK100 JP225 XAGUSD XBRUSD XTIUSD EURUSD GBPUSD USDJPY USDCHF USDCAD AUDUSD NZDUSD EURGBP EURJPY EURCHF EURCAD EURAUD EURNZD GBPJPY GBPCAD AUDCAD AUDNZD NZDCAD CADJPY CHFJPY --out Results\v15x_universe_scan.json --report Docs\V15X_UNIVERSE_SCAN.md \"' is not recognized as an internal or external command,
+operable program or batch file.
+v15-X scan on 25 pairs: ['UK100', 'JP225', 'XAGUSD', 'XBRUSD', 'XTIUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'USDCAD', 'AUDUSD', 'NZDUSD', 'EURGBP', 'EURJPY', 'EURCHF', 'EURCAD', 'EURAUD', 'EURNZD', 'GBPJPY', 'GBPCAD', 'AUDCAD', 'AUDNZD', 'NZDCAD', 'CADJPY', 'CHFJPY']
+
+=== [1/25] UK100 ===
+[UK100] loading UK100_M1.csv ...
+[UK100]   100,000 bars -> IS 70,000  OOS 20,000
+[UK100]   grid  24/72  best_IS_net=$-1,517 PF=0.66
+[UK100]   grid  48/72  best_IS_net=$-431 PF=0.72
+[UK100]   grid  72/72  best_IS_net=$+675 PF=2.67
+[UK100] REJECT | OOS n=6 net=$-117 PF=0.74 | stress +$1 net=$-417 PF=0.41  (77s)
+c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Scripts\v15x_universe_scan.py:247: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  f"_Generated {datetime.utcnow().isoformat()}Z — SmartBB v14 engine, coarse "
+
+=== [2/25] JP225 ===
+[JP225] loading JP225_M1.csv ...
+[JP225]   100,000 bars -> IS 70,000  OOS 20,000
+[JP225]   grid  24/72  best_IS_net=$+384 PF=1.67
+[JP225]   grid  48/72  best_IS_net=$+411 PF=2.63
+[JP225]   grid  72/72  best_IS_net=$+411 PF=2.63
+[JP225] TIER3 | OOS n=13 net=$+136 PF=4.63 | stress +$1 net=$-514 PF=0.00  (76s)
+
+=== [3/25] XAGUSD ===
+[XAGUSD] loading XAGUSD_M1.csv ...
+[XAGUSD]   534,711 bars -> IS 374,297  OOS 106,942
+[XAGUSD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[XAGUSD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[XAGUSD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[XAGUSD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (392s)
+
+=== [4/25] XBRUSD ===
+[XBRUSD] loading XBRUSD_M1.csv ...
+[XBRUSD]   99,000 bars -> IS 69,300  OOS 19,800
+[XBRUSD]   grid  24/72  best_IS_net=$-65 PF=0.86
+[XBRUSD]   grid  48/72  best_IS_net=$+62 PF=1.28
+[XBRUSD]   grid  72/72  best_IS_net=$+191 PF=3.16
+[XBRUSD] TIER3 | OOS n=4 net=$+167 PF=4.05 | stress +$1 net=$-33 PF=0.78  (69s)
+
+=== [5/25] XTIUSD ===
+[XTIUSD] loading XTIUSD_M1.csv ...
+[XTIUSD]   99,000 bars -> IS 69,300  OOS 19,800
+[XTIUSD]   grid  24/72  best_IS_net=$-370 PF=0.00
+[XTIUSD]   grid  48/72  best_IS_net=$-154 PF=0.42
+[XTIUSD]   grid  72/72  best_IS_net=$+82 PF=3.93
+[XTIUSD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (69s)
+
+=== [6/25] EURUSD ===
+[EURUSD] loading EURUSD_M1.csv ...
+[EURUSD]   99,000 bars -> IS 69,300  OOS 19,800
+[EURUSD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[EURUSD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[EURUSD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[EURUSD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (73s)
+
+=== [7/25] GBPUSD ===
+[GBPUSD] loading GBPUSD_M1.csv ...
+[GBPUSD]   99,000 bars -> IS 69,300  OOS 19,800
+[GBPUSD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[GBPUSD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[GBPUSD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[GBPUSD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (74s)
+
+=== [8/25] USDJPY ===
+[USDJPY] loading USDJPY_M1.csv ...
+[USDJPY]   100,000 bars -> IS 70,000  OOS 20,000
+[USDJPY]   grid  24/72  best_IS_net=$+0 PF=0.00
+[USDJPY]   grid  48/72  best_IS_net=$+0 PF=0.00
+[USDJPY]   grid  72/72  best_IS_net=$+0 PF=0.00
+[USDJPY] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (74s)
+
+=== [9/25] USDCHF ===
+[USDCHF] loading USDCHF_M1.csv ...
+[USDCHF]   100,000 bars -> IS 70,000  OOS 20,000
+[USDCHF]   grid  24/72  best_IS_net=$+0 PF=0.00
+[USDCHF]   grid  48/72  best_IS_net=$+0 PF=0.00
+[USDCHF]   grid  72/72  best_IS_net=$+0 PF=0.00
+[USDCHF] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (74s)
+
+=== [10/25] USDCAD ===
+[USDCAD] loading USDCAD_M1.csv ...
+[USDCAD]   100,000 bars -> IS 70,000  OOS 20,000
+[USDCAD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[USDCAD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[USDCAD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[USDCAD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (76s)
+
+=== [11/25] AUDUSD ===
+[AUDUSD] loading AUDUSD_M1.csv ...
+[AUDUSD]   99,000 bars -> IS 69,300  OOS 19,800
+[AUDUSD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[AUDUSD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[AUDUSD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[AUDUSD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (75s)
+
+=== [12/25] NZDUSD ===
+[NZDUSD] loading NZDUSD_M1.csv ...
+[NZDUSD]   99,000 bars -> IS 69,300  OOS 19,800
+[NZDUSD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[NZDUSD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[NZDUSD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[NZDUSD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (73s)
+
+=== [13/25] EURGBP ===
+[EURGBP] loading EURGBP_M1.csv ...
+[EURGBP]   100,000 bars -> IS 70,000  OOS 20,000
+[EURGBP]   grid  24/72  best_IS_net=$+0 PF=0.00
+[EURGBP]   grid  48/72  best_IS_net=$+0 PF=0.00
+[EURGBP]   grid  72/72  best_IS_net=$+0 PF=0.00
+[EURGBP] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (73s)
+
+=== [14/25] EURJPY ===
+[EURJPY] loading EURJPY_M1.csv ...
+[EURJPY]   100,000 bars -> IS 70,000  OOS 20,000
+[EURJPY]   grid  24/72  best_IS_net=$+0 PF=0.00
+[EURJPY]   grid  48/72  best_IS_net=$+0 PF=0.00
+[EURJPY]   grid  72/72  best_IS_net=$+0 PF=0.00
+[EURJPY] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (74s)
+
+=== [15/25] EURCHF ===
+[EURCHF] loading EURCHF_M1.csv ...
+[EURCHF]   100,000 bars -> IS 70,000  OOS 20,000
+[EURCHF]   grid  24/72  best_IS_net=$+0 PF=0.00
+[EURCHF]   grid  48/72  best_IS_net=$+0 PF=0.00
+[EURCHF]   grid  72/72  best_IS_net=$+0 PF=0.00
+[EURCHF] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (73s)
+
+=== [16/25] EURCAD ===
+[EURCAD] loading EURCAD_M1.csv ...
+[EURCAD]   100,000 bars -> IS 70,000  OOS 20,000
+[EURCAD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[EURCAD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[EURCAD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[EURCAD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (76s)
+
+=== [17/25] EURAUD ===
+[EURAUD] loading EURAUD_M1.csv ...
+[EURAUD]   100,000 bars -> IS 70,000  OOS 20,000
+[EURAUD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[EURAUD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[EURAUD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[EURAUD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (76s)
+
+=== [18/25] EURNZD ===
+[EURNZD] loading EURNZD_M1.csv ...
+[EURNZD]   100,000 bars -> IS 70,000  OOS 20,000
+[EURNZD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[EURNZD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[EURNZD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[EURNZD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (76s)
+
+=== [19/25] GBPJPY ===
+[GBPJPY] loading GBPJPY_M1.csv ...
+[GBPJPY]   100,000 bars -> IS 70,000  OOS 20,000
+[GBPJPY]   grid  24/72  best_IS_net=$+0 PF=0.00
+[GBPJPY]   grid  48/72  best_IS_net=$+0 PF=0.00
+[GBPJPY]   grid  72/72  best_IS_net=$+0 PF=0.00
+[GBPJPY] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (75s)
+
+=== [20/25] GBPCAD ===
+[GBPCAD] loading GBPCAD_M1.csv ...
+[GBPCAD]   100,000 bars -> IS 70,000  OOS 20,000
+[GBPCAD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[GBPCAD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[GBPCAD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[GBPCAD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (75s)
+
+=== [21/25] AUDCAD ===
+[AUDCAD] loading AUDCAD_M1.csv ...
+[AUDCAD]   100,000 bars -> IS 70,000  OOS 20,000
+[AUDCAD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[AUDCAD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[AUDCAD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[AUDCAD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (74s)
+
+=== [22/25] AUDNZD ===
+[AUDNZD] loading AUDNZD_M1.csv ...
+[AUDNZD]   100,000 bars -> IS 70,000  OOS 20,000
+[AUDNZD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[AUDNZD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[AUDNZD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[AUDNZD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (73s)
+
+=== [23/25] NZDCAD ===
+[NZDCAD] loading NZDCAD_M1.csv ...
+[NZDCAD]   100,000 bars -> IS 70,000  OOS 20,000
+[NZDCAD]   grid  24/72  best_IS_net=$+0 PF=0.00
+[NZDCAD]   grid  48/72  best_IS_net=$+0 PF=0.00
+[NZDCAD]   grid  72/72  best_IS_net=$+0 PF=0.00
+[NZDCAD] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (74s)
+
+=== [24/25] CADJPY ===
+[CADJPY] loading CADJPY_M1.csv ...
+[CADJPY]   100,000 bars -> IS 70,000  OOS 20,000
+[CADJPY]   grid  24/72  best_IS_net=$+0 PF=0.00
+[CADJPY]   grid  48/72  best_IS_net=$+0 PF=0.00
+[CADJPY]   grid  72/72  best_IS_net=$+0 PF=0.00
+[CADJPY] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (73s)
+
+=== [25/25] CHFJPY ===
+[CHFJPY] loading CHFJPY_M1.csv ...
+[CHFJPY]   100,000 bars -> IS 70,000  OOS 20,000
+[CHFJPY]   grid  24/72  best_IS_net=$+0 PF=0.00
+[CHFJPY]   grid  48/72  best_IS_net=$+0 PF=0.00
+[CHFJPY]   grid  72/72  best_IS_net=$+0 PF=0.00
+[CHFJPY] REJECT | OOS n=0 net=$+0 PF=0.00 | stress +$1 net=$+0 PF=0.00  (75s)
+
+=== v15-X SCAN COMPLETE ===
+  UK100    REJECT OOS n=  6 net=$    -117 PF=0.74
+  JP225    TIER3  OOS n= 13 net=$    +136 PF=4.63
+  XAGUSD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  XBRUSD   TIER3  OOS n=  4 net=$    +167 PF=4.05
+  XTIUSD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  EURUSD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  GBPUSD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  USDJPY   REJECT OOS n=  0 net=$      +0 PF=0.00
+  USDCHF   REJECT OOS n=  0 net=$      +0 PF=0.00
+  USDCAD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  AUDUSD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  NZDUSD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  EURGBP   REJECT OOS n=  0 net=$      +0 PF=0.00
+  EURJPY   REJECT OOS n=  0 net=$      +0 PF=0.00
+  EURCHF   REJECT OOS n=  0 net=$      +0 PF=0.00
+  EURCAD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  EURAUD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  EURNZD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  GBPJPY   REJECT OOS n=  0 net=$      +0 PF=0.00
+  GBPCAD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  AUDCAD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  AUDNZD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  NZDCAD   REJECT OOS n=  0 net=$      +0 PF=0.00
+  CADJPY   REJECT OOS n=  0 net=$      +0 PF=0.00
+  CHFJPY   REJECT OOS n=  0 net=$      +0 PF=0.00

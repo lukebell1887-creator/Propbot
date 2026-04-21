@@ -136,6 +136,165 @@ SMARTBB_UNIVERSE: dict[str, SymbolSpec] = {
         swap_long_pts=-270.0 / 100.0, swap_short_pts=-270.0 / 100.0,
         swap_triple_day=4,
         trade_start=7 * 60, trade_end=22 * 60),
+    # ---- v15-expansion: additional indices ----------------------------
+    "UK100": SymbolSpec(
+        symbol="UK100", asset_class="index", pip_value=1.0,
+        spread_pts=1.5, commission_type="zero",
+        contract_size=1.0,
+        swap_long_pts=-3.0, swap_short_pts=-0.5, swap_triple_day=4,
+        trade_start=7 * 60, trade_end=20 * 60),
+    "JP225": SymbolSpec(
+        symbol="JP225", asset_class="index", pip_value=0.0091,  # ~$1 per 110 pts at ~110 USDJPY
+        spread_pts=8.0, commission_type="zero",
+        contract_size=1.0,
+        swap_long_pts=-10.0, swap_short_pts=0.0, swap_triple_day=4,
+        trade_start=0 * 60, trade_end=21 * 60),
+    # ---- v15-expansion: additional metals/energies --------------------
+    "XAGUSD": SymbolSpec(
+        symbol="XAGUSD", asset_class="metal", pip_value=0.05,  # $0.05/pt, 5000 oz contract
+        spread_pts=2.0, commission_type="percent",
+        commission_per_deal=0.001,
+        contract_size=5000.0,
+        swap_long_pts=-3.0, swap_short_pts=-3.0, swap_triple_day=4,
+        trade_start=7 * 60, trade_end=22 * 60),
+    "XBRUSD": SymbolSpec(      # Brent
+        symbol="XBRUSD", asset_class="oil", pip_value=10.0,
+        spread_pts=0.03, commission_type="percent",
+        commission_per_deal=0.002,
+        contract_size=100.0,
+        swap_long_pts=-0.05, swap_short_pts=-0.05, swap_triple_day=4,
+        trade_start=8 * 60, trade_end=20 * 60),
+    "XTIUSD": SymbolSpec(      # WTI alt
+        symbol="XTIUSD", asset_class="oil", pip_value=10.0,
+        spread_pts=0.04, commission_type="percent",
+        commission_per_deal=0.002,
+        contract_size=100.0,
+        swap_long_pts=-0.05, swap_short_pts=-0.05, swap_triple_day=4,
+        trade_start=13 * 60, trade_end=20 * 60),
+    # ---- v15-expansion: forex majors ($4/lot R/T = $2/deal fixed) ----
+    # pip_value = $ per point per 1 lot.  Non-JPY: 1 point = $1 on 100k lot (5-digit).
+    # JPY pairs: 1 point = ~$0.091 at ~110 USDJPY level (3-digit).
+    "EURUSD": SymbolSpec(
+        symbol="EURUSD", asset_class="forex", pip_value=1.0,
+        spread_pts=1.0, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.8, swap_short_pts=0.2, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "GBPUSD": SymbolSpec(
+        symbol="GBPUSD", asset_class="forex", pip_value=1.0,
+        spread_pts=1.5, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.4, swap_short_pts=-0.2, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "USDJPY": SymbolSpec(
+        symbol="USDJPY", asset_class="forex", pip_value=0.091,
+        spread_pts=1.2, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=0.5, swap_short_pts=-1.2, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "USDCHF": SymbolSpec(
+        symbol="USDCHF", asset_class="forex", pip_value=1.0,
+        spread_pts=1.8, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=0.3, swap_short_pts=-1.0, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "USDCAD": SymbolSpec(
+        symbol="USDCAD", asset_class="forex", pip_value=1.0,
+        spread_pts=1.6, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.3, swap_short_pts=-0.2, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "AUDUSD": SymbolSpec(
+        symbol="AUDUSD", asset_class="forex", pip_value=1.0,
+        spread_pts=1.5, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.5, swap_short_pts=-0.2, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "NZDUSD": SymbolSpec(
+        symbol="NZDUSD", asset_class="forex", pip_value=1.0,
+        spread_pts=2.0, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.5, swap_short_pts=-0.3, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    # ---- v15-expansion: forex crosses --------------------------------
+    "EURGBP": SymbolSpec(
+        symbol="EURGBP", asset_class="forex", pip_value=1.0,
+        spread_pts=1.5, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.5, swap_short_pts=-0.3, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "EURJPY": SymbolSpec(
+        symbol="EURJPY", asset_class="forex", pip_value=0.091,
+        spread_pts=1.8, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=0.2, swap_short_pts=-1.4, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "EURCHF": SymbolSpec(
+        symbol="EURCHF", asset_class="forex", pip_value=1.0,
+        spread_pts=2.2, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.7, swap_short_pts=-0.4, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "EURCAD": SymbolSpec(
+        symbol="EURCAD", asset_class="forex", pip_value=1.0,
+        spread_pts=2.5, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.7, swap_short_pts=-0.4, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "EURAUD": SymbolSpec(
+        symbol="EURAUD", asset_class="forex", pip_value=1.0,
+        spread_pts=2.8, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.3, swap_short_pts=-0.5, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "EURNZD": SymbolSpec(
+        symbol="EURNZD", asset_class="forex", pip_value=1.0,
+        spread_pts=3.2, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.3, swap_short_pts=-0.7, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "GBPJPY": SymbolSpec(
+        symbol="GBPJPY", asset_class="forex", pip_value=0.091,
+        spread_pts=2.5, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=0.5, swap_short_pts=-1.7, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "GBPCAD": SymbolSpec(
+        symbol="GBPCAD", asset_class="forex", pip_value=1.0,
+        spread_pts=3.0, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.6, swap_short_pts=-0.5, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "AUDCAD": SymbolSpec(
+        symbol="AUDCAD", asset_class="forex", pip_value=1.0,
+        spread_pts=2.2, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.5, swap_short_pts=-0.4, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "AUDNZD": SymbolSpec(
+        symbol="AUDNZD", asset_class="forex", pip_value=1.0,
+        spread_pts=2.5, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.5, swap_short_pts=-0.4, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "NZDCAD": SymbolSpec(
+        symbol="NZDCAD", asset_class="forex", pip_value=1.0,
+        spread_pts=2.8, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=-0.5, swap_short_pts=-0.3, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "CADJPY": SymbolSpec(
+        symbol="CADJPY", asset_class="forex", pip_value=0.091,
+        spread_pts=2.0, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=0.2, swap_short_pts=-1.0, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
+    "CHFJPY": SymbolSpec(
+        symbol="CHFJPY", asset_class="forex", pip_value=0.091,
+        spread_pts=2.5, commission_type="fixed",
+        commission_per_deal=2.0, contract_size=100000.0,
+        swap_long_pts=0.1, swap_short_pts=-1.2, swap_triple_day=2,
+        trade_start=0, trade_end=24 * 60),
 }
 
 

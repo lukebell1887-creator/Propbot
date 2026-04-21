@@ -1,0 +1,49 @@
+
+=== USOIL ===  (100,000 M1 bars)
+
+[USOIL] splits: IS=60,000  OOS1=15,000  OOS2=15,000
+[USOIL] IS grid = 81 configs
+  IS [1/81] last: n=5 PF=0.30 net=$-76
+  IS [10/81] last: n=8 PF=0.15 net=$-191
+  IS [20/81] last: n=22 PF=0.05 net=$-659
+  IS [30/81] last: n=13 PF=0.08 net=$-379
+  IS [40/81] last: n=6 PF=0.05 net=$-204
+  IS [50/81] last: n=17 PF=0.05 net=$-573
+  IS [60/81] last: n=6 PF=0.05 net=$-229
+  IS [70/81] last: n=2 PF=0.00 net=$-59
+  IS [80/81] last: n=8 PF=0.00 net=$-403
+[USOIL] IS done in 69.7s (69,776 bars/sec)
+[USOIL] Top5 OOS2 results:
+    z=0.97 hq=0.2 sa=0.75 tf=0.5  n=1 PF=0.00 net=$-45 DD=0.04%  fail
+    z=0.99 hq=0.2 sa=0.75 tf=1.0  n=1 PF=0.00 net=$-34 DD=0.03%  fail
+    z=0.98 hq=0.2 sa=0.75 tf=0.75  n=1 PF=0.00 net=$-34 DD=0.03%  fail
+    z=0.98 hq=0.2 sa=1.0 tf=0.75  n=1 PF=0.00 net=$-48 DD=0.05%  fail
+    z=0.97 hq=0.2 sa=0.75 tf=0.75  n=2 PF=0.00 net=$-79 DD=0.08%  fail
+
+=== XAUUSD ===  (708,795 M1 bars)
+
+[XAUUSD] splits: IS=425,277  OOS1=106,319  OOS2=106,321
+[XAUUSD] IS grid = 81 configs
+  IS [1/81] last: n=4 PF=0.00 net=$-580
+  IS [10/81] last: n=6 PF=0.00 net=$-865
+  IS [20/81] last: n=34 PF=0.01 net=$-5152
+  IS [30/81] last: n=26 PF=0.00 net=$-4339
+  IS [40/81] last: n=3 PF=0.00 net=$-469
+  IS [50/81] last: n=24 PF=0.01 net=$-4055
+  IS [60/81] last: n=14 PF=0.00 net=$-2467
+  IS [70/81] last: n=1 PF=0.00 net=$-226
+  IS [80/81] last: n=13 PF=0.00 net=$-2136
+[XAUUSD] IS done in 540.7s (63,703 bars/sec)
+[XAUUSD] Top5 OOS2 results:
+    z=0.97 hq=0.4 sa=0.75 tf=0.5  n=16 PF=0.18 net=$-2623 DD=2.76%  fail
+    z=0.97 hq=0.4 sa=1.0 tf=0.5  n=16 PF=0.17 net=$-2995 DD=3.50%  fail
+    z=0.99 hq=0.4 sa=0.75 tf=0.75  n=18 PF=0.16 net=$-2381 DD=2.52%  fail
+    z=0.99 hq=0.3 sa=0.75 tf=0.75  n=12 PF=0.30 net=$-1213 DD=1.41%  fail
+    z=0.98 hq=0.4 sa=0.75 tf=0.75  n=25 PF=0.05 net=$-5404 DD=5.40%  fail
+
+======================================================================
+  v14 OPTIMIZER SUMMARY
+======================================================================
+  KEPT:     []
+  DROPPED:  ['USOIL', 'XAUUSD']
+  Written to: Results\v14_usoil_xauusd.json

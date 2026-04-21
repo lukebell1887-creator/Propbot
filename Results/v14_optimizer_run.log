@@ -1,0 +1,105 @@
+
+=== US100 ===  (99,000 M1 bars)
+
+[US100] splits: IS=59,400  OOS1=14,850  OOS2=14,850
+[US100] IS grid = 81 configs
+  IS [1/81] last: n=27 PF=1.99 net=$3136
+  IS [10/81] last: n=41 PF=2.45 net=$6323
+  IS [20/81] last: n=46 PF=3.57 net=$11328
+  IS [30/81] last: n=18 PF=8.27 net=$5745
+  IS [40/81] last: n=29 PF=3.57 net=$6201
+  IS [50/81] last: n=32 PF=4.40 net=$8193
+  IS [60/81] last: n=10 PF=10.75 net=$3045
+  IS [70/81] last: n=18 PF=1.97 net=$1843
+  IS [80/81] last: n=19 PF=1.83 net=$1671
+[US100] IS done in 72.1s (66,691 bars/sec)
+[US100] Top5 OOS2 results:
+    z=0.98 hq=0.2 sa=0.75 tf=1.0  n=5 PF=5.58 net=$998 DD=0.22%  PASS
+    z=0.98 hq=0.2 sa=0.75 tf=0.75  n=5 PF=5.58 net=$998 DD=0.22%  PASS
+    z=0.98 hq=0.2 sa=0.75 tf=0.5  n=5 PF=5.58 net=$998 DD=0.22%  PASS
+    z=0.98 hq=0.4 sa=0.75 tf=1.0  n=9 PF=13.41 net=$2706 DD=0.22%  PASS
+    z=0.98 hq=0.4 sa=0.75 tf=0.75  n=9 PF=13.41 net=$2706 DD=0.22%  PASS
+[US100] Bootstrap CI on OOS2: net_p05=$1523 pf_p05=3.58 dd_p95=$436
+
+=== US500 ===  (100,000 M1 bars)
+
+[US500] splits: IS=60,000  OOS1=15,000  OOS2=15,000
+[US500] IS grid = 81 configs
+  IS [1/81] last: n=25 PF=3.36 net=$1469
+  IS [10/81] last: n=37 PF=2.76 net=$1689
+  IS [20/81] last: n=47 PF=1.77 net=$1217
+  IS [30/81] last: n=26 PF=2.81 net=$1280
+  IS [40/81] last: n=31 PF=0.86 net=$-219
+  IS [50/81] last: n=37 PF=0.88 net=$-241
+  IS [60/81] last: n=16 PF=1.70 net=$438
+  IS [70/81] last: n=16 PF=0.91 net=$-82
+  IS [80/81] last: n=19 PF=0.76 net=$-276
+[US500] IS done in 77.2s (62,965 bars/sec)
+[US500] Top5 OOS2 results:
+    z=0.99 hq=0.4 sa=0.75 tf=1.0  n=3 PF=25.38 net=$634 DD=0.03%  fail
+    z=0.99 hq=0.3 sa=0.75 tf=1.0  n=3 PF=25.38 net=$634 DD=0.03%  fail
+    z=0.99 hq=0.2 sa=0.75 tf=1.0  n=3 PF=25.38 net=$634 DD=0.03%  fail
+    z=0.99 hq=0.4 sa=0.75 tf=0.75  n=3 PF=25.38 net=$634 DD=0.03%  fail
+    z=0.98 hq=0.3 sa=0.75 tf=1.0  n=4 PF=29.76 net=$748 DD=0.03%  fail
+
+=== US30 ===  (100,000 M1 bars)
+
+[US30] splits: IS=60,000  OOS1=15,000  OOS2=15,000
+[US30] IS grid = 81 configs
+  IS [1/81] last: n=38 PF=0.93 net=$-423
+  IS [10/81] last: n=55 PF=0.63 net=$-2973
+  IS [20/81] last: n=64 PF=0.91 net=$-790
+  IS [30/81] last: n=28 PF=2.04 net=$3274
+  IS [40/81] last: n=41 PF=1.24 net=$1937
+  IS [50/81] last: n=47 PF=1.02 net=$168
+  IS [60/81] last: n=15 PF=3.08 net=$4052
+  IS [70/81] last: n=20 PF=1.13 net=$493
+  IS [80/81] last: n=26 PF=1.45 net=$2327
+[US30] IS done in 79.7s (60,976 bars/sec)
+[US30] Top5 OOS2 results:
+    z=0.99 hq=0.2 sa=0.75 tf=0.5  n=4 PF=2.19 net=$584 DD=0.49%  fail
+    z=0.99 hq=0.2 sa=0.75 tf=0.75  n=4 PF=2.19 net=$584 DD=0.49%  fail
+    z=0.99 hq=0.2 sa=0.75 tf=1.0  n=4 PF=2.19 net=$584 DD=0.49%  fail
+    z=0.99 hq=0.3 sa=0.75 tf=0.5  n=6 PF=3.97 net=$1456 DD=0.48%  PASS
+    z=0.99 hq=0.3 sa=0.75 tf=0.75  n=6 PF=3.97 net=$1456 DD=0.48%  PASS
+[US30] Bootstrap CI on OOS2: net_p05=$-116 pf_p05=0.92 dd_p95=$980
+
+=== DE40 ===  (99,000 M1 bars)
+
+[DE40] splits: IS=59,400  OOS1=14,850  OOS2=14,850
+[DE40] IS grid = 81 configs
+  IS [1/81] last: n=36 PF=1.47 net=$1901
+  IS [10/81] last: n=43 PF=1.52 net=$2316
+  IS [20/81] last: n=50 PF=1.36 net=$1912
+  IS [30/81] last: n=20 PF=0.89 net=$-254
+  IS [40/81] last: n=27 PF=1.28 net=$987
+  IS [50/81] last: n=32 PF=0.52 net=$-2337
+  IS [60/81] last: n=10 PF=0.80 net=$-294
+  IS [70/81] last: n=14 PF=0.78 net=$-489
+  IS [80/81] last: n=16 PF=0.78 net=$-500
+[DE40] IS done in 74.5s (64,599 bars/sec)
+[DE40] Top5 OOS2 results:
+    z=0.98 hq=0.4 sa=0.75 tf=0.5  n=16 PF=2.14 net=$1723 DD=1.00%  PASS
+    z=0.99 hq=0.4 sa=0.75 tf=0.5  n=7 PF=6.59 net=$1350 DD=0.24%  PASS
+    z=0.99 hq=0.4 sa=0.75 tf=0.75  n=7 PF=6.59 net=$1350 DD=0.24%  PASS
+    z=0.99 hq=0.4 sa=0.75 tf=1.0  n=7 PF=6.59 net=$1350 DD=0.24%  PASS
+    z=0.99 hq=0.2 sa=0.75 tf=0.5  n=2 PF=0.36 net=$-155 DD=0.24%  fail
+[DE40] Bootstrap CI on OOS2: net_p05=$-473 pf_p05=0.81 dd_p95=$1632
+
+=== UK100 ===  (100,000 M1 bars)
+
+[UK100] splits: IS=60,000  OOS1=15,000  OOS2=15,000
+[UK100] IS grid = 81 configs
+Traceback (most recent call last):
+  File "c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Scripts\optimize_v14_per_symbol.py", line 400, in <module>
+    main()
+  File "c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Scripts\optimize_v14_per_symbol.py", line 368, in main
+    res = walk_forward(
+          ^^^^^^^^^^^^^
+  File "c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Scripts\optimize_v14_per_symbol.py", line 233, in walk_forward
+    s = run_v14(symbol, is_rows, p, initial_equity)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Scripts\optimize_v14_per_symbol.py", line 74, in run_v14
+    symbols=[SMARTBB_UNIVERSE[symbol]],
+             ~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'UK100'

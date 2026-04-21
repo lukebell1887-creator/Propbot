@@ -1,0 +1,6 @@
+US100: ['symbol', 'tier', 'reason', 'best_params', 'best_cfg_summary', 'oos_per_split', 'median_net', 'median_pf', 'commission_stress', 'bootstrap_per_split', 'neighbour_smoothness', 'duration_sec']
+US500: ['symbol', 'tier', 'reason', 'best_params', 'best_cfg_summary', 'oos_per_split', 'median_net', 'median_pf', 'commission_stress', 'bootstrap_per_split', 'neighbour_smoothness', 'duration_sec']
+US30: ['symbol', 'tier', 'reason', 'best_params', 'best_cfg_summary', 'oos_per_split', 'median_net', 'median_pf', 'commission_stress', 'bootstrap_per_split', 'neighbour_smoothness', 'duration_sec']
+DE40: ['symbol', 'tier', 'reason', 'best_params', 'best_cfg_summary', 'oos_per_split', 'median_net', 'median_pf', 'commission_stress', 'bootstrap_per_split', 'neighbour_smoothness', 'duration_sec']
+USOIL: ['symbol', 'tier', 'reason', 'best_params', 'best_cfg_summary', 'oos_per_split', 'median_net', 'median_pf', 'commission_stress', 'bootstrap_per_split', 'neighbour_smoothness', 'duration_sec']
+XAUUSD: ['symbol', 'tier', 'reason', 'best_params', 'best_cfg_summary', 'oos_per_split', 'median_net', 'median_pf', 'commission_stress', 'bootstrap_per_split', 'neighbour_smoothness', 'duration_sec']

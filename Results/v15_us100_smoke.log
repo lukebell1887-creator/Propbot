@@ -1,0 +1,52 @@
+
+=== US100 ===  (99,000 M1 bars, 3 WF splits: OOS sizes [16831, 14850, 16830])
+[US100] grid = 960 configs
+  [IS-A  50/960] z=0.95 hq=0.15 sa=1.50 tf=0.50 ses=us       n= 38 PF=0.52 net=$-2947
+  [IS-A 100/960] z=0.95 hq=0.25 sa=1.25 tf=0.50 ses=overlap  n= 46 PF=0.76 net=$-2147
+  [IS-A 150/960] z=0.95 hq=0.35 sa=1.00 tf=0.75 ses=us       n= 70 PF=1.39 net=$+4639
+  [IS-A 200/960] z=0.95 hq=0.45 sa=0.75 tf=0.75 ses=overlap  n= 61 PF=1.15 net=$+1445
+  [IS-A 250/960] z=0.97 hq=0.15 sa=0.50 tf=1.00 ses=us       n= 26 PF=7.21 net=$+7211
+  [IS-A 300/960] z=0.97 hq=0.15 sa=1.50 tf=1.00 ses=overlap  n= 20 PF=0.23 net=$-3198
+  [IS-A 350/960] z=0.97 hq=0.25 sa=1.50 tf=0.50 ses=us       n= 33 PF=0.79 net=$-1209
+  [IS-A 400/960] z=0.97 hq=0.35 sa=1.25 tf=0.50 ses=overlap  n= 39 PF=1.06 net=$+374
+  [IS-A 450/960] z=0.97 hq=0.45 sa=1.00 tf=0.75 ses=us       n= 48 PF=2.20 net=$+7389
+  [IS-A 500/960] z=0.98 hq=0.15 sa=0.75 tf=0.75 ses=overlap  n= 14 PF=7.19 net=$+3704
+  [IS-A 550/960] z=0.98 hq=0.25 sa=0.50 tf=1.00 ses=us       n= 24 PF=18.18 net=$+9682
+  [IS-A 600/960] z=0.98 hq=0.25 sa=1.50 tf=1.00 ses=overlap  n= 22 PF=1.36 net=$+1530
+  [IS-A 650/960] z=0.98 hq=0.35 sa=1.50 tf=0.50 ses=us       n= 31 PF=1.11 net=$+569
+  [IS-A 700/960] z=0.98 hq=0.45 sa=1.25 tf=0.50 ses=overlap  n= 28 PF=1.94 net=$+3523
+  [IS-A 750/960] z=0.99 hq=0.15 sa=1.00 tf=0.75 ses=us       n=  8 PF=18.32 net=$+2715
+  [IS-A 800/960] z=0.99 hq=0.25 sa=0.75 tf=0.75 ses=overlap  n= 14 PF=16.40 net=$+4890
+  [IS-A 850/960] z=0.99 hq=0.35 sa=0.50 tf=1.00 ses=us       n= 18 PF=71.06 net=$+8620
+  [IS-A 900/960] z=0.99 hq=0.35 sa=1.50 tf=1.00 ses=overlap  n= 18 PF=0.69 net=$-917
+  [IS-A 950/960] z=0.99 hq=0.45 sa=1.50 tf=0.50 ses=us       n= 19 PF=0.75 net=$-751
+  [IS-A 960/960] z=0.99 hq=0.45 sa=1.50 tf=1.00 ses=overlap  n= 18 PF=0.69 net=$-917
+[US100] top-30 IS configs identified; running on all 3 OOS splits
+  [OOS   5/30] z=0.97 hq=0.45 sa=0.50 tf=0.75 ses=all        3-split med: net=$+2,411 PF=19.24
+  [OOS  10/30] z=0.97 hq=0.45 sa=0.50 tf=0.50 ses=us         3-split med: net=$+2,411 PF=19.24
+  [OOS  15/30] z=0.98 hq=0.45 sa=0.50 tf=1.00 ses=all        3-split med: net=$+1,788 PF=19.24
+  [OOS  20/30] z=0.98 hq=0.45 sa=0.75 tf=1.00 ses=us         3-split med: net=$+776 PF=2.31
+  [OOS  25/30] z=0.97 hq=0.35 sa=0.50 tf=0.50 ses=all        3-split med: net=$+2,554 PF=10.75
+  [OOS  30/30] z=0.98 hq=0.35 sa=0.50 tf=1.00 ses=us         3-split med: net=$+1,930 PF=10.75
+
+[US100] WINNER: z=0.97 hq=0.35 sa=0.5 tf=1.0 ses=all
+  3-split OOS: net=$+2,554 PF=7.28 n=13  net=$+868 PF=10.75 n=4  net=$+5,861 PF=inf n=12
+  Comm-stress +$0.00/lot  n= 12  net=$+5,861  PF=inf  comm=$0
+  Comm-stress +$0.50/lot  n= 12  net=$+5,681  PF=inf  comm=$174
+  Comm-stress +$1.00/lot  n= 12  net=$+5,501  PF=inf  comm=$347
+  Comm-stress +$2.00/lot  n= 12  net=$+5,145  PF=inf  comm=$693
+  Bootstrap split-0: net p05=$+1,175 p50=$+2,564 p95=$+3,906  PF p05=2.46
+  Bootstrap split-1: net p05=$-94 p50=$+868 p95=$+1,912  PF p05=0.00
+  Bootstrap split-2: net p05=$+4,646 p50=$+5,864 p95=$+7,040  PF p05=10.00
+  Smoothness: 5/5 top grid neighbours profitable
+[US100] TIER TIER1 — 3-split median PF 10.75, net $2554, +$1/lot stress PF inf  (862.1s)
+
+Wrote Results\v15_us100_smoke.json
+Wrote Docs\V15_US100_SMOKE.md
+
+======================================================================
+  v15 SUMMARY
+======================================================================
+  TIER1   : ['US100']
+  TIER2   : []
+  REJECT  : []

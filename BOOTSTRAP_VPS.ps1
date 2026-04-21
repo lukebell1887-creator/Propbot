@@ -6,7 +6,7 @@
 #   2. Open PowerShell AS ADMINISTRATOR (right-click the Start menu -> PowerShell (Admin))
 #   3. Paste:
 #        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-#        irm https://raw.githubusercontent.com/lukebell1887-creator/PropBot/main/BOOTSTRAP_VPS.ps1 | iex
+#        irm https://raw.githubusercontent.com/lukebell1887-creator/Propbot/main/BOOTSTRAP_VPS.ps1 | iex
 #      (or copy this file to C:\ and run: powershell -ExecutionPolicy Bypass -File C:\BOOTSTRAP_VPS.ps1)
 #
 # What it does:
@@ -35,7 +35,7 @@ if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
     Write-Host "`n[1/6] Installing Chocolatey..." -ForegroundColor Yellow
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-    iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 } else {
     Write-Host "`n[1/6] Chocolatey already installed." -ForegroundColor Green
@@ -50,7 +50,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 $repoDir = "C:\PropBot"
 if (-not (Test-Path $repoDir)) {
     Write-Host "`n[3/6] Cloning PropBot repo..." -ForegroundColor Yellow
-    git clone https://github.com/lukebell1887-creator/PropBot.git $repoDir
+    git clone https://github.com/lukebell1887-creator/Propbot.git $repoDir
 } else {
     Write-Host "`n[3/6] Repo exists — pulling latest..." -ForegroundColor Green
     Push-Location $repoDir

@@ -1,0 +1,46 @@
+[
+  {
+    "symbol": "EURUSD",
+    "bars": 99000,
+    "commission_profile": {
+      "asset_class": "forex",
+      "spread_pts": 1.0,
+      "commission_type": "fixed",
+      "commission_per_deal": 2.0,
+      "pip_value": 1.0,
+      "contract_size": 100000.0
+    },
+    "best_config": {
+      "z": 0.95,
+      "hq": 0.15,
+      "sa": 0.75,
+      "tf": 0.5,
+      "ses": "all"
+    },
+    "is": {
+      "n": 0,
+      "net": 0,
+      "pf": 0,
+      "comm": 0,
+      "spread": 0
+    },
+    "oos": {
+      "oos_n": 0,
+      "oos_net": 0,
+      "oos_pf": 0,
+      "oos_wr": 0,
+      "oos_dd_pct": 0,
+      "oos_commissions": 0,
+      "oos_spread_cost": 0,
+      "oos_exp_R": 0
+    },
+    "stress": {
+      "stress_n": 0,
+      "stress_net": 0,
+      "stress_pf": 0
+    },
+    "tier": "REJECT",
+    "reason": "only 0 OOS trades",
+    "elapsed_sec": 74.08125257492065
+  }
+]

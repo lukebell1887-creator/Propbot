@@ -1,0 +1,1883 @@
+{
+  "results": {
+    "US100": {
+      "symbol": "US100",
+      "status": "KEEP",
+      "best_params": {
+        "z_quantile": 0.98,
+        "z_quantile_window": 500,
+        "z_min_abs": 2.5,
+        "z_max_abs": 5.0,
+        "hurst_quantile": 0.4,
+        "hurst_quantile_window": 200,
+        "hurst_max_abs": 0.55,
+        "use_ou_gate": true,
+        "ou_window": 200,
+        "ou_max_halflife": 30.0,
+        "stop_atr_mult": 0.75,
+        "tp_frac": 1.0,
+        "breakeven_trigger_frac": 0.5,
+        "breakeven_atr_offset": 0.2,
+        "use_optimal_stop": true,
+        "optimal_stop_threshold": 0.4,
+        "optimal_stop_min_bars": 3,
+        "time_stop_max": 96,
+        "time_stop_ou_mult": 2.0,
+        "allowed_hours": null,
+        "risk_multiplier": 1.0
+      },
+      "oos2_metrics": {
+        "trades": 9,
+        "net_pnl": 2706.1310244239953,
+        "pct_return": 2.7061310244239865,
+        "pf": 13.410261304169229,
+        "win_rate": 0.8888888888888888,
+        "expectancy_R": 0.5948245700063272,
+        "avg_winner_R": 0.7236916228345017,
+        "avg_loser_R": -0.4361118526190694,
+        "avg_bars_held": 0.0,
+        "max_dd_pct": 0.21805592630953471,
+        "equity": 102706.13102442399,
+        "peak": 102706.13102442399,
+        "gross_commissions": 0.0,
+        "gross_spread_cost": 1002.4200000000001,
+        "by_symbol": {
+          "US100": {
+            "n": 9,
+            "wins": 8,
+            "net": 2706.1310244239953,
+            "sum_R": 5.353421130056946,
+            "sum_bars": 0,
+            "wr": 0.8888888888888888,
+            "expR": 0.5948245700063273,
+            "avg_bars": 0.0
+          }
+        },
+        "by_side": {
+          "1": {
+            "n": 6,
+            "wins": 5,
+            "net": 1582.2992080231509,
+            "sum_R": 3.126401074232996,
+            "sum_bars": 0,
+            "wr": 0.8333333333333334,
+            "expR": 0.5210668457054993,
+            "avg_bars": 0.0
+          },
+          "-1": {
+            "n": 3,
+            "wins": 3,
+            "net": 1123.8318164008447,
+            "sum_R": 2.2270200558239486,
+            "sum_bars": 0,
+            "wr": 1.0,
+            "expR": 0.7423400186079828,
+            "avg_bars": 0.0
+          }
+        },
+        "by_exit_reason": {
+          "stop_loss": 9
+        },
+        "by_hurst": {
+          "0.5": {
+            "n": 7,
+            "wins": 6,
+            "net": 2045.5421583058903,
+            "wr": 0.8571428571428571
+          },
+          "0.4": {
+            "n": 2,
+            "wins": 2,
+            "net": 660.5888661181052,
+            "wr": 1.0
+          }
+        },
+        "by_z": {
+          "3.0": {
+            "n": 3,
+            "wins": 2,
+            "net": 618.1094977101852,
+            "wr": 0.6666666666666666
+          },
+          "2.5": {
+            "n": 4,
+            "wins": 4,
+            "net": 1200.2518831672744,
+            "wr": 1.0
+          },
+          "3.5": {
+            "n": 2,
+            "wins": 2,
+            "net": 887.7696435465359,
+            "wr": 1.0
+          }
+        }
+      },
+      "bootstrap": {
+        "median_net": 2748.4434541583314,
+        "p05_net": 1522.7760430040498,
+        "p95_net": 3695.621546256229,
+        "median_pf": 13.95875832254702,
+        "p05_pf": 3.580185891471413,
+        "p95_pf": 1000000.0,
+        "median_dd": 218.0559263095347,
+        "p95_dd": 436.1118526190694,
+        "n_iters": 10000
+      },
+      "masked_alternative": null,
+      "is_trades_with_best": 32,
+      "is_net_with_best": 10895.615614867811
+    },
+    "US500": {
+      "symbol": "US500",
+      "status": "DROP_OOS2_NONE_PASS",
+      "oos2_results": [
+        {
+          "params": {
+            "z_quantile": 0.99,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.4,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 1.0,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 3,
+            "net_pnl": 634.0897153595974,
+            "pct_return": 0.6340897153596161,
+            "pf": 25.38407449153445,
+            "win_rate": 0.6666666666666666,
+            "expectancy_R": 0.4222382609770971,
+            "avg_winner_R": 0.6593616474639504,
+            "avg_loser_R": -0.05200851199660974,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.026004255998297594,
+            "equity": 100634.08971535962,
+            "peak": 100634.08971535962,
+            "gross_commissions": 0.0,
+            "gross_spread_cost": 178.96800000000002,
+            "by_symbol": {
+              "US500": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "sum_R": 1.2667147829312912,
+                "sum_bars": 0,
+                "wr": 0.6666666666666666,
+                "expR": 0.4222382609770971,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "sum_R": -0.05200851199660974,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.05200851199660974,
+                "avg_bars": 0.0
+              },
+              "1": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "sum_R": 1.3187232949279009,
+                "sum_bars": 0,
+                "wr": 1.0,
+                "expR": 0.6593616474639504,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 3
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "wr": 0.6666666666666666
+              }
+            },
+            "by_z": {
+              "3.0": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "wr": 0.0
+              },
+              "3.5": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "wr": 1.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.99,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.3,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 1.0,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 3,
+            "net_pnl": 634.0897153595974,
+            "pct_return": 0.6340897153596161,
+            "pf": 25.38407449153445,
+            "win_rate": 0.6666666666666666,
+            "expectancy_R": 0.4222382609770971,
+            "avg_winner_R": 0.6593616474639504,
+            "avg_loser_R": -0.05200851199660974,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.026004255998297594,
+            "equity": 100634.08971535962,
+            "peak": 100634.08971535962,
+            "gross_commissions": 0.0,
+            "gross_spread_cost": 178.96800000000002,
+            "by_symbol": {
+              "US500": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "sum_R": 1.2667147829312912,
+                "sum_bars": 0,
+                "wr": 0.6666666666666666,
+                "expR": 0.4222382609770971,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "sum_R": -0.05200851199660974,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.05200851199660974,
+                "avg_bars": 0.0
+              },
+              "1": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "sum_R": 1.3187232949279009,
+                "sum_bars": 0,
+                "wr": 1.0,
+                "expR": 0.6593616474639504,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 3
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "wr": 0.6666666666666666
+              }
+            },
+            "by_z": {
+              "3.0": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "wr": 0.0
+              },
+              "3.5": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "wr": 1.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.99,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.2,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 1.0,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 3,
+            "net_pnl": 634.0897153595974,
+            "pct_return": 0.6340897153596161,
+            "pf": 25.38407449153445,
+            "win_rate": 0.6666666666666666,
+            "expectancy_R": 0.4222382609770971,
+            "avg_winner_R": 0.6593616474639504,
+            "avg_loser_R": -0.05200851199660974,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.026004255998297594,
+            "equity": 100634.08971535962,
+            "peak": 100634.08971535962,
+            "gross_commissions": 0.0,
+            "gross_spread_cost": 178.96800000000002,
+            "by_symbol": {
+              "US500": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "sum_R": 1.2667147829312912,
+                "sum_bars": 0,
+                "wr": 0.6666666666666666,
+                "expR": 0.4222382609770971,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "sum_R": -0.05200851199660974,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.05200851199660974,
+                "avg_bars": 0.0
+              },
+              "1": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "sum_R": 1.3187232949279009,
+                "sum_bars": 0,
+                "wr": 1.0,
+                "expR": 0.6593616474639504,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 3
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "wr": 0.6666666666666666
+              }
+            },
+            "by_z": {
+              "3.0": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "wr": 0.0
+              },
+              "3.5": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "wr": 1.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.99,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.4,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 0.75,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 3,
+            "net_pnl": 634.0897153595974,
+            "pct_return": 0.6340897153596161,
+            "pf": 25.38407449153445,
+            "win_rate": 0.6666666666666666,
+            "expectancy_R": 0.4222382609770971,
+            "avg_winner_R": 0.6593616474639504,
+            "avg_loser_R": -0.05200851199660974,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.026004255998297594,
+            "equity": 100634.08971535962,
+            "peak": 100634.08971535962,
+            "gross_commissions": 0.0,
+            "gross_spread_cost": 178.96800000000002,
+            "by_symbol": {
+              "US500": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "sum_R": 1.2667147829312912,
+                "sum_bars": 0,
+                "wr": 0.6666666666666666,
+                "expR": 0.4222382609770971,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "sum_R": -0.05200851199660974,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.05200851199660974,
+                "avg_bars": 0.0
+              },
+              "1": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "sum_R": 1.3187232949279009,
+                "sum_bars": 0,
+                "wr": 1.0,
+                "expR": 0.6593616474639504,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 3
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "wr": 0.6666666666666666
+              }
+            },
+            "by_z": {
+              "3.0": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "wr": 0.0
+              },
+              "3.5": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "wr": 1.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.98,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.3,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 1.0,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 4,
+            "net_pnl": 747.8887257628244,
+            "pct_return": 0.7478887257628375,
+            "pf": 29.760243162179943,
+            "win_rate": 0.75,
+            "expectancy_R": 0.37321968036591474,
+            "avg_winner_R": 0.5149624111534229,
+            "avg_loser_R": -0.05200851199660974,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.026004255998297594,
+            "equity": 100747.88872576284,
+            "peak": 100747.88872576284,
+            "gross_commissions": 0.0,
+            "gross_spread_cost": 238.96800000000002,
+            "by_symbol": {
+              "US500": {
+                "n": 4,
+                "wins": 3,
+                "net": 747.8887257628244,
+                "sum_R": 1.4928787214636592,
+                "sum_bars": 0,
+                "wr": 0.75,
+                "expR": 0.3732196803659148,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "sum_R": -0.05200851199660974,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.05200851199660974,
+                "avg_bars": 0.0
+              },
+              "1": {
+                "n": 3,
+                "wins": 3,
+                "net": 773.8929817611292,
+                "sum_R": 1.5448872334602688,
+                "sum_bars": 0,
+                "wr": 1.0,
+                "expR": 0.5149624111534229,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 4
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 3,
+                "wins": 2,
+                "net": 634.0897153595974,
+                "wr": 0.6666666666666666
+              },
+              "0.5": {
+                "n": 1,
+                "wins": 1,
+                "net": 113.79901040322693,
+                "wr": 1.0
+              }
+            },
+            "by_z": {
+              "3.0": {
+                "n": 1,
+                "wins": 0,
+                "net": -26.00425599830487,
+                "wr": 0.0
+              },
+              "3.5": {
+                "n": 2,
+                "wins": 2,
+                "net": 660.0939713579023,
+                "wr": 1.0
+              },
+              "2.5": {
+                "n": 1,
+                "wins": 1,
+                "net": 113.79901040322693,
+                "wr": 1.0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "US30": {
+      "symbol": "US30",
+      "status": "DROP_BOOTSTRAP_FAIL",
+      "best_params": {
+        "z_quantile": 0.99,
+        "z_quantile_window": 500,
+        "z_min_abs": 2.5,
+        "z_max_abs": 5.0,
+        "hurst_quantile": 0.3,
+        "hurst_quantile_window": 200,
+        "hurst_max_abs": 0.55,
+        "use_ou_gate": true,
+        "ou_window": 200,
+        "ou_max_halflife": 30.0,
+        "stop_atr_mult": 0.75,
+        "tp_frac": 0.5,
+        "breakeven_trigger_frac": 0.5,
+        "breakeven_atr_offset": 0.2,
+        "use_optimal_stop": true,
+        "optimal_stop_threshold": 0.4,
+        "optimal_stop_min_bars": 3,
+        "time_stop_max": 96,
+        "time_stop_ou_mult": 2.0,
+        "allowed_hours": null,
+        "risk_multiplier": 1.0
+      },
+      "oos2_metrics": {
+        "trades": 6,
+        "net_pnl": 1455.865472276919,
+        "pct_return": 1.455865472276928,
+        "pf": 3.9712954284453743,
+        "win_rate": 0.8333333333333334,
+        "expectancy_R": 0.4840011050134653,
+        "avg_winner_R": 0.7733751445074171,
+        "avg_loser_R": -0.9628690924562933,
+        "avg_bars_held": 0.0,
+        "max_dd_pct": 0.4814345462281467,
+        "equity": 101455.86547227693,
+        "peak": 101774.30864298447,
+        "gross_commissions": 0.0,
+        "gross_spread_cost": 807.705,
+        "by_symbol": {
+          "US30": {
+            "n": 6,
+            "wins": 5,
+            "net": 1455.8654722769193,
+            "sum_R": 2.904006630080792,
+            "sum_bars": 0,
+            "wr": 0.8333333333333334,
+            "expR": 0.4840011050134653,
+            "avg_bars": 0.0
+          }
+        },
+        "by_side": {
+          "-1": {
+            "n": 4,
+            "wins": 4,
+            "net": 1774.3086429844611,
+            "sum_R": 3.5252729594625993,
+            "sum_bars": 0,
+            "wr": 1.0,
+            "expR": 0.8813182398656498,
+            "avg_bars": 0.0
+          },
+          "1": {
+            "n": 2,
+            "wins": 1,
+            "net": -318.44317070754187,
+            "sum_R": -0.6212663293818077,
+            "sum_bars": 0,
+            "wr": 0.5,
+            "expR": -0.31063316469090385,
+            "avg_bars": 0.0
+          }
+        },
+        "by_exit_reason": {
+          "stop_loss": 6
+        },
+        "by_hurst": {
+          "0.4": {
+            "n": 6,
+            "wins": 5,
+            "net": 1455.8654722769193,
+            "wr": 0.8333333333333334
+          }
+        },
+        "by_z": {
+          "3.5": {
+            "n": 1,
+            "wins": 1,
+            "net": 450.3582735122936,
+            "wr": 1.0
+          },
+          "3.0": {
+            "n": 5,
+            "wins": 4,
+            "net": 1005.5071987646256,
+            "wr": 0.8
+          }
+        }
+      },
+      "bootstrap": {
+        "median_net": 1506.3022207881263,
+        "p05_net": -115.56300926097668,
+        "p95_net": 2661.5895320986533,
+        "median_pf": 4.074232467018464,
+        "p05_pf": 0.9213819665683098,
+        "p95_pf": 1000000.0,
+        "median_dd": 489.9766809921857,
+        "p95_dd": 979.9533619843714,
+        "n_iters": 10000
+      }
+    },
+    "DE40": {
+      "symbol": "DE40",
+      "status": "DROP_BOOTSTRAP_FAIL",
+      "best_params": {
+        "z_quantile": 0.98,
+        "z_quantile_window": 500,
+        "z_min_abs": 2.5,
+        "z_max_abs": 5.0,
+        "hurst_quantile": 0.4,
+        "hurst_quantile_window": 200,
+        "hurst_max_abs": 0.55,
+        "use_ou_gate": true,
+        "ou_window": 200,
+        "ou_max_halflife": 30.0,
+        "stop_atr_mult": 0.75,
+        "tp_frac": 0.5,
+        "breakeven_trigger_frac": 0.5,
+        "breakeven_atr_offset": 0.2,
+        "use_optimal_stop": true,
+        "optimal_stop_threshold": 0.4,
+        "optimal_stop_min_bars": 3,
+        "time_stop_max": 96,
+        "time_stop_ou_mult": 2.0,
+        "allowed_hours": null,
+        "risk_multiplier": 1.0
+      },
+      "oos2_metrics": {
+        "trades": 16,
+        "net_pnl": 1723.3873376194078,
+        "pct_return": 1.7233873376194098,
+        "pf": 2.13923338588748,
+        "win_rate": 0.625,
+        "expectancy_R": 0.23591614564311003,
+        "avg_winner_R": 0.682368282322154,
+        "avg_loser_R": -0.5081707488219632,
+        "avg_bars_held": 0.0,
+        "max_dd_pct": 1.0031894817240827,
+        "equity": 101723.38733761941,
+        "peak": 101723.38733761941,
+        "gross_commissions": 0.0,
+        "gross_spread_cost": 1519.4325,
+        "by_symbol": {
+          "DE40": {
+            "n": 16,
+            "wins": 10,
+            "net": 1723.3873376194078,
+            "sum_R": 3.77465833028976,
+            "sum_bars": 0,
+            "wr": 0.625,
+            "expR": 0.23591614564311,
+            "avg_bars": 0.0
+          }
+        },
+        "by_side": {
+          "-1": {
+            "n": 11,
+            "wins": 7,
+            "net": 1336.5685133281727,
+            "sum_R": 2.9830277918593526,
+            "sum_bars": 0,
+            "wr": 0.6363636363636364,
+            "expR": 0.2711843447144866,
+            "avg_bars": 0.0
+          },
+          "1": {
+            "n": 5,
+            "wins": 3,
+            "net": 386.81882429123516,
+            "sum_R": 0.7916305384304076,
+            "sum_bars": 0,
+            "wr": 0.6,
+            "expR": 0.15832610768608152,
+            "avg_bars": 0.0
+          }
+        },
+        "by_exit_reason": {
+          "stop_loss": 15,
+          "take_profit": 1
+        },
+        "by_hurst": {
+          "0.5": {
+            "n": 5,
+            "wins": 2,
+            "net": 276.97921593171486,
+            "wr": 0.4
+          },
+          "0.4": {
+            "n": 11,
+            "wins": 8,
+            "net": 1446.408121687693,
+            "wr": 0.7272727272727273
+          }
+        },
+        "by_z": {
+          "2.5": {
+            "n": 10,
+            "wins": 4,
+            "net": -274.7984073820203,
+            "wr": 0.4
+          },
+          "3.0": {
+            "n": 4,
+            "wins": 4,
+            "net": 1261.0123104168438,
+            "wr": 1.0
+          },
+          "3.5": {
+            "n": 2,
+            "wins": 2,
+            "net": 737.1734345845845,
+            "wr": 1.0
+          }
+        }
+      },
+      "bootstrap": {
+        "median_net": 1737.9996020077197,
+        "p05_net": -473.0671588878894,
+        "p95_net": 3924.6258875376006,
+        "median_pf": 2.1849417498491253,
+        "p05_pf": 0.8059786709258897,
+        "p95_pf": 7.611450148933046,
+        "median_dd": 719.138383882455,
+        "p95_dd": 1631.8304811999042,
+        "n_iters": 10000
+      }
+    },
+    "USOIL": {
+      "symbol": "USOIL",
+      "status": "DROP_OOS2_NONE_PASS",
+      "oos2_results": [
+        {
+          "params": {
+            "z_quantile": 0.97,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.2,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 0.5,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 1,
+            "net_pnl": -44.563105969933275,
+            "pct_return": -0.04456310596993717,
+            "pf": 0.0,
+            "win_rate": 0.0,
+            "expectancy_R": -0.08912621193986656,
+            "avg_winner_R": 0.0,
+            "avg_loser_R": -0.08912621193986656,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.04456310596993717,
+            "equity": 99955.43689403006,
+            "peak": 100000.0,
+            "gross_commissions": 12.208470927008587,
+            "gross_spread_cost": 30.0,
+            "by_symbol": {
+              "USOIL": {
+                "n": 1,
+                "wins": 0,
+                "net": -44.563105969933275,
+                "sum_R": -0.08912621193986656,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.08912621193986656,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -44.563105969933275,
+                "sum_R": -0.08912621193986656,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.08912621193986656,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 1
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 1,
+                "wins": 0,
+                "net": -44.563105969933275,
+                "wr": 0.0
+              }
+            },
+            "by_z": {
+              "2.5": {
+                "n": 1,
+                "wins": 0,
+                "net": -44.563105969933275,
+                "wr": 0.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.99,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.2,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 1.0,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 1,
+            "net_pnl": -34.046519080477644,
+            "pct_return": -0.03404651908048254,
+            "pf": 0.0,
+            "win_rate": 0.0,
+            "expectancy_R": -0.06809303816095529,
+            "avg_winner_R": 0.0,
+            "avg_loser_R": -0.06809303816095529,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.03404651908048254,
+            "equity": 99965.95348091952,
+            "peak": 100000.0,
+            "gross_commissions": 12.196370029810133,
+            "gross_spread_cost": 30.0,
+            "by_symbol": {
+              "USOIL": {
+                "n": 1,
+                "wins": 0,
+                "net": -34.046519080477644,
+                "sum_R": -0.06809303816095529,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.06809303816095529,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -34.046519080477644,
+                "sum_R": -0.06809303816095529,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.06809303816095529,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 1
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 1,
+                "wins": 0,
+                "net": -34.046519080477644,
+                "wr": 0.0
+              }
+            },
+            "by_z": {
+              "2.5": {
+                "n": 1,
+                "wins": 0,
+                "net": -34.046519080477644,
+                "wr": 0.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.98,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.2,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 0.75,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 1,
+            "net_pnl": -34.046519080477644,
+            "pct_return": -0.03404651908048254,
+            "pf": 0.0,
+            "win_rate": 0.0,
+            "expectancy_R": -0.06809303816095529,
+            "avg_winner_R": 0.0,
+            "avg_loser_R": -0.06809303816095529,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.03404651908048254,
+            "equity": 99965.95348091952,
+            "peak": 100000.0,
+            "gross_commissions": 12.196370029810133,
+            "gross_spread_cost": 30.0,
+            "by_symbol": {
+              "USOIL": {
+                "n": 1,
+                "wins": 0,
+                "net": -34.046519080477644,
+                "sum_R": -0.06809303816095529,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.06809303816095529,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -34.046519080477644,
+                "sum_R": -0.06809303816095529,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.06809303816095529,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 1
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 1,
+                "wins": 0,
+                "net": -34.046519080477644,
+                "wr": 0.0
+              }
+            },
+            "by_z": {
+              "2.5": {
+                "n": 1,
+                "wins": 0,
+                "net": -34.046519080477644,
+                "wr": 0.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.98,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.2,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 1.0,
+            "tp_frac": 0.75,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 1,
+            "net_pnl": -47.69538916141902,
+            "pct_return": -0.04769538916142483,
+            "pf": 0.0,
+            "win_rate": 0.0,
+            "expectancy_R": -0.09539077832283804,
+            "avg_winner_R": 0.0,
+            "avg_loser_R": -0.09539077832283804,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.04769538916142483,
+            "equity": 99952.30461083858,
+            "peak": 100000.0,
+            "gross_commissions": 12.199099257980686,
+            "gross_spread_cost": 30.0,
+            "by_symbol": {
+              "USOIL": {
+                "n": 1,
+                "wins": 0,
+                "net": -47.69538916141902,
+                "sum_R": -0.09539077832283804,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.09539077832283804,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 1,
+                "wins": 0,
+                "net": -47.69538916141902,
+                "sum_R": -0.09539077832283804,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.09539077832283804,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 1
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 1,
+                "wins": 0,
+                "net": -47.69538916141902,
+                "wr": 0.0
+              }
+            },
+            "by_z": {
+              "2.5": {
+                "n": 1,
+                "wins": 0,
+                "net": -47.69538916141902,
+                "wr": 0.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.97,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.2,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 0.75,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 2,
+            "net_pnl": -78.60962505041093,
+            "pct_return": -0.0786096250504197,
+            "pf": 0.0,
+            "win_rate": 0.0,
+            "expectancy_R": -0.07862666917037603,
+            "avg_winner_R": 0.0,
+            "avg_loser_R": -0.07862666917037603,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 0.0786096250504197,
+            "equity": 99921.39037494958,
+            "peak": 100000.0,
+            "gross_commissions": 24.40484095681872,
+            "gross_spread_cost": 60.0,
+            "by_symbol": {
+              "USOIL": {
+                "n": 2,
+                "wins": 0,
+                "net": -78.60962505041093,
+                "sum_R": -0.15725333834075206,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.07862666917037603,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 2,
+                "wins": 0,
+                "net": -78.60962505041093,
+                "sum_R": -0.15725333834075206,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.07862666917037603,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 2
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 2,
+                "wins": 0,
+                "net": -78.60962505041093,
+                "wr": 0.0
+              }
+            },
+            "by_z": {
+              "2.5": {
+                "n": 2,
+                "wins": 0,
+                "net": -78.60962505041093,
+                "wr": 0.0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "XAUUSD": {
+      "symbol": "XAUUSD",
+      "status": "DROP_OOS2_NONE_PASS",
+      "oos2_results": [
+        {
+          "params": {
+            "z_quantile": 0.97,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.4,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 0.5,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 16,
+            "net_pnl": -2623.261282292282,
+            "pct_return": -2.6232612822922383,
+            "pf": 0.1795527788648586,
+            "win_rate": 0.4375,
+            "expectancy_R": -0.35252033270798844,
+            "avg_winner_R": 0.20703679367620698,
+            "avg_loser_R": -0.7877314310068071,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 2.755458243167013,
+            "equity": 97376.73871770776,
+            "peak": 100000.0,
+            "gross_commissions": 6656.315430176344,
+            "gross_spread_cost": 435.88200000000006,
+            "by_symbol": {
+              "XAUUSD": {
+                "n": 16,
+                "wins": 7,
+                "net": -2623.261282292283,
+                "sum_R": -5.640325323327815,
+                "sum_bars": 0,
+                "wr": 0.4375,
+                "expR": -0.35252033270798844,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 3,
+                "wins": 1,
+                "net": -559.433960993979,
+                "sum_R": -1.1808723267168921,
+                "sum_bars": 0,
+                "wr": 0.3333333333333333,
+                "expR": -0.3936241089056307,
+                "avg_bars": 0.0
+              },
+              "1": {
+                "n": 13,
+                "wins": 6,
+                "net": -2063.827321298303,
+                "sum_R": -4.459452996610922,
+                "sum_bars": 0,
+                "wr": 0.46153846153846156,
+                "expR": -0.34303484589314787,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 16
+            },
+            "by_hurst": {
+              "0.5": {
+                "n": 5,
+                "wins": 2,
+                "net": -1212.4315865506287,
+                "wr": 0.4
+              },
+              "0.4": {
+                "n": 11,
+                "wins": 5,
+                "net": -1410.8296957416537,
+                "wr": 0.45454545454545453
+              }
+            },
+            "by_z": {
+              "2.5": {
+                "n": 6,
+                "wins": 0,
+                "net": -2642.448701105608,
+                "wr": 0.0
+              },
+              "3.5": {
+                "n": 5,
+                "wins": 5,
+                "net": 554.6719155608727,
+                "wr": 1.0
+              },
+              "3.0": {
+                "n": 5,
+                "wins": 2,
+                "net": -535.4844967475472,
+                "wr": 0.4
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.97,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.4,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 1.0,
+            "tp_frac": 0.5,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 16,
+            "net_pnl": -2994.8413191921777,
+            "pct_return": -2.9948413191921865,
+            "pf": 0.17351460825680012,
+            "win_rate": 0.25,
+            "expectancy_R": -0.578329016215959,
+            "avg_winner_R": 0.7162725489555833,
+            "avg_loser_R": -1.0098628712731397,
+            "avg_bars_held": 0.1875,
+            "max_dd_pct": 3.4976425038182497,
+            "equity": 97005.15868080781,
+            "peak": 100000.0,
+            "gross_commissions": 6580.653528509135,
+            "gross_spread_cost": 424.37000000000006,
+            "by_symbol": {
+              "XAUUSD": {
+                "n": 16,
+                "wins": 4,
+                "net": -2994.8413191921773,
+                "sum_R": -9.253264259455346,
+                "sum_bars": 3,
+                "wr": 0.25,
+                "expR": -0.5783290162159591,
+                "avg_bars": 0.1875
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 3,
+                "wins": 0,
+                "net": -853.0396398687653,
+                "sum_R": -2.0085501683769236,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.6695167227923079,
+                "avg_bars": 0.0
+              },
+              "1": {
+                "n": 13,
+                "wins": 4,
+                "net": -2141.8016793234124,
+                "sum_R": -7.24471409107842,
+                "sum_bars": 3,
+                "wr": 0.3076923076923077,
+                "expR": -0.5572856993137246,
+                "avg_bars": 0.23076923076923078
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 15,
+              "take_profit": 1
+            },
+            "by_hurst": {
+              "0.5": {
+                "n": 5,
+                "wins": 0,
+                "net": -1649.9935162606862,
+                "wr": 0.0
+              },
+              "0.4": {
+                "n": 11,
+                "wins": 4,
+                "net": -1344.8478029314915,
+                "wr": 0.36363636363636365
+              }
+            },
+            "by_z": {
+              "2.5": {
+                "n": 6,
+                "wins": 1,
+                "net": -2105.5571613044367,
+                "wr": 0.16666666666666666
+              },
+              "3.5": {
+                "n": 5,
+                "wins": 3,
+                "net": 118.88619826249982,
+                "wr": 0.6
+              },
+              "3.0": {
+                "n": 5,
+                "wins": 0,
+                "net": -1008.1703561502409,
+                "wr": 0.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.99,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.4,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 0.75,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 18,
+            "net_pnl": -2380.835614965036,
+            "pct_return": -2.380835614965021,
+            "pf": 0.1575091037451414,
+            "win_rate": 0.3333333333333333,
+            "expectancy_R": -0.28131053543407075,
+            "avg_winner_R": 0.23640652980274812,
+            "avg_loser_R": -0.5401690680524801,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 2.515433731536803,
+            "equity": 97619.16438503498,
+            "peak": 100000.0,
+            "gross_commissions": 6835.857760810842,
+            "gross_spread_cost": 463.74600000000004,
+            "by_symbol": {
+              "XAUUSD": {
+                "n": 18,
+                "wins": 6,
+                "net": -2380.835614965036,
+                "sum_R": -5.063589637813273,
+                "sum_bars": 0,
+                "wr": 0.3333333333333333,
+                "expR": -0.2813105354340707,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "1": {
+                "n": 11,
+                "wins": 5,
+                "net": -1023.1474282848077,
+                "sum_R": -2.190757942845954,
+                "sum_bars": 0,
+                "wr": 0.45454545454545453,
+                "expR": -0.1991598129859958,
+                "avg_bars": 0.0
+              },
+              "-1": {
+                "n": 7,
+                "wins": 1,
+                "net": -1357.6881866802282,
+                "sum_R": -2.872831694967319,
+                "sum_bars": 0,
+                "wr": 0.14285714285714285,
+                "expR": -0.4104045278524741,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 18
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 11,
+                "wins": 4,
+                "net": -1244.974114753492,
+                "wr": 0.36363636363636365
+              },
+              "0.5": {
+                "n": 7,
+                "wins": 2,
+                "net": -1135.8615002115444,
+                "wr": 0.2857142857142857
+              }
+            },
+            "by_z": {
+              "3.0": {
+                "n": 12,
+                "wins": 1,
+                "net": -2714.769304980326,
+                "wr": 0.08333333333333333
+              },
+              "3.5": {
+                "n": 6,
+                "wins": 5,
+                "net": 333.9336900152905,
+                "wr": 0.8333333333333334
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.99,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.3,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 0.75,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 12,
+            "net_pnl": -1213.0272481160478,
+            "pct_return": -1.21302724811605,
+            "pf": 0.29704636461361084,
+            "win_rate": 0.4166666666666667,
+            "expectancy_R": -0.1837036569258715,
+            "avg_winner_R": 0.2819415918279364,
+            "avg_loser_R": -0.5163074060357342,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 1.4068538718809724,
+            "equity": 98786.97275188395,
+            "peak": 100000.0,
+            "gross_commissions": 4332.406398373864,
+            "gross_spread_cost": 304.48800000000006,
+            "by_symbol": {
+              "XAUUSD": {
+                "n": 12,
+                "wins": 5,
+                "net": -1213.0272481160475,
+                "sum_R": -2.204443883110458,
+                "sum_bars": 0,
+                "wr": 0.4166666666666667,
+                "expR": -0.1837036569258715,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "1": {
+                "n": 10,
+                "wins": 5,
+                "net": -590.2224231013496,
+                "sum_R": -0.9371238246086807,
+                "sum_bars": 0,
+                "wr": 0.5,
+                "expR": -0.09371238246086808,
+                "avg_bars": 0.0
+              },
+              "-1": {
+                "n": 2,
+                "wins": 0,
+                "net": -622.8048250146983,
+                "sum_R": -1.2673200585017772,
+                "sum_bars": 0,
+                "wr": 0.0,
+                "expR": -0.6336600292508886,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 12
+            },
+            "by_hurst": {
+              "0.4": {
+                "n": 10,
+                "wins": 4,
+                "net": -817.0090168595353,
+                "wr": 0.4
+              },
+              "0.5": {
+                "n": 2,
+                "wins": 1,
+                "net": -396.0182312565124,
+                "wr": 0.5
+              }
+            },
+            "by_z": {
+              "3.0": {
+                "n": 7,
+                "wins": 0,
+                "net": -1725.6148728063533,
+                "wr": 0.0
+              },
+              "3.5": {
+                "n": 5,
+                "wins": 5,
+                "net": 512.5876246903057,
+                "wr": 1.0
+              }
+            }
+          }
+        },
+        {
+          "params": {
+            "z_quantile": 0.98,
+            "z_quantile_window": 500,
+            "z_min_abs": 2.5,
+            "z_max_abs": 5.0,
+            "hurst_quantile": 0.4,
+            "hurst_quantile_window": 200,
+            "hurst_max_abs": 0.55,
+            "use_ou_gate": true,
+            "ou_window": 200,
+            "ou_max_halflife": 30.0,
+            "stop_atr_mult": 0.75,
+            "tp_frac": 0.75,
+            "breakeven_trigger_frac": 0.5,
+            "breakeven_atr_offset": 0.2,
+            "use_optimal_stop": true,
+            "optimal_stop_threshold": 0.4,
+            "optimal_stop_min_bars": 3,
+            "time_stop_max": 96,
+            "time_stop_ou_mult": 2.0,
+            "allowed_hours": null,
+            "risk_multiplier": 1.0
+          },
+          "metrics": {
+            "trades": 25,
+            "net_pnl": -5404.050844824615,
+            "pct_return": -5.404050844824582,
+            "pf": 0.04833220228305262,
+            "win_rate": 0.24,
+            "expectancy_R": -0.8215463252577656,
+            "avg_winner_R": 0.1485832100744143,
+            "avg_loser_R": -1.1279030206258223,
+            "avg_bars_held": 0.0,
+            "max_dd_pct": 5.404050844824582,
+            "equity": 94595.94915517542,
+            "peak": 100000.0,
+            "gross_commissions": 9342.990128489846,
+            "gross_spread_cost": 641.7540000000001,
+            "by_symbol": {
+              "XAUUSD": {
+                "n": 25,
+                "wins": 6,
+                "net": -5404.0508448246155,
+                "sum_R": -20.53865813144414,
+                "sum_bars": 0,
+                "wr": 0.24,
+                "expR": -0.8215463252577656,
+                "avg_bars": 0.0
+              }
+            },
+            "by_side": {
+              "-1": {
+                "n": 11,
+                "wins": 1,
+                "net": -2801.0019146327168,
+                "sum_R": -9.189217913298144,
+                "sum_bars": 0,
+                "wr": 0.09090909090909091,
+                "expR": -0.8353834466634676,
+                "avg_bars": 0.0
+              },
+              "1": {
+                "n": 14,
+                "wins": 5,
+                "net": -2603.0489301918988,
+                "sum_R": -11.349440218145995,
+                "sum_bars": 0,
+                "wr": 0.35714285714285715,
+                "expR": -0.8106743012961425,
+                "avg_bars": 0.0
+              }
+            },
+            "by_exit_reason": {
+              "stop_loss": 25
+            },
+            "by_hurst": {
+              "0.5": {
+                "n": 11,
+                "wins": 2,
+                "net": -2648.2640192176527,
+                "wr": 0.18181818181818182
+              },
+              "0.4": {
+                "n": 14,
+                "wins": 4,
+                "net": -2755.7868256069623,
+                "wr": 0.2857142857142857
+              }
+            },
+            "by_z": {
+              "2.5": {
+                "n": 6,
+                "wins": 0,
+                "net": -2720.6454673137287,
+                "wr": 0.0
+              },
+              "3.0": {
+                "n": 14,
+                "wins": 2,
+                "net": -2896.379480532527,
+                "wr": 0.14285714285714285
+              },
+              "3.5": {
+                "n": 5,
+                "wins": 4,
+                "net": 212.9741030216411,
+                "wr": 0.8
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "summary": {
+    "kept": [
+      "US100"
+    ],
+    "dropped": [
+      "US500",
+      "US30",
+      "DE40",
+      "USOIL",
+      "XAUUSD"
+    ],
+    "total_candidates": 6
+  }
+}

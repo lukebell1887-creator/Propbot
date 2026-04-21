@@ -1,0 +1,29 @@
+
+=== US100 ===  (99,000 M1 bars)
+
+[US100] splits: IS=59,400  OOS1=14,850  OOS2=14,850
+[US100] IS grid = 81 configs
+  IS [1/81] last: n=27 PF=1.99 net=$3136
+  IS [10/81] last: n=41 PF=2.45 net=$6323
+  IS [20/81] last: n=46 PF=3.57 net=$11328
+  IS [30/81] last: n=18 PF=8.27 net=$5745
+  IS [40/81] last: n=29 PF=3.57 net=$6201
+  IS [50/81] last: n=32 PF=4.40 net=$8193
+  IS [60/81] last: n=10 PF=10.75 net=$3045
+  IS [70/81] last: n=18 PF=1.97 net=$1843
+  IS [80/81] last: n=19 PF=1.83 net=$1671
+[US100] IS done in 76.9s (62,549 bars/sec)
+[US100] Top5 OOS2 results:
+    z=0.98 hq=0.2 sa=0.75 tf=1.0  n=5 PF=5.58 net=$998 DD=0.22%  PASS
+    z=0.98 hq=0.2 sa=0.75 tf=0.75  n=5 PF=5.58 net=$998 DD=0.22%  PASS
+    z=0.98 hq=0.2 sa=0.75 tf=0.5  n=5 PF=5.58 net=$998 DD=0.22%  PASS
+    z=0.98 hq=0.4 sa=0.75 tf=1.0  n=9 PF=13.41 net=$2706 DD=0.22%  PASS
+    z=0.98 hq=0.4 sa=0.75 tf=0.75  n=9 PF=13.41 net=$2706 DD=0.22%  PASS
+[US100] Bootstrap CI on OOS2: net_p05=$1603 pf_p05=3.67 dd_p95=$436
+
+======================================================================
+  v14 OPTIMIZER SUMMARY
+======================================================================
+  KEPT:     ['US100']
+  DROPPED:  []
+  Written to: Results\v14_pilot_US100.json

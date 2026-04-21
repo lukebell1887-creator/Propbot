@@ -1,0 +1,8 @@
+Loaded 29809 M1 bars of US100 from 2026-01-14 21:22:00 to 2026-02-13 21:22:00
+v14 default params on US100 (30d):
+  trades     = 6
+  net_pnl    = $2455.95
+  win_rate   = 100.0%
+  PF         = inf
+  max_dd     = 0.00%
+  exit_reasons: {'stop_loss': 6}
