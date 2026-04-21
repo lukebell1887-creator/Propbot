@@ -37,7 +37,8 @@ Write-Host "       sleep/hibernate disabled on AC power.`n"
 # ----- 2. register the Task Scheduler entry ----------------------------
 Write-Host "[2/4] Registering scheduled task '$TASK'..."
 # delete if already exists so script is idempotent
-schtasks /Delete /TN $TASK /F 2>$null | Out-Null
+# (cmd /c used so stderr is truly swallowed when task does not yet exist)
+cmd /c "schtasks /Delete /TN $TASK /F >nul 2>&1"
 
 $xml = @"
 <?xml version='1.0' encoding='UTF-16'?>
