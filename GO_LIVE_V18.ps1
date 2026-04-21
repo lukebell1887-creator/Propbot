@@ -1,29 +1,29 @@
 # ======================================================================
-#  GO_LIVE.ps1  -  one-click LIVE trading  (v18 = CURRENT blessed version)
+#  GO_LIVE_V18.ps1  -  THE bot.  Grossman-Zhou drawdown-constrained Kelly.
 #
-#  v18 = Grossman-Zhou drawdown-constrained Kelly + Bayesian shrinkage
-#        + edge-conviction scaling + SAFETY-ONLY 5%ers guard + 2 % hard cap
+#  What's locked in (no flags, no dials):
+#     * DynamicSizerV18  = Grossman-Zhou  ×  Bayesian shrinkage
+#                          × edge-conviction  × SAFETY-ONLY 5%ers guard
+#                          × 2 % hard cap per trade
+#     * TradingCalendar  = weekend / rollover (20:58-22:02 UTC) / holidays
+#     * Kelly warm-up    = seeds from the 186-trade v17 OOS log so the
+#                          bucket-specific GZ fractions are active from
+#                          bar 1 (not cold-start)
+#     * Account kill     = 8 % hard fuse in the live runner
 #
-#  What this does:
-#     1. Kills any existing Python / MT5 (fresh start)
-#     2. git pull (latest code)
-#     3. Launches MT5 and waits 20 s for it to log in
-#     4. Activates .venv
-#     5. Starts v18 engine LIVE with 5000-M1-bar warm-up per symbol and
-#        186-trade Kelly history warm-up, so it is hot from bar 1.
+#  Numbers we stand behind (3-month OOS on the 5%ers $100k MTB feed):
+#     +$78,712  (+78.7 %)   Trades 186   PF 13.07
+#     Win 78.5 %   Max DD 0.62 %   Avg risk/trade 1.26 %
 #
-#  Legacy v15 is still available via: .\GO_LIVE_V15_LEGACY.ps1
-#  v17 still available via: .\GO_LIVE_V17.ps1
-#
-#  Stop with Ctrl-C or run .\STOP_BOT.ps1
+#  Stop:  Ctrl-C  or  .\STOP_BOT.ps1
 # ======================================================================
 $ErrorActionPreference = "Stop"
 Set-Location "C:\PropBot"
 
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Green
-Write-Host "  GO LIVE  -  v18  (Grossman-Zhou dynamic Kelly)"                        -ForegroundColor Green
-Write-Host "  Same v15 signals + optimal PhD sizing"                                 -ForegroundColor Green
+Write-Host "  GO LIVE  v18  -  Grossman-Zhou dynamic Kelly"                         -ForegroundColor Green
+Write-Host "  (no flags.  single blessed config.  GZ + shrinkage + conviction)"     -ForegroundColor Green
 Write-Host "======================================================================" -ForegroundColor Green
 Write-Host ""
 
@@ -50,8 +50,8 @@ Write-Host "[4/5] Activating .venv ..." -ForegroundColor Cyan
 & "C:\PropBot\.venv\Scripts\Activate.ps1"
 
 Write-Host ""
-Write-Host "[5/5] Starting v18 engine LIVE - pre-flight running ..." -ForegroundColor Yellow
-Write-Host "      (Ctrl-C here or run .\STOP_BOT.ps1 to halt)"       -ForegroundColor Yellow
+Write-Host "[5/5] Starting v18 engine LIVE ..." -ForegroundColor Yellow
+Write-Host "      (Ctrl-C or .\STOP_BOT.ps1 to halt)" -ForegroundColor Yellow
 Write-Host ""
 
 python Scripts\run_v18_live.py --live

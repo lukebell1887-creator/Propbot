@@ -1,6 +1,6 @@
 # ======================================================================
-#  GO_DRYRUN.ps1  -  v18 in DRY-RUN mode.  Same code path as live,
-#  but no orders are placed.  Recommended 24-48 h VPS soak before live.
+#  GO_DRYRUN_V18.ps1  -  v18 in DRY-RUN mode.  Same code path as live,
+#  but no orders are sent.  Use for the 24-48 h VPS soak before flipping.
 # ======================================================================
 $ErrorActionPreference = "Stop"
 Set-Location "C:\PropBot"

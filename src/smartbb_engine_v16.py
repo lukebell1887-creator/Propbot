@@ -31,6 +31,8 @@ from src.smartbb_engine_v14 import (
 )
 from src.dynamic_sizer_v16 import DynamicSizerV16, SizerConfig
 from src.trading_calendar import TradingCalendar, CalendarConfig
+from src.fivers_risk_guard import FiversRiskGuard
+
 
 
 class SmartBBV16Engine(SmartBBV14Engine):
@@ -49,6 +51,7 @@ class SmartBBV16Engine(SmartBBV14Engine):
         initial_equity: float = 100_000.0,
         sizer: Optional[DynamicSizerV16] = None,
         calendar: Optional[TradingCalendar] = None,
+        fivers_guard: Optional[FiversRiskGuard] = None,
         use_dynamic_sizing: bool = True,
         use_calendar: bool = True,
     ):
@@ -58,18 +61,24 @@ class SmartBBV16Engine(SmartBBV14Engine):
         )
         self.sizer = sizer or DynamicSizerV16()
         self.calendar = calendar or TradingCalendar()
+        self.fivers_guard = fivers_guard       # may be None (ablation)
         self.use_dynamic_sizing = use_dynamic_sizing
         self.use_calendar = use_calendar
 
         # Telemetry
         self.blackout_counts: dict[str, int] = {}
         self.risk_breakdowns: list[dict] = []  # kept small - one per entry
+        self.guard_trace: list[dict] = []      # last N guard state snapshots
+
 
     # =================================================================
     # Override 1: entry gate - calendar blackouts
     # =================================================================
     def _maybe_enter(self, st: _SymbolStateV14, time: float,
                        close: float) -> None:
+        # Cache the bar timestamp so _risk_pct (called inside super) can
+        # feed it into FiversRiskGuard for correct day-rollover logic.
+        st._last_bar_time = time
         if self.use_calendar:
             ts = datetime.utcfromtimestamp(time)
             allowed, reason = self.calendar.can_enter(st.spec.symbol, ts)
@@ -78,6 +87,7 @@ class SmartBBV16Engine(SmartBBV14Engine):
                     self.blackout_counts.get(reason, 0) + 1
                 return
         super()._maybe_enter(st, time, close)
+
 
     # =================================================================
     # Override 2: per-trade risk% - dynamic composition
@@ -115,7 +125,37 @@ class SmartBBV16Engine(SmartBBV14Engine):
         if len(self.risk_breakdowns) < 400:
             self.risk_breakdowns.append(dict(self.sizer.last_breakdown))
 
+        # ─── 5%ers hard brake (applied LAST, after Kelly/vol/DD) ───
+        if self.fivers_guard is not None:
+            from datetime import datetime, timezone
+            bar_t = getattr(st, "_last_bar_time", None)
+            if bar_t is None:
+                ts = datetime.now(timezone.utc)
+            else:
+                ts = datetime.utcfromtimestamp(bar_t).replace(tzinfo=timezone.utc)
+
+            gs = self.fivers_guard.multiplier(self.equity, now_utc=ts)
+            if len(self.guard_trace) < 400:
+                self.guard_trace.append({
+                    "ts": ts.isoformat(timespec="seconds"),
+                    "today_dd": gs.today_dd_usd,
+                    "total_dd": gs.total_dd_usd,
+                    "mult":     gs.multiplier,
+                    "phase":    gs.phase,
+                })
+            if gs.multiplier <= 0.0:
+                # Guard says STOP - book as a blackout so telemetry shows it
+                reason = (
+                    "fivers_guard_total_halt"  if gs.halted_permanently else
+                    "fivers_guard_daily_halt"  if gs.halted_today else
+                    "fivers_guard_zero_mult"
+                )
+                self.blackout_counts[reason] = self.blackout_counts.get(reason, 0) + 1
+                return 0.0
+            risk_pct *= gs.multiplier
+
         return risk_pct
+
 
     # =================================================================
     # Override 3: feed realized R back into the sizer after every close
