@@ -98,11 +98,12 @@ def main():
         log.error("    Also check: port %d not already bound, firewall allows loopback.", args.port)
         return 2
 
-    # Sanity: print account
+    # Sanity: print account (AccountInfo has no .login field — it's broker-side only)
     acct = bridge.get_account_info()
     log.info(
-        f"✅  Connected. login={acct.login} balance=${acct.balance:,.2f} "
-        f"equity=${acct.equity:,.2f} server={acct.server}"
+        f"✅  Connected. balance=${acct.balance:,.2f} "
+        f"equity=${acct.equity:,.2f} currency={acct.currency} "
+        f"leverage=1:{acct.leverage} server={acct.server}"
     )
 
     # ---- 2. Verify broker knows our symbols

@@ -69,13 +69,15 @@ int OnInit()
 //+------------------------------------------------------------------+
 void DetectSymbols()
 {
-   // v13 SmartBB universe — 5%ers MTB cheap (mostly zero-commission)
+   // v15 SmartBB universe — 5%ers MTB cheap (mostly zero-commission)
    // Each row is a list of variant symbol names to try; first valid wins.
-   string us100[]  = {"US100","NAS100","USTEC","NAS100.","NDX100","US100.cash"};
-   string us500[]  = {"US500","SP500","SPX500","US500.","SPX","US500.cash"};
-   string us30[]   = {"US30","DJ30","US30.","WS30","DJIA","US30.cash"};
-   string de40[]   = {"DE40","DAX40","GER40","DAX","DE40.","GER40.cash"};
-   string usoil[]  = {"USOIL","WTI","OIL","CL","USOIL.","USOIL.cash","XTIUSD"};
+   // NOTE: broker can supply them with dots, suffixes, prefixes, etc.
+   //       Variant list ordered: 5%ers preferred first, common ones after.
+   string us100[]   = {"NAS100","US100","USTEC","NAS100.","NDX100","US100.cash","USTECH"};
+   string us500[]   = {"SP500","US500","SPX500","US500.","SPX","US500.cash"};
+   string us30[]    = {"US30","DJ30","US30.","WS30","DJIA","US30.cash"};
+   string de40[]    = {"DAX40","DE40","GER40","DAX","DE40.","GER40.cash"};
+   string xauusd[]  = {"XAUUSD","GOLD","XAU/USD","XAUUSD.","XAUUSD.cash","XAUUSDm"};
    
    ArrayResize(g_symbols, 0);
    ArrayResize(g_last_m1_time, 0);
@@ -85,7 +87,7 @@ void DetectSymbols()
    AddFirstValid(us500);
    AddFirstValid(us30);
    AddFirstValid(de40);
-   AddFirstValid(usoil);
+   AddFirstValid(xauusd);
 }
 
 //+------------------------------------------------------------------+
@@ -171,6 +173,17 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTimer()
 {
+   // Re-detect symbols if we have none — MT5 may be still loading them
+   // during OnInit. Retry every 5 seconds until at least one is found.
+   static datetime last_symbol_retry = 0;
+   if(g_num_symbols == 0 && (long)TimeCurrent() - (long)last_symbol_retry >= 5)
+   {
+      last_symbol_retry = TimeCurrent();
+      DetectSymbols();
+      if(g_num_symbols > 0)
+         PrintFormat("LATE-DETECTED %d symbols: %s", g_num_symbols, SymbolListStr());
+   }
+   
    if(!g_connected)
    {
       // ═══ DEAD-PYTHON FAILSAFE (v5.64) ═══════════════════════════════
