@@ -453,24 +453,6 @@ class SmartBBV14Engine:
         else:
             band = mean + cfg.bb_sigma * std
             sl = band + p.stop_atr_mult * atr_pts
-
-        # --------------------------------------------------------------
-        # SL direction safety guard (v18.1 — 2026-04-21)
-        # --------------------------------------------------------------
-        # In extreme-overshoot cases (|z| well past the BB band, e.g. z=-2.81
-        # vs band at z=-2.0), the BB-anchored SL formula above can land on the
-        # WRONG side of entry. MT5 would reject such an order as "Invalid
-        # stops" (for a BUY, SL must be strictly below market; for a SELL,
-        # strictly above). We floor the SL at a minimum safe distance from
-        # entry_fill to keep both backtest and live semantics broker-valid.
-        min_stop_dist_pts = max(1.0, 0.5 * atr_pts)
-        if side > 0:
-            # LONG: SL must be strictly below entry
-            sl = min(sl, entry_fill - min_stop_dist_pts)
-        else:
-            # SHORT: SL must be strictly above entry
-            sl = max(sl, entry_fill + min_stop_dist_pts)
-
         stop_distance = abs(entry_fill - sl)
 
         # TP: fraction of the way to the middle band
