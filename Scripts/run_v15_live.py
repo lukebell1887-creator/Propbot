@@ -68,9 +68,9 @@ def setup_logging(log_dir: Path):
 def main():
     p = argparse.ArgumentParser(description="SmartBB v15 live launcher")
     p.add_argument("--host", default="127.0.0.1",
-                   help="MT5 bridge host (default 127.0.0.1)")
-    p.add_argument("--port", type=int, default=9090,
-                   help="MT5 bridge port (default 9090)")
+                   help="MT5 bridge BIND host (default 127.0.0.1 loopback only)")
+    p.add_argument("--port", type=int, default=5555,
+                   help="MT5 bridge port (default 5555; must match EA's InpPort)")
     p.add_argument("--tuning",
                    default="Results/v15_ultimate_tuning.json",
                    help="Path to v15 per-symbol tuning JSON")
@@ -89,11 +89,13 @@ def main():
     setup_logging(Path(args.log_dir))
     log = logging.getLogger("smartbb.v15.launch")
 
-    # ---- 1. Connect to MT5 bridge
-    log.info(f"Connecting to MT5 bridge {args.host}:{args.port} …")
-    bridge = MT5Bridge(host=args.host, port=args.port)
+    # ---- 1. Start TCP server, wait for EA to connect back
+    #         (MT5Bridge binds and LISTENS; the EA is the TCP client)
+    log.info(f"Starting MT5 bridge server on {args.host}:{args.port} (waiting for EA) …")
+    bridge = MT5Bridge(host=args.host, req_port=args.port)
     if not bridge.connect():
-        log.error("❌  Could not connect to MT5 bridge. Is SHF_Bridge EA running?")
+        log.error("❌  MT5 bridge failed to start. Is SHF_Bridge EA attached with AutoTrading ON?")
+        log.error("    Also check: port %d not already bound, firewall allows loopback.", args.port)
         return 2
 
     # Sanity: print account
