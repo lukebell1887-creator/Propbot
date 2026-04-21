@@ -1,23 +1,27 @@
 //+------------------------------------------------------------------+
-//| SHF_Bridge.mq5 — SHF v13 Native TCP Socket Bridge               |
+//| SHF_Bridge.mq5 — PropBot v15 Native TCP Socket Bridge           |
 //| Zero external dependencies — uses MQL5 built-in SocketXXX()     |
 //|                                                                    |
-//| v13 CHANGES (SmartBB strategy):                                    |
-//|   - Universe: US100 / US500 / US30 / DE40 / USOIL (5%ers MTB)    |
-//|   - Bar streaming: new M1 close pushes in DATA field "b"         |
-//|   - Python engine aggregates M1 -> M5 for Bollinger + Hurst      |
-//|   - Dead-Python failsafe retained (closes all after 30s silence) |
+//| VERSION HISTORY (bridge protocol is strategy-agnostic):            |
+//|   v15 - PropBot v15 SmartBB ultimate (per-symbol Z/Hurst/OU/stop) |
+//|   v14 - PhD optimizer tier                                        |
+//|   v13 - SmartBB original                                          |
+//|                                                                    |
+//| Universe (auto-detected): US100 / US500 / US30 / DE40 / USOIL     |
+//| Bar streaming: new M1 close pushes in DATA field "b"              |
+//| Python engine aggregates M1 -> M5 for Bollinger + Hurst           |
+//| Dead-Python failsafe: closes all after 30s silence                |
 //|                                                                    |
 //| Architecture:                                                      |
-//|   Python = TCP Server (bound 0.0.0.0:5555)                         |
+//|   Python = TCP Server (bound 127.0.0.1:5555)                       |
 //|   MT5 EA = TCP Client  (connects to Python)                       |
 //|                                                                    |
 //| Protocol: Length-prefixed JSON over TCP                            |
 //|   [4 bytes big-endian length][JSON payload]                       |
 //+------------------------------------------------------------------+
-#property copyright "SHF Trading Systems"
+#property copyright "PropBot Trading Systems"
 #property link      ""
-#property version   "13.00"
+#property version   "15.00"
 #property strict
 
 input string InpHost        = "127.0.0.1";  // Python server host
@@ -53,7 +57,7 @@ int OnInit()
    
    EventSetMillisecondTimer(InpTimerMs);
    
-   PrintFormat("SHF Bridge v5.64 (Native TCP) | Port=%d | Timer=%dms | Magic=%d",
+   PrintFormat("PropBot v15 Bridge (Native TCP) | Port=%d | Timer=%dms | Magic=%d",
                InpPort, InpTimerMs, InpMagic);
    PrintFormat("Detected %d symbols: %s", g_num_symbols, SymbolListStr());
    
