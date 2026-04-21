@@ -77,8 +77,6 @@ $xml = @"
     <Enabled>true</Enabled>
     <Hidden>false</Hidden>
     <RunOnlyIfIdle>false</RunOnlyIfIdle>
-    <DisallowStartOnRemoteAppSession>false</DisallowStartOnRemoteAppSession>
-    <UseUnifiedSchedulingEngine>true</UseUnifiedSchedulingEngine>
     <WakeToRun>false</WakeToRun>
     <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
     <Priority>7</Priority>
@@ -99,9 +97,17 @@ $xml = @"
 
 $xmlPath = Join-Path $env:TEMP "propbot_task.xml"
 $xml | Out-File -FilePath $xmlPath -Encoding Unicode
-schtasks /Create /TN $TASK /XML $xmlPath /F | Out-Null
-Remove-Item $xmlPath
-Write-Host "       task '$TASK' registered (boot + logon triggers, restart-on-fail x9999).`n"
+$create = cmd /c "schtasks /Create /TN `"$TASK`" /XML `"$xmlPath`" /F 2>&1"
+Remove-Item $xmlPath -ErrorAction SilentlyContinue
+$verify = cmd /c "schtasks /Query /TN `"$TASK`" 2>&1"
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "       task '$TASK' registered (boot + logon triggers, restart-on-fail x9999)." -ForegroundColor Green
+} else {
+    Write-Host "       TASK REGISTRATION FAILED -- schtasks said:" -ForegroundColor Red
+    $create | ForEach-Object { "           $_" }
+    throw "Task '$TASK' was NOT registered. See error above."
+}
+Write-Host ""
 
 # ----- 3. open firewall port for EA bridge (loopback only - safer) -----
 Write-Host "[3/4] Firewall rule for 127.0.0.1:5555 (EA bridge)..."
