@@ -879,11 +879,17 @@ class V23Live:
                         t = datetime.fromisoformat(t)
                     if t and t.tzinfo is None:
                         t = t.replace(tzinfo=timezone.utc)
+                    # Bridge uses short keys {t,o,h,l,c,v}; older code paths
+                    # used long keys {time,open,high,low,close,volume}.
+                    # Accept both so warmup & poll never KeyError on either.
                     bar = BarData(
                         symbol=broker_sym, timeframe="M1",
-                        time=t, open=float(b["open"]), high=float(b["high"]),
-                        low=float(b["low"]), close=float(b["close"]),
-                        volume=float(b.get("volume", 0)),
+                        time=t,
+                        open=float(b.get("o", b.get("open", 0.0))),
+                        high=float(b.get("h", b.get("high", 0.0))),
+                        low=float(b.get("l", b.get("low", 0.0))),
+                        close=float(b.get("c", b.get("close", 0.0))),
+                        volume=float(b.get("v", b.get("volume", 0.0))),
                     )
                 else:
                     bar = b
@@ -930,10 +936,16 @@ class V23Live:
                     t = datetime.fromisoformat(t)
                 if t and t.tzinfo is None:
                     t = t.replace(tzinfo=timezone.utc)
-                bar = BarData(symbol=broker_sym, timeframe="M1", time=t,
-                              open=float(b["open"]), high=float(b["high"]),
-                              low=float(b["low"]), close=float(b["close"]),
-                              volume=float(b.get("volume", 0)))
+                # Bridge returns short keys {t,o,h,l,c,v}; keep legacy-long-key
+                # compat so we never KeyError regardless of bridge version.
+                bar = BarData(
+                    symbol=broker_sym, timeframe="M1", time=t,
+                    open=float(b.get("o", b.get("open", 0.0))),
+                    high=float(b.get("h", b.get("high", 0.0))),
+                    low=float(b.get("l", b.get("low", 0.0))),
+                    close=float(b.get("c", b.get("close", 0.0))),
+                    volume=float(b.get("v", b.get("volume", 0.0))),
+                )
             else:
                 bar = b
             norm.append(bar)
