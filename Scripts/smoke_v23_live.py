@@ -59,14 +59,40 @@ def main() -> int:
               f"+ {o.or_minutes}m,  trade_window={o.trade_window_minutes}m,  "
               f"tp1={o.tp1_range_mult}x  tp2={o.tp2_range_mult}x")
 
-    # Sizer smoke — FLAT 0.110% risk (matches risk_sweep_fine.json)
+    # Sizer smoke — Merton-GZ (v24d sweet-spot: base=0.110%, cap=5x → 0.55% max)
     eq = 100_000.0
     peak = 100_000.0
-    rp = runner._flat_risk_pct
-    print(f"\n  Sizer smoke  :  flat risk = {rp*100:.4f}%   "
-          f"($ per trade @ $100k eq = ${eq*rp:.2f})   "
-          f"[matches risk_sweep_fine.json]")
-    assert abs(rp - cfg.base_risk_pct) < 1e-12, "flat risk should equal base_risk_pct"
+    # Warmup: sizer returns base while <15 trades seen, so seed it a bit.
+    # At DD=0 with edge μ>0, risk should equal cap = 0.55%.
+    # At DD≈4%, risk should → 0 (Grossman-Zhou barrier absorbs).
+    rp_warm = runner.merton_sizer.compute_risk_pct("DE40", eq, peak, [])
+    print(f"\n  Sizer smoke  (warmup, DD=0 %)      :  risk = {rp_warm*100:.4f}%   "
+          f"($ per trade @ $100k = ${eq*rp_warm:.2f})")
+    assert abs(rp_warm - cfg.base_risk_pct) < 1e-12, "warmup should return base = 0.110%"
+
+    # Feed 20 synthetic trades with avg +0.5R, σ~1.5R → μ/σ²≈0.22 → merton_mult binds cap
+    import random
+    random.seed(42)
+    for _ in range(20):
+        runner.merton_sizer.on_trade_closed("DE40", random.gauss(0.5, 1.5))
+    rp_edge = runner.merton_sizer.compute_risk_pct("DE40", eq, peak, [])
+    print(f"  Sizer smoke  (20 trades, DD=0 %)   :  risk = {rp_edge*100:.4f}%   "
+          f"(cap binds at {cfg.base_risk_pct*cfg.cap_mult*100:.3f}%)")
+    assert rp_edge <= cfg.base_risk_pct * cfg.cap_mult + 1e-9, "must not exceed hard cap"
+
+    # Simulate DD = 2% → GZ barrier halves the size
+    rp_dd2 = runner.merton_sizer.compute_risk_pct("DE40", eq * 0.98, eq, [])
+    print(f"  Sizer smoke  (20 trades, DD=2 %)   :  risk = {rp_dd2*100:.4f}%   "
+          f"(GZ barrier = {1 - 0.02/cfg.dd_cap_pct:.3f})")
+
+    # Simulate DD ≈ 4% → GZ absorbs → risk = 0 (sizer itself stops trading)
+    rp_dd4 = runner.merton_sizer.compute_risk_pct("DE40", eq * 0.96, eq, [])
+    print(f"  Sizer smoke  (20 trades, DD=4 %)   :  risk = {rp_dd4*100:.4f}%   "
+          f"(GZ barrier absorbs → size → 0 at DD_cap=4%)")
+    assert rp_dd4 < rp_edge, "GZ barrier must shrink size as DD approaches cap"
+
+    # Reset so warmup test works on subsequent runs
+    runner.merton_sizer.reset()
 
     # Warmup smoke — verify the method exists and is callable (can't run
     # end-to-end here as we have no bridge; full warmup runs on VPS).

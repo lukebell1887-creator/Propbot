@@ -46,12 +46,16 @@ NEWS_CSV = ROOT / "data" / "news" / "tier1_2026.csv"
 
 
 def run(risk, add_news_rails: bool):
-    # Identical to preflight_checks.run(risk) — do NOT deviate from these params
+    # Sizer parity with src/live/v23_live.py (v24d sweet-spot, audit-validated 2026-04):
+    #   cap_mult=5.0, gamma=3.0  →  honest shootout: +$23,311 / 2.06% DD / 0 halts, 0 breaker
+    # DO NOT drift these without updating the live file (tests/test_live_backtest_parity.py
+    # will fail the build if they ever disagree).
     cfg = MertonGZSizerConfig(
-        base_risk_pct=risk, cap_mult=3.0, gamma=2.0,
+        base_risk_pct=risk, cap_mult=5.0, gamma=3.0,
         ewma_alpha=0.20, warmup_trades=15, dd_cap_pct=0.04,
         pool_symbols=True, no_edge_multiplier=1.0,
     )
+
     raw, tmin, tmax, _dropped, streams = run_portfolio(SYMS, cfg)
 
     if add_news_rails:

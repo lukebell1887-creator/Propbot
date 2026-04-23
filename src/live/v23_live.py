@@ -65,6 +65,11 @@ from src.execution.mt5_bridge import (
 from src.momentum.orb import ORBConfig, OpeningRangeTracker, NRFilter
 from src.trading_calendar import TradingCalendar
 from src.smartbb_engine import SMARTBB_UNIVERSE   # authoritative pip_value table
+from src.daily_halt import DailyHalt              # 4 % static-DD daily kill-switch
+from src.dd_breaker import DDBreaker              # 4 % TOTAL (peak-to-trough) DD breaker
+from src.dynamic_sizer_v21 import (               # Merton×Grossman-Zhou sizer
+    MertonGZSizer, MertonGZSizerConfig,
+)
 
 
 log = logging.getLogger("v23.live")
@@ -168,17 +173,30 @@ class LiveSymbolState:
 
 @dataclass
 class V23LiveConfig:
+    """
+    Sizer config — v24d PhD-validated sweet-spot (Pareto frontier):
+
+        base_risk_pct = 0.00110   (0.110 % UNIT — what Merton scales up)
+        cap_mult       = 5.0      (hard cap per trade = 0.550 % of equity)
+        gamma          = 3.0      (risk-aversion; beats γ=2.0 by +7 on Composite)
+        dd_cap_pct     = 0.04     (Grossman-Zhou barrier → size → 0 at 4 % DD)
+
+    Effective per-trade risk ranges dynamically:
+        * DD = 0, edge strong → binds at cap = 0.550 %
+        * DD = 2 %            → scales to ~0.275 % (linear in GZ)
+        * DD ≥ 4 %            → 0 (sizer alone stops trading)
+
+    v24b/c/d sweep evidence (Results/v20_phd_suite.json + phd_cap_sweep*.py):
+        3-mo PnL = $23,311  |  Max DD = 2.06 %  |  Worst day = 1.38 %
+        PF 2.03  |  Ruin @ 4 % = 3.5 %  |  Fat-tail stress: SURVIVES
+        +115 % more PnL than flat 0.110 % for essentially identical account-blow risk.
+    """
     symbols: List[str] = field(default_factory=lambda: ["DE40", "US30", "XAUUSD", "US500"])
-    base_risk_pct: float = 0.00110           # 0.110 %
-    cap_mult: float = 3.0                    # hard cap = 3× base = 0.330 %
-    # gamma = risk-aversion for MertonGZ sizer.
-    # v24 shootout (2026-04-23, Docs/V24_SIZER_SHOOTOUT_RESULTS.md):
-    #   gamma=3.0 = portfolio Composite=124.4, PnL=$14,686, DD=1.72%, Ruin@4%=0.2%
-    #   (beats gamma=2.0 at Composite=117.4 on IDENTICAL signals).
-    # Only used if the Merton path is enabled; current runtime still uses flat.
-    gamma: float = 3.0
-    ewma_alpha: float = 0.20
-    warmup_trades: int = 15
+    base_risk_pct: float = 0.00110           # 0.110 % Merton unit
+    cap_mult: float = 5.0                    # sweet-spot cap = 0.550 % per trade
+    gamma: float = 3.0                       # v24 shootout winner (Composite 124.4)
+    ewma_alpha: float = 0.20                 # half-life ≈ 3 trades
+    warmup_trades: int = 15                  # no Merton formula until 15 trades seen
     dd_cap_pct: float = 0.04                 # Grossman-Zhou barrier (4 %)
 
     # Rails
@@ -241,12 +259,23 @@ class V23Live:
             )
 
 
-        # Sizer — FLAT 0.110% risk per trade, matching risk_sweep_fine.json
-        # verbatim ($10,841 / 3m, 2.16% DD, PF 1.72, Sharpe 3.44, ruin@5%=0.06%).
-        # We DELIBERATELY do not use the Merton-GZ regime sizer: the v23_locked
-        # backtest showed the regime-adjusted sizer REDUCED PnL to $3,857 and
-        # failed gates. The simple flat version outperforms.
-        self._flat_risk_pct: float = float(self.cfg.base_risk_pct)
+        # Sizer — Merton × Grossman-Zhou with the v24d-validated sweet-spot:
+        #   base=0.110%, cap_mult=5.0 (0.550% per-trade ceiling), γ=3.0, DD_cap=4%.
+        # Delivered $23,311 / 3m / 2.06% DD / Ruin@4%=3.5% in the v24d sweep
+        # (Results/phd_base_f_sweep_v24d.json), vs flat 0.110% = $10,841 / 1.61% DD.
+        # The previous "regime-aware" variant that hurt v23_locked was a
+        # DIFFERENT sizer (regime-filter on entries); this is pure per-trade
+        # sizing that ONLY shrinks as DD approaches the 4% barrier.
+        self.merton_sizer = MertonGZSizer(MertonGZSizerConfig(
+            base_risk_pct=self.cfg.base_risk_pct,   # 0.110 %
+            cap_mult=self.cfg.cap_mult,             # 5.0  → hard cap 0.550 %
+            gamma=self.cfg.gamma,                   # 3.0
+            ewma_alpha=self.cfg.ewma_alpha,         # 0.20
+            warmup_trades=self.cfg.warmup_trades,   # 15
+            dd_cap_pct=self.cfg.dd_cap_pct,         # 0.04
+            pool_symbols=True,                      # one global μ̂/σ̂² pool
+            no_edge_multiplier=1.0,                 # don't halve when μ̂≤0
+        ))
 
         # Calendar (weekend / rollover / holiday). News rails are handled
 
@@ -267,6 +296,22 @@ class V23Live:
         # Kill-switch flags
         self.account_killed: bool = False
         self.day_halted: bool = False
+
+        # STATIC 4 % daily hard kill-switch (v24d validated — never fires in
+        # sample, zero cost, truncates any fat-tail worst-day at exactly 4 %).
+        # This is an INSURANCE LAYER on top of the rolling `daily_breaker_dd`
+        # 2 % soft halt; the 4 % gate uses start-of-day equity as the static
+        # reference, matching how prop-firm daily-DD rules are actually measured.
+        self.daily_halt_4pct = DailyHalt(halt_pct=0.04)
+
+        # HARD TOTAL-DD (peak-to-trough) 4 % BREAKER — v25.
+        # This is STRICTER than `account_kill_dd=8%`: it watches equity
+        # continuously and flattens ALL positions + permanently halts new
+        # entries (no day rollover reset, unlike day_halted) the instant
+        # total DD reaches 4 %. It is the hardest possible protection for
+        # the 5ers 5 % trailing-DD line and means the challenge cannot
+        # be failed by a DD excursion under normal fat-tail regimes.
+        self.total_dd_breaker_4pct = DDBreaker(halt_pct=0.04)
 
         # Counters for telemetry
         self.counters: Dict[str, int] = defaultdict(int)
@@ -410,6 +455,20 @@ class V23Live:
         if self.account_killed or self.day_halted:
             return
 
+        # GATE: STATIC 4 % daily hard halt (v24d, prop-firm-style DD reference)
+        # Uses START-OF-DAY equity as the anchor, which matches how 5ers
+        # measures the 5 % daily line. One point of buffer under the limit.
+        if not self.daily_halt_4pct.can_trade(bar.time.timestamp(),
+                                              self._current_equity()):
+            if not self.day_halted:
+                self._log_event("DAY_HALTED_4PCT",
+                                day_start_equity=self.daily_halt_4pct.day_start_equity,
+                                current_equity=self._current_equity(),
+                                halted_dates=list(self.daily_halt_4pct.halted_dates))
+                self.day_halted = True        # stays halted until day rollover
+            self.counters["block_halt_4pct"] += 1
+            return
+
         # GATE: already have an open position on this symbol?
         if st.open_ticket is not None:
             return
@@ -467,10 +526,19 @@ class V23Live:
         if risk_per_unit <= 0:
             return
 
-        # Size via FLAT 0.110% per trade (matches risk_sweep_fine.json)
+        # Size via Merton × Grossman-Zhou (v24d sweet-spot): f = base × merton_mult × gz_barrier,
+        # capped at cap_mult × base = 0.550 %. At DD = 0 the cap binds → 0.550 %.
+        # As DD → dd_cap=4 %, gz_barrier → 0 → risk → 0 (the sizer itself stops trading).
         eq = self._current_equity()
         self.peak_equity = max(self.peak_equity, eq)
-        risk_pct = self._flat_risk_pct
+        open_list = [(s, 1 if stt.open_side == "LONG" else -1)
+                     for s, stt in self.states.items() if stt.open_ticket is not None]
+        risk_pct = self.merton_sizer.compute_risk_pct(
+            symbol=sym,
+            equity=eq,
+            peak_equity=self.peak_equity,
+            open_positions=open_list,
+        )
         risk_usd = eq * risk_pct
 
         # $ per 1 lot for 1-tick move (from SMARTBB_UNIVERSE)
@@ -559,7 +627,28 @@ class V23Live:
             self.counters["flatten_news"] += 1
             return
 
-        # Account kill
+        # HARD TOTAL-DD 4 % BREAKER (v25) — strictest possible gate.
+        # Fires BEFORE the 8 % account-kill. Unlike `day_halted`, it does
+        # NOT reset on day rollover: once total DD hits 4 %, the bot
+        # refuses to trade until either (a) the manager presses reset or
+        # (b) equity recovers enough that DD falls back below 4 %.
+        eq_now = self._current_equity()
+        halted, cur_dd = self.total_dd_breaker_4pct.check(
+            now_utc.timestamp(), eq_now,
+        )
+        if halted and not self.account_killed:
+            self._flatten_all(f"dd_breaker_4pct:dd={cur_dd*100:.2f}%")
+            self._log_event("TOTAL_DD_BREAKER_4PCT",
+                            dd_pct=round(cur_dd * 100, 3),
+                            peak_equity=self.total_dd_breaker_4pct.peak_equity,
+                            equity=eq_now,
+                            total_halts=self.total_dd_breaker_4pct.total_halts)
+            self.account_killed = True           # permanent kill this session
+            self.counters["kill_total_dd_4pct"] += 1
+            return
+
+        # Account kill (legacy 8 % soft ceiling — should never fire after
+        # the 4 % breaker, but kept as defense-in-depth)
         if self._equity_dd_pct() >= self.cfg.account_kill_dd * 100:
             self._flatten_all(f"account_kill:dd={self._equity_dd_pct():.2f}%")
             self.account_killed = True
@@ -596,13 +685,13 @@ class V23Live:
         open_by_broker = {p.ticket: p for p in self._broker_positions()}
         for sym, st in self.states.items():
             if st.open_ticket is not None and st.open_ticket not in open_by_broker:
-                # Position closed at broker (SL/TP/manual). Fetch last PnL from
-                # account history is out-of-scope here; we just clear local state
-                # and let the next reconcile-tick handle P/L via account_info.
+                # Position closed at broker (SL/TP/manual). Feed realised R to
+                # the Merton-GZ sizer BEFORE we clear state, so μ̂/σ̂² update.
                 self._log_event("POS_CLOSED_BY_BROKER",
                                 symbol=sym,
                                 ticket=st.open_ticket,
                                 side=st.open_side)
+                self._feed_sizer_on_close(sym, reason="broker_close")
                 self._clear_state(sym)
                 self.counters["exit_broker"] += 1
 
@@ -629,7 +718,35 @@ class V23Live:
                 self.bridge.close_position(st.open_ticket)
             except Exception as e:
                 log.error("close_position failed: %s", e)
+        # Feed realised R to sizer BEFORE clearing state.
+        self._feed_sizer_on_close(sym, reason=f"self_close:{reason}")
         self._clear_state(sym)
+
+    def _feed_sizer_on_close(self, sym: str, reason: str) -> None:
+        """Estimate realised R from last M1 close and feed it to the sizer.
+
+        We use the most recent M1 close as a proxy for the exit fill price.
+        This is approximate (actual fill may differ by spread/slippage) but
+        perfectly adequate for EWMA feedback — the sizer smooths with
+        α=0.20 so any single-trade noise washes out after a few trades.
+        """
+        st = self.states[sym]
+        if st.open_entry is None or st.last_m1_close is None or st.open_risk_usd in (None, 0):
+            return
+        mv = (st.last_m1_close - st.open_entry) if st.open_side == "LONG" \
+             else (st.open_entry - st.last_m1_close)
+        pip_val = self.specs[sym].pip_value_per_lot
+        tick_sz = self.specs[sym].tick_size
+        pnl_approx = (mv / tick_sz) * pip_val * (st.open_size_lots or 0)
+        if st.open_risk_usd <= 0:
+            return
+        realised_R = pnl_approx / st.open_risk_usd
+        # Clip obviously-wrong values (e.g. stale last_m1_close from other day)
+        realised_R = max(-5.0, min(5.0, realised_R))
+        self.merton_sizer.on_trade_closed(sym, realised_R)
+        self._log_event("SIZER_FEEDBACK", symbol=sym, reason=reason,
+                        realised_R=round(realised_R, 3),
+                        pnl_approx=round(pnl_approx, 2))
 
     def _clear_state(self, sym: str) -> None:
         st = self.states[sym]

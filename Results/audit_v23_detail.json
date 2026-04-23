@@ -1,0 +1,67 @@
+{
+  "window": [
+    "2026-01-20 08:19:00",
+    "2026-04-21 12:08:00"
+  ],
+  "global": {
+    "partials": 283,
+    "entries": 161,
+    "net": 10852.557085682742,
+    "ret_pct": 10.852557085682742,
+    "max_dd_pct": 2.1556342300820344,
+    "worst_day_pnl": -728.8110000000083,
+    "worst_day_pct": -0.7288110000000083,
+    "worst_daily_dd_pct": 0.6945565071166556,
+    "sub60s_partials": 0,
+    "same_bar_partials": 0,
+    "same_bar_entries": 0,
+    "dd_breaker_4pct_triggered": false,
+    "dd_breaker_max_dd_seen_pct": 2.1556342300820344
+  },
+  "per_symbol": {
+    "DE40": {
+      "partials": 115,
+      "entries": 64,
+      "net": 3089.677432750869,
+      "ret_pct": 3.089677432750869,
+      "max_dd_pct": 1.6908297335411395,
+      "worst_day_pnl": -393.53020000003636,
+      "worst_day_pct": -0.39353020000003636,
+      "sub60s_partials": 0,
+      "same_bar_partials": 0
+    },
+    "US30": {
+      "partials": 94,
+      "entries": 60,
+      "net": 4646.065365144038,
+      "ret_pct": 4.646065365144038,
+      "max_dd_pct": 1.4789728105789517,
+      "worst_day_pnl": -363.825,
+      "worst_day_pct": -0.363825,
+      "sub60s_partials": 0,
+      "same_bar_partials": 0
+    },
+    "XAUUSD": {
+      "partials": 26,
+      "entries": 16,
+      "net": 2173.5771485436453,
+      "ret_pct": 2.1735771485436453,
+      "max_dd_pct": 0.15619943843632056,
+      "worst_day_pnl": -100.86853151999897,
+      "worst_day_pct": -0.10086853151999896,
+      "sub60s_partials": 0,
+      "same_bar_partials": 0
+    },
+    "US500": {
+      "partials": 48,
+      "entries": 21,
+      "net": 943.2371392441897,
+      "ret_pct": 0.9432371392441897,
+      "max_dd_pct": 0.36648269653559606,
+      "worst_day_pnl": -355.4671999999732,
+      "worst_day_pct": -0.3554671999999732,
+      "sub60s_partials": 0,
+      "same_bar_partials": 0
+    }
+  }
+}
