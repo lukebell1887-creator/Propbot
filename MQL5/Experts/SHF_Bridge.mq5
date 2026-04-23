@@ -1,9 +1,14 @@
 //+------------------------------------------------------------------+
-//| SHF_Bridge.mq5 — PropBot v15 Native TCP Socket Bridge           |
+//| SHF_Bridge.mq5 — PropBot v23 Native TCP Socket Bridge           |
 //| Zero external dependencies — uses MQL5 built-in SocketXXX()     |
 //|                                                                    |
-//| VERSION HISTORY (bridge protocol is strategy-agnostic):            |
-//|   v15 - PropBot v15 SmartBB ultimate (per-symbol Z/Hurst/OU/stop) |
+//| VERSION HISTORY (bridge protocol is strategy-agnostic — the same  |
+//| EA is deliberately reused across strategy versions; bumping the   |
+//| banner only helps you confirm the right .ex5 is attached):        |
+//|   v23 - ORB + Merton-GZ sizer + 4% DD breaker (CURRENT)           |
+//|   v18 - Final SmartBB                                             |
+//|   v16 - SmartBB w/ warmup + telemetry                             |
+//|   v15 - SmartBB ultimate (per-symbol Z/Hurst/OU/stop)             |
 //|   v14 - PhD optimizer tier                                        |
 //|   v13 - SmartBB original                                          |
 //|                                                                    |
@@ -21,7 +26,7 @@
 //+------------------------------------------------------------------+
 #property copyright "PropBot Trading Systems"
 #property link      ""
-#property version   "15.00"
+#property version   "23.00"
 #property strict
 
 input string InpHost        = "127.0.0.1";  // Python server host
@@ -57,7 +62,7 @@ int OnInit()
    
    EventSetMillisecondTimer(InpTimerMs);
    
-   PrintFormat("PropBot v15 Bridge (Native TCP) | Port=%d | Timer=%dms | Magic=%d",
+   PrintFormat("PropBot v23 Bridge (Native TCP) | Port=%d | Timer=%dms | Magic=%d",
                InpPort, InpTimerMs, InpMagic);
    PrintFormat("Detected %d symbols: %s", g_num_symbols, SymbolListStr());
    
