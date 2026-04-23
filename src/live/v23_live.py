@@ -63,9 +63,9 @@ from src.execution.mt5_bridge import (
     MT5Bridge, OrderRequest, OrderType, Position, AccountInfo, BarData,
 )
 from src.momentum.orb import ORBConfig, OpeningRangeTracker, NRFilter
-from src.dynamic_sizer_v21 import MertonGZSizer, MertonGZSizerConfig
 from src.trading_calendar import TradingCalendar
 from src.smartbb_engine import SMARTBB_UNIVERSE   # authoritative pip_value table
+
 
 log = logging.getLogger("v23.live")
 
@@ -236,20 +236,15 @@ class V23Live:
             )
 
 
-        # Sizer — matches preflight_checks.run() exactly (see risk_sweep_fine.json)
-        sizer_cfg = MertonGZSizerConfig(
-            base_risk_pct=self.cfg.base_risk_pct,
-            cap_mult=self.cfg.cap_mult,
-            gamma=self.cfg.gamma,
-            ewma_alpha=self.cfg.ewma_alpha,
-            warmup_trades=self.cfg.warmup_trades,
-            dd_cap_pct=self.cfg.dd_cap_pct,
-            pool_symbols=True,
-            no_edge_multiplier=1.0,
-        )
-        self.sizer = MertonGZSizer(cfg=sizer_cfg)
+        # Sizer — FLAT 0.110% risk per trade, matching risk_sweep_fine.json
+        # verbatim ($10,841 / 3m, 2.16% DD, PF 1.72, Sharpe 3.44, ruin@5%=0.06%).
+        # We DELIBERATELY do not use the Merton-GZ regime sizer: the v23_locked
+        # backtest showed the regime-adjusted sizer REDUCED PnL to $3,857 and
+        # failed gates. The simple flat version outperforms.
+        self._flat_risk_pct: float = float(self.cfg.base_risk_pct)
 
         # Calendar (weekend / rollover / holiday). News rails are handled
+
         # separately so we can apply the -2min flatten independently.
         self.calendar = TradingCalendar()
 
@@ -467,11 +462,12 @@ class V23Live:
         if risk_per_unit <= 0:
             return
 
-        # Size via Merton-GZ
+        # Size via FLAT 0.110% per trade (matches risk_sweep_fine.json)
         eq = self._current_equity()
         self.peak_equity = max(self.peak_equity, eq)
-        risk_pct = self.sizer.compute_risk_pct(sym, eq, self.peak_equity, [])
+        risk_pct = self._flat_risk_pct
         risk_usd = eq * risk_pct
+
         # $ per 1 lot for 1-tick move (from SMARTBB_UNIVERSE)
         pip_val = self.specs[sym].pip_value_per_lot
         tick_sz = self.specs[sym].tick_size
@@ -776,10 +772,96 @@ class V23Live:
                 st.bars_seen_today += 1
 
     # -----------------------------------------------------------------
+    # Startup warmup (pre-seed OR tracker + NR filter per symbol)
+    # -----------------------------------------------------------------
+    def _warmup_symbol(self, sym: str, bars_to_fetch: int = 2880) -> int:
+        """
+        Pull `bars_to_fetch` M1 bars from the broker and feed them through
+        the OR tracker + NR filter in strict chronological order. This ensures
+        that when the main poll loop starts, every symbol already has:
+          * today's finalised OR (if the OR window is in the past)
+          * a populated NR filter (needs ~20 prior-day bars)
+
+        Default 2880 bars = 48 h of M1 = enough for any OR window regardless
+        of when the bot is started. No entries are placed here — the ORB
+        tracker is deterministic and will simply replay what already happened.
+
+        Returns: number of bars processed.
+        """
+        st = self.states[sym]
+        broker_sym = self._symbol_to_broker(sym)
+        try:
+            bars = self.bridge.get_history(broker_sym, count=bars_to_fetch)
+        except Exception as e:
+            log.warning("warmup  %s  get_history failed: %s", sym, e)
+            return 0
+        if not bars:
+            log.warning("warmup  %s  broker returned 0 bars", sym)
+            return 0
+
+        # Normalise dict→BarData and ensure chronological order
+        norm: List[BarData] = []
+        for b in bars:
+            if isinstance(b, dict):
+                t = b.get("time")
+                if isinstance(t, str):
+                    t = datetime.fromisoformat(t)
+                if t and t.tzinfo is None:
+                    t = t.replace(tzinfo=timezone.utc)
+                bar = BarData(symbol=broker_sym, timeframe="M1", time=t,
+                              open=float(b["open"]), high=float(b["high"]),
+                              low=float(b["low"]), close=float(b["close"]),
+                              volume=float(b.get("volume", 0)))
+            else:
+                bar = b
+            norm.append(bar)
+        norm.sort(key=lambda x: x.time)
+
+        # Feed bars through OR tracker + NR filter — NO trading during warmup
+        processed = 0
+        for bar in norm:
+            day_key = bar.time.strftime("%Y-%m-%d")
+            st.or_tracker.update(day_key, bar.time.hour, bar.time.minute,
+                                 float(bar.high), float(bar.low))
+            st.nr_filter.update(day_key, float(bar.high), float(bar.low))
+            st.last_m1_close = float(bar.close)
+            st.last_bar_time = bar.time
+            processed += 1
+
+        orb = st.or_tracker
+        or_info = (f"OR=[{orb.or_low:.2f}-{orb.or_high:.2f}] finalised={orb.or_finalised}"
+                   if orb.or_high is not None else "OR=n/a")
+        log.info("warmup  %s  bars=%d  last=%s  %s",
+                 sym, processed, norm[-1].time.isoformat() if norm else "n/a", or_info)
+        return processed
+
+    def _warmup_all(self) -> None:
+        """Warm up every configured symbol. Called once from start()."""
+        log.info("=" * 72)
+        log.info(" WARMUP — pre-seeding OR tracker + NR filter for each symbol")
+        log.info(" (pulling 48h of M1 history per symbol; no orders are sent)")
+        log.info("=" * 72)
+        total = 0
+        for sym in self.cfg.symbols:
+            n = self._warmup_symbol(sym, bars_to_fetch=2880)
+            total += n
+        log.info("WARMUP complete — %d bars seeded across %d symbols",
+                 total, len(self.cfg.symbols))
+        self._log_event("WARMUP_DONE",
+                        bars_total=total,
+                        symbols={sym: {
+                            "or_high": self.states[sym].or_tracker.or_high,
+                            "or_low": self.states[sym].or_tracker.or_low,
+                            "or_finalised": self.states[sym].or_tracker.or_finalised,
+                            "last_bar_time": str(self.states[sym].last_bar_time),
+                        } for sym in self.cfg.symbols})
+
+    # -----------------------------------------------------------------
     # Public API
     # -----------------------------------------------------------------
     def start(self) -> int:
-        """Initialise equity anchors. Call before run()."""
+        """Initialise equity anchors + warm up each symbol's OR/NR state.
+        Call before run()."""
         eq = self._current_equity()
         if eq <= 0:
             log.error("Bridge returned zero/negative equity — cannot start.")
@@ -790,7 +872,12 @@ class V23Live:
         self._current_day_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         log.info("[START] equity=$%.2f  mode=%s", eq, "DRY-RUN" if self.dry_run else "LIVE")
         self._log_event("START", equity=eq, dry_run=self.dry_run, cfg=vars(self.cfg))
+
+        # PRE-SEED per-symbol OR tracker + NR filter from 48h of M1 history.
+        # Must happen BEFORE run() or the first trading day will have no OR.
+        self._warmup_all()
         return 0
+
 
     def stop(self) -> None:
         self._stop = True

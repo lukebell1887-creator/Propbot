@@ -32,3 +32,4 @@ state/
 Thumbs.db
 .DS_Store
 desktop.ini
+Results/v23_live_*.log 

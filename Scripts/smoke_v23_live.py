@@ -59,13 +59,23 @@ def main() -> int:
               f"+ {o.or_minutes}m,  trade_window={o.trade_window_minutes}m,  "
               f"tp1={o.tp1_range_mult}x  tp2={o.tp2_range_mult}x")
 
-    # Sizer smoke — warmup regime
+    # Sizer smoke — FLAT 0.110% risk (matches risk_sweep_fine.json)
     eq = 100_000.0
     peak = 100_000.0
-    rp = runner.sizer.compute_risk_pct("DE40", eq, peak, [])
-    print(f"\n  Sizer smoke  :  warmup risk = {rp*100:.4f}%   "
-          f"($ per trade @ $100k eq = ${eq*rp:.2f})")
-    assert 0.0 < rp <= cfg.base_risk_pct * cfg.cap_mult + 1e-9, "sizer out of bounds"
+    rp = runner._flat_risk_pct
+    print(f"\n  Sizer smoke  :  flat risk = {rp*100:.4f}%   "
+          f"($ per trade @ $100k eq = ${eq*rp:.2f})   "
+          f"[matches risk_sweep_fine.json]")
+    assert abs(rp - cfg.base_risk_pct) < 1e-12, "flat risk should equal base_risk_pct"
+
+    # Warmup smoke — verify the method exists and is callable (can't run
+    # end-to-end here as we have no bridge; full warmup runs on VPS).
+    assert hasattr(runner, "_warmup_all") and callable(runner._warmup_all), \
+        "runner missing warmup; OR tracker will be empty on day-1"
+    assert hasattr(runner, "_warmup_symbol") and callable(runner._warmup_symbol), \
+        "runner missing per-symbol warmup"
+    print(f"  Warmup wired :  _warmup_all() present (pulls 2880 M1 bars/symbol on start)")
+
 
     # Rail smoke
     from datetime import datetime, timezone, timedelta
