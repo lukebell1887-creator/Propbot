@@ -28,9 +28,19 @@ if ($LASTEXITCODE -ne 0) {
     exit 2
 }
 
+# Broker-name mapping for this 5ers FivePercentOnline-Real server,
+# discovered via Scripts\probe_broker_symbols.py on 2026-04-23:
+#   DE40  -> DAX40   (not DE40.cash)
+#   US30  -> US30    (plain, no .cash)
+#   US500 -> SP500   (not US500.cash)
+#   XAUUSD -> XAUUSD (default)
+# If you move to a different broker, re-run the probe and update this line.
+$BrokerNames = "DE40=DAX40,US30=US30,US500=SP500,XAUUSD=XAUUSD"
+
 # Run the launcher - cap_mult=5.0 is the v24d-optimal sweet-spot.
 & python "$PSScriptRoot\Scripts\run_v23_live.py" `
     --symbols "DE40,US30,XAUUSD,US500" `
+    --broker-names $BrokerNames `
     --risk 0.00110 `
     --cap-mult 5.0 `
     --account-kill 0.08 `
