@@ -1,0 +1,17 @@
+==============================================================================================================
+  🎯 ORB v20 — PhD SUPERIOR GRID SEARCH (walk-forward + deflated Sharpe)
+  $100,000 account  |  5 symbols  |  full per-asset-class commission
+==============================================================================================================
+  Symbols       : DE40, US100, US30, US500, XAUUSD
+  FULL window   : 2026-01-19 -> 2026-04-07  (78 days)
+  IS window     : 2026-01-19 -> 2026-03-10  (50 days)
+  [embargo  2 days]
+  OOS window    : 2026-03-12 -> 2026-04-07  (26 days)
+
+  Loading M1 data...
+  Bars: FULL=376,313  IS=243,450  OOS=119,228
+
+  Grid cells: 648  →  1,296 backtests (IS + OOS)
+  Estimated runtime: ~7.6 min
+
+  [ 24/648]  ETA 2752s  |  best-robust IS=$+1,370  OOS=$+1,354  FULL=$+3,113

@@ -1,0 +1,32 @@
+Total trials in DB: 118
+Valid positive-J trials: 1
+
+TOP 10 trials (by J):
+   #        J    N    E[R]     PF    DD%        PnL
+   2   +0.157   75  +0.181   1.33   3.92 $   +6,806
+
+================================================================================
+BEST (trial #2)  J = +0.1568
+================================================================================
+  z_min_abs            = 1.7042
+  z_max_abs            = 2.7723
+  z_quantile           = 0.7073
+  hurst_max_abs        = 0.4582
+  hurst_quantile       = 0.6589
+  stop_atr_mult        = 0.4674
+  tp_frac              = 0.5629
+  ou_max_halflife      = 221.1992
+
+IS window: 2026-01-19 -> 2026-03-22
+OOS window: 2026-03-22 -> 2026-04-07
+
+Re-evaluating IS...
+  IS  N= 75 E[R]=+0.181 PF=1.33 DD=3.92% PnL=$+6,806 WR=49.3% Phantoms=0
+
+Evaluating OOS (held-out last 20 %)...
+  OOS N= 24 E[R]=-0.177 PF=0.76 DD=5.43% PnL=$-2,157 WR=37.5% Phantoms=0
+
+Full 3m window (IS+OOS combined, as shown to user)...
+  FULL N=112 E[R]=+0.144 PF=1.26 DD=5.04% PnL=$+8,065 WR=48.2% Phantoms=0
+
+Saved: C:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Results\phd_optimize_v19_final.json

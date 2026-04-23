@@ -1,0 +1,73 @@
+{
+  "symbols": [
+    "DE40",
+    "US100",
+    "US30",
+    "XAUUSD",
+    "US500"
+  ],
+  "balance": 100000.0,
+  "window": [
+    "2026-01-20 08:19:00",
+    "2026-04-21 12:08:00"
+  ],
+  "sizer": {
+    "base_risk_pct": 0.0011,
+    "cap_mult": 2.5,
+    "max_per_trade_pct": 0.0027500000000000003
+  },
+  "news_events": 31,
+  "rails_audit": {
+    "position_cap_dropped": {
+      "position_cap_entries_dropped": 14
+    },
+    "weekend_flat_dropped": {
+      "weekend_dropped": 0
+    },
+    "news_entries_blocked": 0,
+    "news_flattens": 0,
+    "kill_switch_dropped": 0,
+    "days_locked": 0,
+    "dropped_hmm": 110
+  },
+  "trades": 260,
+  "entries": 153,
+  "net_pnl": 3856.910416333259,
+  "pf": 1.266965077609241,
+  "wr": 0.6230769230769231,
+  "sharpe": 1.4450951863632784,
+  "max_dd_pct": 3.160001576168477,
+  "worst_day_pct": -0.8895346265999937,
+  "days_lt_2pct": 0,
+  "days_lt_3pct": 0,
+  "bootstrap": {
+    "ruin": {
+      "3.0": 29.220000000000002,
+      "4.0": 10.82,
+      "5.0": 3.88
+    },
+    "dd_percentiles": {
+      "dd_p50": 2.383191979201509,
+      "dd_p95": 4.76106683783635,
+      "dd_p99": 6.230610473133649
+    },
+    "n_paths": 5000
+  },
+  "durations": {
+    "sub_30s": 0,
+    "sub_60s": 0,
+    "total": 260
+  },
+  "compound": {
+    "monthly_pct": 1.2694534924250656,
+    "year1_pct": 16.343358217415236,
+    "year1_balance": 116343.35821741524
+  },
+  "gates": {
+    "Max DD <= 4.0%": true,
+    "Ruin@5% <= 0.5%": false,
+    "Net PnL >= $8k": false,
+    "HFT sub-60s == 0": true
+  },
+  "all_ok": false
+}

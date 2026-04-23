@@ -1,0 +1,96 @@
+================================================================================
+  PHD-GRADE FULL-SCENARIO TEST REPORT
+  generated : 2026-04-21T18:28:42
+================================================================================
+
+--------------------------------------------------------------------------------
+  PART 1 / SmartBB v18 — 3-way HONEST reference backtest
+--------------------------------------------------------------------------------
+    [CONTROL (v18)] running ...
+    [REV_PROPER] running ...
+    [REV_PROPER + NSB] running ...
+  
+  ====================================================================================================================================
+    RESULTS — three SL/TP regimes, same everything else
+  ====================================================================================================================================
+    CONTROL (v18)      | N= 50 WR=22.0% PnL=$   -2,677 ( -2.7%) PF=0.76 DD=5.22% avgBars= 0.7 sameBar= 33 wrongSL=  2 | take_profit=5, stop_loss=41, optimal_stop=4
+    REV_PROPER         | N= 51 WR=45.1% PnL=$   -5,261 ( -5.3%) PF=0.35 DD=5.26% avgBars= 0.9 sameBar= 26 wrongSL=  1 | stop_loss=23, take_profit=21, optimal_stop=6, ghost_total_dd=1
+    REV_PROPER + NSB   | N= 41 WR=41.5% PnL=$   -5,075 ( -5.1%) PF=0.29 DD=5.07% avgBars= 1.5 sameBar=  0 wrongSL=  2 | stop_loss=21, take_profit=14, optimal_stop=6
+  ------------------------------------------------------------------------------------------------------------------------------------
+  
+  INTERPRETATION:
+    CONTROL PnL        = $-2,677  (wrong-side SL exits = 2)
+    REV_PROPER PnL     = $-5,261  <-- same signals, broker-valid orders, same-bar still allowed
+    REV_PROPER + NSB   = $-5,075  <-- plus NO same-bar exits (realistic live test)
+  
+    Packaging-only delta      : $-2,584
+    Same-bar-cheating delta   : $+186
+  
+    VERDICT: (iii) Edge is SPURIOUS — do not go live; strategy has no live-viable edge.
+
+--------------------------------------------------------------------------------
+  PART 2 / ORB v20 — PhD GRID SEARCH  (walk-forward IS/OOS/FULL)
+--------------------------------------------------------------------------------
+  Cells tested       : 648
+  Backtests run      : 1944
+  Window (FULL)      : ['2026-01-19 01:05:00', '2026-04-07 08:37:00']
+  Window (IS)        : ['2026-01-19 01:05:00', '2026-03-10 01:05:00']
+  Window (OOS)       : ['2026-03-12 01:05:00', '2026-04-07 08:37:00']
+  PBO (overfit prob) : 50.0%   (BAD: overfits IS→OOS)
+
+  WINNER CONFIG (by robust score, IS+OOS+FULL all positive):
+    or_minutes   : 30
+    tp1 / tp2    : 2.0 / 4.0
+    sl_buffer    : 0.3
+    amp_hurdle   : 4.5
+    require_nr7  : False
+    hurst window : [0.4, 0.7]
+
+  WINNER PERFORMANCE:
+    IS    N= 150  WR=  0.0%  PnL=  $+10,619  PF=  1.25  DD= 5.64%
+    OOS   N=  72  WR=  0.0%  PnL=   $+7,632  PF=  1.40  DD= 8.57%
+    FULL  N= 230  WR=  0.0%  PnL=  $+19,194  PF=  1.29  DD= 8.57%
+
+  DEFLATED SHARPE p  : 1.000   (REAL edge at 5%)
+
+--------------------------------------------------------------------------------
+  PART 3 / Top-15 robust configs  (all must be +ve on IS AND OOS)
+--------------------------------------------------------------------------------
+   #  IS  PnL / N / PF       OOS PnL / N / PF      FULL PnL / N / PF     |  or tp    sl amp nr7 hurst
+   1  $+10,619/150/ 1.25   $+7,632/ 72/ 1.40  $+19,194/230/ 1.29  | 30 2.0/4.0 0.3 4.5 off mid  
+   2  $+11,476/151/ 1.27   $+7,632/ 72/ 1.40  $+20,117/231/ 1.31  | 30 2.0/4.0 0.3 4.5 off all  
+   3   $+6,926/156/ 1.15   $+6,641/ 74/ 1.33  $+14,155/238/ 1.21  | 30 2.0/4.0 0.3 3.0 off mid  
+   4   $+7,752/157/ 1.17   $+6,641/ 74/ 1.33  $+15,038/239/ 1.22  | 30 2.0/4.0 0.3 3.0 off all  
+   5   $+4,582/152/ 1.13   $+4,624/ 78/ 1.27   $+9,755/238/ 1.18  | 30 1.5/3.0 0.6 3.0 off all  
+   6   $+8,145/157/ 1.20   $+4,908/ 77/ 1.27  $+13,630/242/ 1.22  | 30 2.0/4.0 0.6 3.0 off all  
+   7   $+7,471/156/ 1.19   $+4,908/ 77/ 1.27  $+12,916/241/ 1.21  | 30 2.0/4.0 0.6 3.0 off mid  
+   8   $+4,009/151/ 1.11   $+4,624/ 78/ 1.27   $+9,152/237/ 1.17  | 30 1.5/3.0 0.6 3.0 off mid  
+   9  $+10,507/151/ 1.28   $+4,620/ 77/ 1.25  $+15,811/236/ 1.26  | 30 2.0/4.0 0.6 4.5 off all  
+  10   $+9,817/150/ 1.26   $+4,620/ 77/ 1.25  $+15,077/235/ 1.25  | 30 2.0/4.0 0.6 4.5 off mid  
+  11   $+4,357/151/ 1.09  $+10,207/ 50/ 1.72  $+14,446/209/ 1.22  | 30 2.0/4.0 0.0 4.5 off all  
+  12   $+3,981/152/ 1.10   $+6,823/ 75/ 1.37  $+11,415/235/ 1.19  | 30 1.5/3.0 0.3 3.0 off all  
+  13   $+3,531/143/ 1.10   $+5,029/ 73/ 1.31   $+9,042/224/ 1.17  | 30 1.5/3.0 0.6 4.5 off all  
+  14   $+3,319/150/ 1.07  $+10,207/ 50/ 1.72  $+13,319/208/ 1.21  | 30 2.0/4.0 0.0 4.5 off mid  
+  15   $+3,283/151/ 1.08   $+6,823/ 75/ 1.37  $+10,665/234/ 1.18  | 30 1.5/3.0 0.3 3.0 off mid  
+
+--------------------------------------------------------------------------------
+  PART 4 / Best config PER SYMBOL (FULL 3-month window, N>=5, net>0)
+--------------------------------------------------------------------------------
+  DE40     N= 99  WR= 71.7%  net=$+10,559  | or=30m  tp=1.5/3.0  slb=0.3  amp=3.0  off  all  
+  US100    N= 75  WR= 53.3%  net= $+3,803  | or=5m  tp=2.0/4.0  slb=0.0  amp=4.5  off  all  
+  US30     N= 79  WR= 58.2%  net= $+9,760  | or=30m  tp=2.0/4.0  slb=0.0  amp=4.5  off  all  
+  US500    N= 47  WR= 76.6%  net= $+1,532  | or=15m  tp=0.5/1.0  slb=0.6  amp=3.0  off  all  
+  XAUUSD   N= 26  WR= 69.2%  net= $+2,737  | or=30m  tp=2.0/4.0  slb=0.6  amp=4.5  off  all  
+
+--------------------------------------------------------------------------------
+  INTERPRETATION GUIDE (quick)
+--------------------------------------------------------------------------------
+   * PBO < 50%  → IS-top configs DO generalise to OOS (good)
+   * PBO >= 50% → pure overfitting, ignore IS winners
+   * Deflated Sharpe p > 0.95 → edge is statistically real at 5%
+   * For LIVE deployment: prefer configs where IS PF >= 1.3 AND OOS PF >= 1.1
+     AND per-symbol WR >= 55% on N >= 10 trades
+
+================================================================================
+  END OF REPORT — copy EVERYTHING above and paste into Cline.
+================================================================================

@@ -57,6 +57,12 @@ class ORBConfig:
     # Stop placement: use max(EVT-GARCH stop, OR-mirror stop)
     use_or_mirror_stop: bool = True
 
+    # Extra buffer BEYOND the opposite OR level, measured in OR_range units.
+    # 0.0 = classic OR-mirror stop (tight).  0.3 = OR_mirror + 30% of OR_range
+    # (wider stop → lower whipsaw rate, slightly lower R per trade).
+    sl_buffer_range_mult: float = 0.0
+
+
 
 # Default 5%ers / Fintokei (Nov-Feb / winter UTC) presets
 ORB_DEFAULTS: dict[str, ORBConfig] = {

@@ -1,0 +1,67 @@
+c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Scripts\backtest_v20_live_ready.py:338: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  p(f"  generated : {datetime.utcnow().isoformat()[:19]}")
+c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Scripts\backtest_v20_live_ready.py:442: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "generated": datetime.utcnow().isoformat(),
+========================================================================================================================
+  v20 LIVE-READY BACKTEST — ORB v20 + Dynamic Sizer v20
+  $100,000 account  |  3-month 5%ers M1  |  DE40 + US30 + XAUUSD
+  generated : 2026-04-21T17:55:09
+========================================================================================================================
+  Symbols: DE40, US30, XAUUSD
+  Window : 2026-01-19 -> 2026-04-07
+  Total M1 bars: 224,467
+
+  Running 3 sizing variants on same data ...
+
+  [FLAT  0.50 %] running ...
+  [SMART  (no corr)] running ...
+  [SMART + CORR   ] running ...
+
+========================================================================================================================
+  RESULTS — three sizers, same engine, same feed, same per-symbol ORB configs
+========================================================================================================================
+  FLAT  0.50 %           | entries=128 partials= 218 WR= 64.7% PnL=$  +19,770 (+19.8%) PF=1.63 DD=4.10% cost=$ 3,927 | sameBar= 0 wrongSL=29 (1.1s)
+    by_symbol:
+      DE40    N=103 WR= 71.8% net=$ +11,803
+      US30    N= 87 WR= 55.2% net=$  +6,241
+      XAUUSD  N= 28 WR= 67.9% net=$  +1,726
+    by_exit:  session_close=19($+3,186), stop=100($-18,831), time_stop=9($+2,397), tp1=60($+22,065), tp2=30($+10,954)
+
+  SMART  (no corr)       | entries=125 partials= 215 WR= 65.6% PnL=$  +25,546 (+25.5%) PF=1.41 DD=7.31% cost=$ 8,122 | sameBar= 0 wrongSL=29 (1.1s)
+    by_symbol:
+      DE40    N=103 WR= 71.8% net=$ +19,683
+      US30    N= 84 WR= 57.1% net=$  +1,742
+      XAUUSD  N= 28 WR= 67.9% net=$  +4,122
+    by_exit:  session_close=19($+7,051), stop=97($-40,464), time_stop=9($+2,878), tp1=60($+37,605), tp2=30($+18,477)
+
+  SMART + CORR           | entries=125 partials= 215 WR= 65.6% PnL=$  +25,546 (+25.5%) PF=1.41 DD=7.31% cost=$ 8,122 | sameBar= 0 wrongSL=29 (1.1s)
+    by_symbol:
+      DE40    N=103 WR= 71.8% net=$ +19,683
+      US30    N= 84 WR= 57.1% net=$  +1,742
+      XAUUSD  N= 28 WR= 67.9% net=$  +4,122
+    by_exit:  session_close=19($+7,051), stop=97($-40,464), time_stop=9($+2,878), tp1=60($+37,605), tp2=30($+18,477)
+
+------------------------------------------------------------------------------------------------------------------------
+  HONEST CHECKS (must all = 0):
+    FLAT  0.50 %            same_bar_exits=0 [OK]  wrong_side_SL=29 [FAIL]
+    SMART  (no corr)        same_bar_exits=0 [OK]  wrong_side_SL=29 [FAIL]
+    SMART + CORR            same_bar_exits=0 [OK]  wrong_side_SL=29 [FAIL]
+
+========================================================================================================================
+  FINAL VERDICT
+========================================================================================================================
+  SMART (no corr) vs FLAT  : ΔPnL = $+5,776   ΔDD = +3.20 pts
+  SMART + CORR    vs FLAT  : ΔPnL = $+5,776   ΔDD = +3.20 pts
+
+  SHIP-READY CHECKLIST for SMART+CORR:
+    Net PnL > 0           : True   ($+25,546)
+    PF >= 1.20            : True   (1.41)
+    Entries >= 30         : True   (125)
+    Max DD < 5% (5ers)    : False   (7.31%)
+    same_bar = 0          : True
+    wrong_side_SL = 0     : False
+
+  >>> VERDICT: DO NOT SHIP. One or more gates failed. Diagnose before live.
+========================================================================================================================
+  Saved: C:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Results\v20_live_ready.json
+  Saved: C:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Results\v20_live_ready.txt

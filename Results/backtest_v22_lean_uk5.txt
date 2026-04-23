@@ -1,0 +1,38 @@
+============================================================================================================
+  BACKTEST v22 Phase A  —  Lean+UK 5  +  all safety rails
+  Symbols : DE40, US30, XAUUSD, US500, UK100   (dropped US100, added UK100)
+============================================================================================================
+
+  Running engine (one pass)...
+  Window : 2026-01-19 01:05:00  →  2026-04-07 08:37:00
+  Raw trades (partials) : 290
+
+  ABLATION TABLE  —  each row ADDS one safety rail to the previous
+  --------------------------------------------------------------------------------------------------------
+  Config                                                   N         PnL    Ret%    DD%    PF     WR  Sharpe
+  --------------------------------------------------------------------------------------------------------
+  A0  Raw engine (baseline)                              290 $  +19,185 +19.18%  2.52%  1.87  65.9%  +4.10
+  A6  + max concurrent positions = 2                     276 $  +18,781 +18.78%  1.73%  1.96  66.7%  +4.28
+  A4  + weekend-flat (no Fri ≥20:00 UTC)                 276 $  +18,781 +18.78%  1.73%  1.96  66.7%  +4.28
+  A5  + daily kill-switch @ 1.0 %                        276 $  +18,781 +18.78%  1.73%  1.96  66.7%  +4.28
+  A2  + slippage pad 0.0 tick                            276 $  +18,781 +18.78%  1.73%  1.96  66.7%  +4.28
+  A2  + slippage pad 0.5 tick                            276 $  +17,845 +17.85%  1.80%  1.89  66.7%  +4.04
+  A2  + slippage pad 1.0 tick                            276 $  +16,910 +16.91%  1.86%  1.82  66.7%  +3.81
+  A2  + slippage pad 2.0 tick                            276 $  +15,039 +15.04%  2.00%  1.70  66.7%  +3.34
+
+  SAFETY-RAIL IMPACT SUMMARY
+  --------------------------------------------------------------------------------------------------------
+    Position-cap (max=2)      : {'position_cap_entries_dropped': 9}
+    Weekend-flat              : {'weekend_dropped': 0}
+    Daily kill-switch (1.0 %) : {'kill_switch_dropped': 0, 'days_locked': 1}
+    Lot rounding (reporting)  : {'rejected_below_min': 0, 'rounded_to_step': 252, 'total': 276}
+
+  PHASE-A EXIT GATE  (at slippage pad = 1.0 tick, realistic live)
+  --------------------------------------------------------------------------------------------------------
+    ✅  PnL ≥ $16,000         actual = $+16,910
+    ✅  DD ≤ 3.0 %            actual = 1.86 %
+    ✅  PF ≥ 1.65             actual = 1.82
+    ✅  Sharpe ≥ 3.0          actual = 3.81
+
+  VERDICT : ✅ PHASE A PASSES — ready for Phase B (HMM)
+============================================================================================================

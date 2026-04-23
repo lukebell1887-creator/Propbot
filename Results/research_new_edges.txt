@@ -1,0 +1,36 @@
+==============================================================================================================
+  research_new_edges  —  DNA-survivor micro-strategy test
+==============================================================================================================
+  loaded 124 candidates, 18 survived DNA holdout
+
+  XAUUSD: 75,441 M1 bars
+  US100: 75,934 M1 bars
+  DE40: 86,610 M1 bars
+
+  Edge                           Sym     Kind              N     WR       Net$     PF    DD%     avg$  verdict
+  --------------------------------------------------------------------------------------------------------------
+  autocorr_h21_lag10             US100   momentum         46  47.8%      $+120   1.04   1.15       +3  MARGINAL
+  autocorr_h21_lag1              US100   reversal         29  41.4%      $-856   0.57   1.11      -30  DROP
+  autocorr_h20_lag3              DE40    momentum         50  44.0%      $-975   0.69   1.84      -19  DROP
+  autocorr_h06_lag3              DE40    momentum         51  47.1%    $-1,040   0.68   1.50      -20  DROP
+  autocorr_h14_lag1              US100   momentum         40  40.0%    $-1,100   0.60   1.57      -27  DROP
+  autocorr_h23_lag1              US100   momentum         37  32.4%    $-1,551   0.35   1.60      -42  DROP
+  autocorr_h06_lag5              US100   reversal         45  37.8%    $-1,851   0.44   1.85      -41  DROP
+  autocorr_h07_lag5              US100   reversal         47  38.3%    $-1,958   0.50   2.34      -42  DROP
+  followthrough_h21              XAUUSD  followthrough    28   3.6%    $-9,459   0.01   9.46     -338  DROP
+  autocorr_h11_lag3              XAUUSD  reversal         36   5.6%   $-10,117   0.01  10.12     -281  DROP
+  autocorr_h11_lag1              XAUUSD  momentum         32   0.0%   $-10,225   0.00  10.22     -320  DROP
+  followthrough_h03              XAUUSD  followthrough    38   2.6%   $-11,689   0.00  11.69     -308  DROP
+  autocorr_h05_lag3              XAUUSD  momentum         44   0.0%   $-12,978   0.00  12.98     -295  DROP
+  autocorr_h14_lag5              XAUUSD  reversal         41   4.9%   $-13,014   0.00  13.01     -317  DROP
+  autocorr_h08_lag5              XAUUSD  reversal         45   6.7%   $-16,258   0.00  16.26     -361  DROP
+  autocorr_h07_lag20             XAUUSD  momentum         54   1.9%   $-20,933   0.00  20.93     -388  DROP
+  or_predicts_post_range         US100   meta              0      —          —      —      —        —  SKIP
+  or_predicts_post_range         XAUUSD  meta              0      —          —      —      —        —  SKIP
+
+==============================================================================================================
+  KEEP        : 0 edges,  total net = $+0
+  MARGINAL    : 1 edges,  total net = $+120
+  Sum of edge income (KEEP+MARGINAL): $+120 / 3 months
+  On $100k at 0.10% risk per trade unit size.
+==============================================================================================================

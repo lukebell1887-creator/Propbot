@@ -1,0 +1,28 @@
+c:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Scripts\backtest_v20_dd_optimal.py:349: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "generated": datetime.utcnow().isoformat(),
+==================================================================================================================================
+  v20 DD-CONSTRAINED OPTIMAL (Magdon-Ismail 2004 bootstrap method)
+  $100,000  |  3-month 5%ers  |  DE40+US30+XAUUSD  |  10,000 bootstrap paths, block_size=5
+  Constraint: P(max_DD > 4%) < 5%
+==================================================================================================================================
+  Window: 2026-01-19 -> 2026-04-07  (224,467 bars)
+
+  Sweeping hard_cap candidates:
+
+     cap%    N    realPnL  realDD    PF     WR  |   bsPnLmean  DD_p50  DD_p95  P(DD>4%)  Sharpe  VERDICT
+    ----------------------------------------------------------------------------------------------------
+     0.40  128  $ +15,732   3.36%  1.63  51.6%  |  $  +15,672   3.38%   6.31%   31.86%   2.235  FAIL-DD
+     0.50  128  $ +20,421   3.72%  1.66  51.6%  |  $  +20,346   4.04%   7.51%   51.20%   2.337  FAIL-DD
+     0.60  128  $ +25,463   4.36%  1.70  51.6%  |  $  +25,369   4.63%   8.71%   66.34%   2.440  FAIL-DD
+     0.70  127  $ +30,479   4.84%  1.74  52.0%  |  $  +30,425   5.19%   9.84%   77.57%   2.556  FAIL-DD
+     0.80  127  $ +33,364   5.51%  1.72  52.0%  |  $  +33,306   5.76%  10.90%   85.17%   2.532  FAIL-DD
+     0.90  126  $ +35,726   6.02%  1.70  52.4%  |  $  +35,699   6.25%  11.77%   89.88%   2.506  FAIL-DD
+     1.00  126  $ +38,816   6.41%  1.70  52.4%  |  $  +38,792   6.68%  12.57%   93.78%   2.510  FAIL-DD
+     1.20  125  $ +36,705   7.18%  1.60  52.8%  |  $  +36,702   7.70%  14.67%   97.85%   2.214  FAIL-DD
+     1.50  125  $ +25,546   7.67%  1.41  52.8%  |  $  +25,614   9.46%  18.73%   99.34%   1.559  FAIL-DD
+
+==================================================================================================================================
+  NO CAP PASSED. Edge not robust enough at 95% confidence for 4% DD.
+  Fallback recommendation: FLAT 0.50 % (realised DD 4.10%, within tolerance).
+==================================================================================================================================
+  Saved: Results/v20_dd_optimal.txt + .json

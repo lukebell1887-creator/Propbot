@@ -1,0 +1,15 @@
+{
+  "trades": 218,
+  "gross": 10520.179891204521,
+  "spread_paid": 1156.571,
+  "commission_paid": 775.073127775321,
+  "swap_paid": 0.0,
+  "net": 9745.106763429201,
+  "broker_violations": 218,
+  "wrong_side_sl": 121,
+  "sl_anomalies": 0,
+  "eq_flat": 109745.10676342921,
+  "eq_compounded": 110185.91189786339,
+  "monthly_rate": 0.03286134314969247,
+  "annual_rate": 0.474023070635059
+}

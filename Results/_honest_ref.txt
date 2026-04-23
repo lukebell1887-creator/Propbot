@@ -1,0 +1,29 @@
+================================================================================================
+  v19 HONEST test — three SL/TP regimes, same feed, same sizer, same params
+  $100,000 account  |  3-month 5%ers M1 window
+================================================================================================
+  Symbols: DE40, US100, US30, US500, XAUUSD
+  Window : 2026-01-19 -> 2026-04-07
+  Total M1 bars: 376,313
+
+  [CONTROL (v18)] running ...
+  [REV_PROPER] running ...
+  [REV_PROPER + NSB] running ...
+
+====================================================================================================================================
+  RESULTS — three SL/TP regimes, same everything else
+====================================================================================================================================
+  CONTROL (v18)      | N= 50 WR=22.0% PnL=$   -2,677 ( -2.7%) PF=0.76 DD=5.22% avgBars= 0.7 sameBar= 33 wrongSL=  2 | take_profit=5, stop_loss=41, optimal_stop=4
+  REV_PROPER         | N= 51 WR=45.1% PnL=$   -5,261 ( -5.3%) PF=0.35 DD=5.26% avgBars= 0.9 sameBar= 26 wrongSL=  1 | stop_loss=23, take_profit=21, optimal_stop=6, ghost_total_dd=1
+  REV_PROPER + NSB   | N= 41 WR=41.5% PnL=$   -5,075 ( -5.1%) PF=0.29 DD=5.07% avgBars= 1.5 sameBar=  0 wrongSL=  2 | stop_loss=21, take_profit=14, optimal_stop=6
+------------------------------------------------------------------------------------------------------------------------------------
+
+INTERPRETATION:
+  CONTROL PnL        = $-2,677  (wrong-side SL exits = 2)
+  REV_PROPER PnL     = $-5,261  <-- same signals, broker-valid orders, same-bar still allowed
+  REV_PROPER + NSB   = $-5,075  <-- plus NO same-bar exits (realistic live test)
+
+  Packaging-only delta      : $-2,584
+  Same-bar-cheating delta   : $+186
+
+  VERDICT: (iii) Edge is SPURIOUS — do not go live; strategy has no live-viable edge.

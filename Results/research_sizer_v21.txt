@@ -1,0 +1,46 @@
+==============================================================================================================
+  research_sizer_v21 — PhD SIZER ABLATION on ORB trade stream
+  $100,000 | 3 months | DE40+US30+XAUUSD | 4% DD target
+==============================================================================================================
+  Window : 2026-01-19 → 2026-04-07
+  Bars   : 376,313
+
+  [1/2] Extracting unit-R trade stream (flat 0.10%)...
+        203 trades.
+        mean R = +0.213,  stdev R = 1.337,  Sharpe_raw = 0.159
+
+  [2/2] Replaying trade stream under each policy...
+
+    Policy                          N         PnL     DD%     PF     WR  Sharpe  avgRisk%  Pass4%DD?
+    --------------------------------------------------------------------------------------------------------
+    P0 FLAT_0.25%                 203  $ +10,977   3.95%   1.44  51.2%    2.24     0.25%  ✅ yes
+    P0b FLAT_0.50%                203  $ +21,954   6.97%   1.44  51.2%    2.24     0.50%  ❌ no
+    P1a MERTON (cap 3.0×)         203  $ +23,168   5.97%   1.42  51.2%    1.90     0.56%  ❌ no
+    P1b MERTON (cap 2.0× = max 0.20%)  203  $ +16,508   4.41%   1.43  51.2%    2.00     0.39%  ❌ no
+    P1c MERTON (cap 1.5× = max 0.15%)  203  $ +13,108   3.57%   1.43  51.2%    2.08     0.31%  ✅ yes
+    PG1 MERTON × GZ (cap 3.0×)    203  $ +14,160   3.41%   1.42  51.2%    1.75     0.34%  ✅ yes
+    PG2 MERTON × GZ (cap 2.0×)    203  $ +13,090   2.88%   1.47  51.2%    2.03     0.29%  ✅ yes
+    PG3 MERTON × GZ × REGIME (cap 2.0×)  203  $ +10,107   2.67%   1.40  51.2%    1.83     0.26%  ✅ yes
+    PG4 MERTON × GZ × HJB (cap 2.0×)  203  $  +9,672   2.69%   1.43  51.2%    1.77     0.22%  ✅ yes
+    PG5 FULL APEX (Merton×GZ×Regime×HJB, cap 2.0×)  203  $  +9,011   2.56%   1.41  51.2%    1.79     0.22%  ✅ yes
+
+  INCREMENTAL $ CONTRIBUTION (each row = delta vs previous):
+  ------------------------------------------------------------
+    P0b FLAT_0.50%                delta = +$+10,977
+    P1a MERTON (cap 3.0×)         delta = +$ +1,215
+    P1b MERTON (cap 2.0× = max 0.20%)  delta = $ -6,661
+    P1c MERTON (cap 1.5× = max 0.15%)  delta = $ -3,400
+    PG1 MERTON × GZ (cap 3.0×)    delta = +$ +1,052
+    PG2 MERTON × GZ (cap 2.0×)    delta = $ -1,070
+    PG3 MERTON × GZ × REGIME (cap 2.0×)  delta = $ -2,983
+    PG4 MERTON × GZ × HJB (cap 2.0×)  delta = $   -434
+    PG5 FULL APEX (Merton×GZ×Regime×HJB, cap 2.0×)  delta = $   -661
+
+==============================================================================================================
+  Best policy : PG1 MERTON × GZ (cap 3.0×)
+    PnL        : $+14,160  (+14.16%)
+    DD         : 3.41%  (target ≤4%)
+    Sharpe     : 1.75
+    WR / PF    : 51.2%  /  1.42
+    avg risk % : 0.34%
+==============================================================================================================

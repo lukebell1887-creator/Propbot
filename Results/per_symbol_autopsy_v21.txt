@@ -1,0 +1,82 @@
+====================================================================================================
+  PER-SYMBOL AUTOPSY — v21 Merton×GZ
+  (3-month window, base=0.15 %, cap=3×, pooled)
+====================================================================================================
+
+  PART 1 / Current 5 symbols — per-symbol contribution in the live portfolio
+  ------------------------------------------------------------------------------------------------
+  Window : 2026-01-19 01:05:00  →  2026-04-07 08:37:00
+  Portfolio total : N=351  PnL=$+14,622  DD=3.36%  PF=1.48  Sharpe=2.77
+
+    Symbol      N      PnL $  Share%     WR    PF Sharpe  SoloDD%  Verdict
+    ----------------------------------------------------------------------------------------
+    DE40      103     +5,824  +39.8%  71.8%  1.89  +2.46    1.59%  CARRIER
+    US30       87     +4,173  +28.5%  55.2%  1.41  +1.31    2.20%  CARRIER
+    XAUUSD     28     +1,770  +12.1%  67.9%  2.15  +1.53    0.58%  CARRIER
+    US100      86     +1,425   +9.7%  48.8%  1.12  +0.44    2.38%  MARGINAL
+    US500      47     +1,429   +9.8%  76.6%  3.46  +2.53    0.48%  CARRIER
+
+  → Carriers  : ['DE40', 'US30', 'XAUUSD', 'US500']
+  → Drags     : (none)
+
+
+  PART 2 / Solo standalone PnL (one symbol at a time, base risk only)
+  Purpose  : strip portfolio interactions — pure edge of each instrument
+  ------------------------------------------------------------------------------------------------
+    Symbol      N      PnL $    DD%     WR    PF Sharpe  Verdict
+    ------------------------------------------------------------------------
+    DE40      116     +6,835  1.59%  68.1%  1.72  +2.41  KEEP / ADD
+    US30       87     +3,600  2.76%  55.2%  1.36  +1.17  KEEP / ADD
+    XAUUSD     28       +501  0.43%  67.9%  1.64  +1.12  KEEP / ADD
+    US100      86       +927  2.02%  48.8%  1.09  +0.33  MARGINAL
+    US500      47       +404  0.47%  76.6%  1.60  +0.75  MARGINAL
+    UK100      80       -607  2.07%  47.5%  0.92  -0.30  SKIP
+    JP225       0         +0  0.00%   0.0% 99.00  +0.00  SKIP
+    XAGUSD      0         +0  0.00%   0.0% 99.00  +0.00  SKIP
+
+
+  PART 3 / Portfolio expansion — does adding each candidate HELP or HURT?
+           Window LOCKED to core-5 range: 2026-01-19  →  2026-04-07
+  ------------------------------------------------------------------------------------------------
+    Portfolio                   N      PnL $    Ret%    DD%    PF Sharpe  Note
+    ----------------------------------------------------------------------------------
+    5-only (baseline)         351    +14,622 +14.62%  3.36%  1.48  +2.77  —
+    5 + UK100                 376    +15,052 +15.05%  3.36%  1.46  +2.76  UK100 trades=25 ΔP $+430 ΔDD -0.00pp
+    5 + JP225                 351    +14,622 +14.62%  3.36%  1.48  +2.77  NO DATA OVERLAP
+    5 + XAGUSD                351    +14,622 +14.62%  3.36%  1.48  +2.77  NO DATA OVERLAP
+
+
+  PART 3b / Candidate standalone edge on their NATIVE data window
+             (no core-5 data available here; shows raw instrument edge only)
+  ------------------------------------------------------------------------------------------------
+    Symbol   Native Window             N      PnL $    DD%    PF Sharpe  Verdict
+    ----------------------------------------------------------------------------------
+    UK100    2025-11-05 → 2026-02-06   80       -607  2.07%  0.92  -0.30  NO EDGE
+    JP225    2025-11-05 → 2026-02-06    0         +0  0.00% 99.00  +0.00  NO EDGE
+    XAGUSD   2025-05-20 → 2025-08-21    0         +0  0.00% 99.00  +0.00  NO EDGE
+
+
+  PART 4 / Pruning test — does REMOVING weak symbols HELP?
+  ------------------------------------------------------------------------------------------------
+    Portfolio                           N      PnL $    Ret%    DD%    PF Sharpe  Δ vs 5
+    --------------------------------------------------------------------------------------
+    5-only (baseline)                 351    +14,622 +14.62%  3.36%  1.48  +2.77  —
+    Drop US100                        265    +16,857 +16.86%  2.56%  1.85  +3.82  ΔP $+2,235 ΔDD -0.80pp
+
+
+====================================================================================================
+  RECOMMENDATION
+====================================================================================================
+  Keep         : ['DE40', 'US30', 'XAUUSD', 'US100', 'US500']
+  Drop (drag)  : (none)
+  Add (helpful): (none — candidates did not clear the bar)
+
+  Final universe : ['DE40', 'US30', 'XAUUSD', 'US100', 'US500']
+    N=351  PnL=$+14,622 (+14.62%)
+    DD=3.36%  PF=1.48  Sharpe=2.77
+    4% DD gate   : ✅
+
+  Excluded without testing (PROP-FIRM HAZARDS, not re-evaluated here):
+    USOIL, XBRUSD, XTIUSD   — x10 weekend swap (unsafe over Fri→Mon)
+    All FX pairs           — $4/lot round-trip commission needs its own tuning
+====================================================================================================

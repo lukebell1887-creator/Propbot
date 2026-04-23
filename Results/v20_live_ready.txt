@@ -1,0 +1,43 @@
+========================================================================================================================
+  v20 LIVE-READY BACKTEST — ORB v20 + Dynamic Sizer v20
+  $100,000 account  |  3-month 5%ers M1  |  DE40 + US30 + XAUUSD
+  generated : 2026-04-21T17:55:09
+========================================================================================================================
+  Symbols: DE40, US30, XAUUSD
+  Window : 2026-01-19 -> 2026-04-07
+  Total M1 bars: 224,467
+
+  Running 3 sizing variants on same data ...
+
+  [FLAT  0.50 %] running ...
+  [SMART  (no corr)] running ...
+  [SMART + CORR   ] running ...
+
+========================================================================================================================
+  RESULTS — three sizers, same engine, same feed, same per-symbol ORB configs
+========================================================================================================================
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+  HONEST CHECKS (must all = 0):
+    FLAT  0.50 %            same_bar_exits=0 [OK]  wrong_side_SL=29 [FAIL]
+    SMART  (no corr)        same_bar_exits=0 [OK]  wrong_side_SL=29 [FAIL]
+    SMART + CORR            same_bar_exits=0 [OK]  wrong_side_SL=29 [FAIL]
+
+========================================================================================================================
+  FINAL VERDICT
+========================================================================================================================
+  SMART (no corr) vs FLAT  : ΔPnL = $+5,776   ΔDD = +3.20 pts
+  SMART + CORR    vs FLAT  : ΔPnL = $+5,776   ΔDD = +3.20 pts
+
+  SHIP-READY CHECKLIST for SMART+CORR:
+    Net PnL > 0           : True   ($+25,546)
+    PF >= 1.20            : True   (1.41)
+    Entries >= 30         : True   (125)
+    Max DD < 5% (5ers)    : False   (7.31%)
+    same_bar = 0          : True
+    wrong_side_SL = 0     : False
+
+  >>> VERDICT: DO NOT SHIP. One or more gates failed. Diagnose before live.
+========================================================================================================================

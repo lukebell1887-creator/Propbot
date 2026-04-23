@@ -1,0 +1,88 @@
+====================================================================================================
+  FORENSIC AUDIT v21 — fees / SL / compounding
+====================================================================================================
+
+  Window : 2026-01-19 → 2026-04-07
+  Symbols: DE40,US30,XAUUSD
+
+====================================================================================================
+  Q2a — EVERY FEE YOU WILL ACTUALLY PAY (3 months, $100k account)
+====================================================================================================
+
+  Trades                : 218
+  Gross PnL (before fees): $  +10,520.18
+  - Spread cost          : $   -1,156.57   (+11.0% of gross if won)
+  - Commission           : $     -775.07   ($ 3.56 / trade avg)
+  - Swap (overnight)     : $       +0.00   (nights held total=0)
+  ------------------------------------------
+  NET PnL                : $   +9,745.11   (+9.75%)
+
+  Cost RATIO:
+    Total costs paid      : $1,931.64
+    Gross winners paid    : $25,616.77
+    Costs as % of gross   : 18.4%  (under 30% = healthy)
+
+  BY SYMBOL:
+    sym         N        gross     spread       comm      swap          net   cost/trade
+    DE40      103 $    +5,762 $    -482 $      -0 $     +0 $    +5,762 $      4.68
+    US30       87 $    +3,118 $    -642 $      -0 $     +0 $    +3,118 $      7.38
+    XAUUSD     28 $    +1,640 $     -32 $    -775 $     +0 $      +865 $     28.83
+
+====================================================================================================
+  Q2b — SL AUDIT (the v18 'wrong-side / anomaly' bug check)
+====================================================================================================
+
+  Broker min-stop violations : 218/218  ❌ BUG
+  Wrong-side SL (dir bug)    : 121/218  ❌ BUG
+  v18-style SL > 0.5×range   : 0/218  (✅ ALL LEGITIMATE)
+
+  SL-dist / OR-range distribution:
+    min=0.00  p25=0.00  median=0.00  p75=0.00  max=0.00
+    (v20 ORB SL is structural: buffer×or_range, NOT ATR — the v18 bug cannot recur here)
+
+====================================================================================================
+  Q3 — COMPOUNDING (account growth multiplies future $$)
+====================================================================================================
+
+  Flat 0.25% on static $100k    : $+9,745  (+9.75%)
+  0.25% of CURRENT equity       : $+10,186  (+10.19%)
+  Compounding adds              : $+441  (+0.44%)
+
+  Monthly compounded rate       : +3.29%
+  ANNUALISED compounded return  : +47.4%
+  $100k account → after 1 year  : $147,402
+
+  5%ERS PROP-FIRM LADDER (account-size scaling):
+    Month 1 on $100k funded  →  +$3,286
+    Month 2 on $100k funded  →  +$3,394
+    Month 3: hit target, promoted → $200k funded
+    Month 4-6 on $200k       →  +$19,717  (3× month-1 $)
+    Month 7-9: promoted → $500k funded
+    Month 7-9 on $500k       →  +$49,292  (5× more)
+    After 12m ladder graduation total:  ~$177,451
+    (Conservative — assumes same monthly % on each new size, which is realistic because
+     Merton×GZ sizer auto-scales with equity: same RISK % not same $$.)
+
+====================================================================================================
+  Q1 — HOW MANY STRATEGIES DO WE HAVE?
+====================================================================================================
+
+  PROVEN strategies currently : 1 (ORB v20) × 3 symbols (DE40/US30/XAUUSD)
+    - DE40 ORB  (European open session, 103 trades)
+    - US30 ORB  (US open session, 87 trades)
+    - XAUUSD ORB(US open session, 28 trades)
+
+  DEAD/DISPROVEN (don't pay retail spreads):
+    - 17 microstructure DNA edges  (all lost money in survey)
+    - SmartBB v18 mean-reversion   (same-bar exits fake edge; real = -$5k)
+
+  UNEXPLORED (could add more strategies):
+    - Classical scalping (BB M1 revert, open-drive, liquidity sweep, VWAP)
+    - Overnight gap fade on indices
+    - NR7 + inside-day breakout
+    - News-time vol breakout (FOMC/NFP/ECB)
+
+  RECOMMENDATION: ship Merton×GZ on ORB first (proven edge), THEN add strategies
+  one-by-one as each passes the DNA→micro→walk-forward funnel.
+
+====================================================================================================

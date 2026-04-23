@@ -1,0 +1,55 @@
+==============================================================================================================
+  ORB v20 — HONEST 3-month 5%ers backtest
+  $100,000 account  |  5 symbols  |  full per-asset-class commission
+==============================================================================================================
+  Symbols: DE40, US100, US30, US500, XAUUSD
+  Window : 2026-01-19 -> 2026-04-07
+  Total M1 bars: 376,313
+
+  Running 3 configurations on same feed...
+
+  [BASELINE (amp=2.5, no NR7)] ...
+  [+ NR7 filter] ...
+  [+ strict amp hurdle (4.0)] ...
+
+======================================================================================================================================================
+  RESULTS
+======================================================================================================================================================
+  BASELINE (amp=2.5, no NR7)     | entries=115 partials= 194 WR=56.7% PnL=$   -7,819 ( -7.8%) PF=0.75 DD=8.04% cost=$4,359 (1.5s)
+    by_symbol:
+      DE40    N= 54 WR=66.7% net=$  +2,745
+      US100   N= 47 WR=53.2% net=$  -3,244
+      US30    N= 48 WR=54.2% net=$  -2,486
+      US500   N= 38 WR=50.0% net=$  -4,506
+      XAUUSD  N=  7 WR=57.1% net=$    -329
+    by_exit:  session_close=2($+42), stop=113($-24,872), tp1=49($+10,609), tp2=30($+6,402)
+
+  + NR7 filter                   | entries= 26 partials=  49 WR=65.3% PnL=$   +2,092 ( +2.1%) PF=1.38 DD=1.37% cost=$  959 (1.6s)
+    by_symbol:
+      DE40    N= 15 WR=80.0% net=$  +2,037
+      US100   N=  8 WR=50.0% net=$    -614
+      US30    N= 15 WR=60.0% net=$    +610
+      US500   N= 10 WR=70.0% net=$    +388
+      XAUUSD  N=  1 WR= 0.0% net=$    -330
+    by_exit:  session_close=2($+62), stop=24($-3,297), tp1=15($+3,489), tp2=8($+1,838)
+
+  + strict amp hurdle (4.0)      | entries=178 partials= 307 WR=58.3% PnL=$   -6,053 ( -6.1%) PF=0.87 DD=8.16% cost=$5,023 (1.6s)
+    by_symbol:
+      DE40    N= 86 WR=65.1% net=$  +3,025
+      US100   N= 85 WR=56.5% net=$  -2,754
+      US30    N= 82 WR=59.8% net=$  -1,270
+      US500   N= 52 WR=50.0% net=$  -4,145
+      XAUUSD  N=  2 WR= 0.0% net=$    -909
+    by_exit:  session_close=6($-254), stop=172($-35,709), tp1=81($+18,744), tp2=48($+11,166)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+BEST: + NR7 filter
+  N entries    = 26
+  Net PnL      = $+2,092  (+2.1%)
+  PF           = 1.38
+  WR           = 65.3%
+  Max DD       = 1.37%
+  Total costs  = $959
+
+VERDICT: (ii) EDGE IS MARGINAL — positive but thin. Tune tp1_range_mult / amp_hurdle first.

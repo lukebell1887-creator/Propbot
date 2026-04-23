@@ -78,6 +78,13 @@ class SymbolParams:
     ou_max_halflife: float = 30.0
 
     # Exits -------------------------------------------------------------
+    # sl_mode:
+    #   "bb_floored" (default, legacy) - SL = BB band +/- stop_atr_mult*ATR,
+    #                                    floored at entry +/- 0.5*ATR to stay
+    #                                    on broker-valid side
+    #   "atr_fixed"  (honest)           - SL = entry +/- stop_atr_mult*ATR,
+    #                                    ALWAYS on correct side by construction
+    sl_mode: str = "bb_floored"
     stop_atr_mult: float = 1.0
     tp_frac: float = 1.0         # 1.0 = middle band, 0.5 = halfway
     breakeven_trigger_frac: float = 0.5
@@ -138,6 +145,19 @@ class SmartBBV14Config:
     # fills, or a future fee hike). Default 0 = honest, pure spec cost model.
     # Used by the v15 optimizer to verify edge survives +$1/lot, +$2/lot etc.
     extra_cost_per_lot: float = 0.0
+
+    # v19 HONEST-MODE KNOBS --------------------------------------------
+    # sl_mode: None = per-symbol override (legacy). Set to
+    #          "reversion_proper" here to force the broker-valid
+    #          separate real-SL + reversion-TP architecture globally.
+    sl_mode: Optional[str] = None
+    # Distance of the REAL stop-loss floor from entry (in ATR multiples)
+    # when sl_mode == "reversion_proper".
+    real_sl_atr_mult: float = 1.5
+    # If True, exit checks are suppressed on the same bar as entry.
+    # This removes the "intrabar cheating" effect where price touched the
+    # exit level during the entry bar itself (before the order existed).
+    no_same_bar_exit: bool = False
 
     # Default SymbolParams for symbols without an explicit override
     default_params: SymbolParams = field(default_factory=SymbolParams)
@@ -446,39 +466,87 @@ class SmartBBV14Engine:
 
         entry_fill = close + side * 0.5 * st.spec.spread_pts
 
-        # Stop beyond the band by stop_atr_mult * ATR
-        if side > 0:
-            band = mean - cfg.bb_sigma * std
-            sl = band - p.stop_atr_mult * atr_pts
+        # ---- SL / TP placement ------------------------------------------
+        # sl_mode options:
+        #   "atr_fixed"         : SL = entry +/- stop_atr_mult*ATR. Always correct side.
+        #   "bb_floored"        : SL = BB band +/- stop_atr_mult*ATR, clamped at
+        #                         entry +/- 0.5*ATR via v18.1 guard (LEGACY, reduces trades).
+        #   "reversion_proper"  : HONEST MODE — real_sl = entry +/- real_sl_atr_mult*ATR
+        #                         (always loss-side safety floor), and the BB overshoot
+        #                         reversion level (band +/- stop_atr_mult*ATR) is used
+        #                         as an ADDITIONAL profit target when on the profit side.
+        #                         TP = nearer of (mid-band TP) and (reversion target).
+        #                         No broker-invalid SL can ever be produced.
+        sl_mode = getattr(cfg, "sl_mode", None)
+        if sl_mode is None:
+            sl_mode = getattr(p, "sl_mode", "bb_floored")
+
+        if sl_mode == "reversion_proper":
+            # ---- Real SL (loss-side floor) ------------------------------
+            real_sl_mult = getattr(cfg, "real_sl_atr_mult", 1.5)
+            if side > 0:
+                sl = entry_fill - real_sl_mult * atr_pts
+            else:
+                sl = entry_fill + real_sl_mult * atr_pts
+
+            # ---- Reversion target (band +/- stop_atr_mult*ATR) ----------
+            if side > 0:
+                band = mean - cfg.bb_sigma * std
+                rev_target = band - p.stop_atr_mult * atr_pts
+            else:
+                band = mean + cfg.bb_sigma * std
+                rev_target = band + p.stop_atr_mult * atr_pts
+
+            # ---- Mid-band TP (classic v13 target) -----------------------
+            mid_tp = entry_fill + side * p.tp_frac * abs(mean - entry_fill)
+
+            # Use reversion target only when it sits on the PROFIT side of entry
+            rev_on_profit_side = (side > 0 and rev_target > entry_fill) or \
+                                 (side < 0 and rev_target < entry_fill)
+            if rev_on_profit_side:
+                # Nearer target fires first in real time — use the closer of the two
+                if side > 0:
+                    tp = min(mid_tp, rev_target)
+                else:
+                    tp = max(mid_tp, rev_target)
+            else:
+                tp = mid_tp
+
+            stop_distance = abs(entry_fill - sl)
+            tp_distance = abs(tp - entry_fill)
+            if tp_distance <= 0 or stop_distance <= 0:
+                return
         else:
-            band = mean + cfg.bb_sigma * std
-            sl = band + p.stop_atr_mult * atr_pts
+            # ---- Legacy modes -------------------------------------------
+            if sl_mode == "atr_fixed":
+                if side > 0:
+                    sl = entry_fill - p.stop_atr_mult * atr_pts
+                else:
+                    sl = entry_fill + p.stop_atr_mult * atr_pts
+            else:
+                # "bb_floored" — anchor SL to the BB band
+                if side > 0:
+                    band = mean - cfg.bb_sigma * std
+                    sl = band - p.stop_atr_mult * atr_pts
+                else:
+                    band = mean + cfg.bb_sigma * std
+                    sl = band + p.stop_atr_mult * atr_pts
 
-        # --------------------------------------------------------------
-        # SL direction safety guard (v18.1 — 2026-04-21)
-        # --------------------------------------------------------------
-        # In extreme-overshoot cases (|z| well past the BB band, e.g. z=-2.81
-        # vs band at z=-2.0), the BB-anchored SL formula above can land on the
-        # WRONG side of entry. MT5 would reject such an order as "Invalid
-        # stops" (for a BUY, SL must be strictly below market; for a SELL,
-        # strictly above). We floor the SL at a minimum safe distance from
-        # entry_fill to keep both backtest and live semantics broker-valid.
-        min_stop_dist_pts = max(1.0, 0.5 * atr_pts)
-        if side > 0:
-            # LONG: SL must be strictly below entry
-            sl = min(sl, entry_fill - min_stop_dist_pts)
-        else:
-            # SHORT: SL must be strictly above entry
-            sl = max(sl, entry_fill + min_stop_dist_pts)
+            # SL direction safety guard (v18.1 — 2026-04-21) — legacy modes only
+            min_stop_dist_pts = max(1.0, 0.5 * atr_pts)
+            if side > 0:
+                sl = min(sl, entry_fill - min_stop_dist_pts)
+            else:
+                sl = max(sl, entry_fill + min_stop_dist_pts)
 
-        stop_distance = abs(entry_fill - sl)
+            stop_distance = abs(entry_fill - sl)
 
-        # TP: fraction of the way to the middle band
-        tp_raw = mean
-        tp = entry_fill + side * p.tp_frac * abs(tp_raw - entry_fill)
-        tp_distance = abs(tp - entry_fill)
-        if tp_distance <= 0 or stop_distance <= 0:
-            return
+            # TP: fraction of the way to the middle band
+            tp_raw = mean
+            tp = entry_fill + side * p.tp_frac * abs(tp_raw - entry_fill)
+            tp_distance = abs(tp - entry_fill)
+            if tp_distance <= 0 or stop_distance <= 0:
+                return
 
         # Amplitude gate (cost discipline — kept from v13)
         expected_pts = tp_distance
@@ -540,6 +608,12 @@ class SmartBBV14Engine:
         pos = st.position
         if pos is None:
             return
+        # v19 honest-mode: block exit checks on the same bar as entry.
+        # Prevents using pre-entry intrabar high/low to trigger fills that
+        # wouldn't have happened live (order didn't yet exist).
+        if getattr(self.cfg, "no_same_bar_exit", False):
+            if (st.m5_bars - pos.entry_bar) < 1:
+                return
         if pos.side > 0:
             if low <= pos.sl:
                 self._close(st, pos.sl, t, "stop_loss")

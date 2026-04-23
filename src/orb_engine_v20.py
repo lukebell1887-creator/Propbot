@@ -35,10 +35,76 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from dataclasses import dataclass, field, asdict
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Callable
 
 from src.smartbb_engine import SymbolSpec, ATR
 from src.momentum.orb import OpeningRangeTracker, NRFilter, ORB_DEFAULTS, ORBConfig
+
+
+
+# ---- Rolling Hurst (simple R/S estimator on rolling log-return window) ---
+class RollingHurst:
+    """Online Hurst exponent via Hurst-Mandelbrot R/S on a rolling window.
+
+    PERFORMANCE: estimate is LAZY — `update()` is O(1), full R/S is only
+    computed on `.value` access AND at most once per `_estimate_interval`
+    bars (since last computation). This avoids the 1.88M-call bottleneck
+    when Hurst is queried rarely (e.g. only at breakout time).
+    """
+    __slots__ = ("window", "logs", "prev_price", "_value",
+                 "_last_est_n", "_n_since", "_estimate_interval")
+    def __init__(self, window: int = 200, estimate_interval: int = 30):
+        self.window = window
+        self.logs: List[float] = []
+        self.prev_price: Optional[float] = None
+        self._value: float = 0.5
+        self._last_est_n = -1
+        self._n_since = 0
+        self._estimate_interval = estimate_interval
+    def update(self, price: float) -> None:
+        if self.prev_price is not None and self.prev_price > 0 and price > 0:
+            self.logs.append(math.log(price / self.prev_price))
+            if len(self.logs) > self.window:
+                self.logs.pop(0)
+            self._n_since += 1
+        self.prev_price = price
+    def _estimate(self) -> float:
+        xs = self.logs
+        n = len(xs)
+        if n < 64:
+            return 0.5
+        mean = sum(xs) / n
+        # single-pass R/S
+        R_hi = -1e18
+        R_lo = 1e18
+        var_sum = 0.0
+        cum = 0.0
+        for x in xs:
+            d = x - mean
+            cum += d
+            if cum > R_hi:
+                R_hi = cum
+            if cum < R_lo:
+                R_lo = cum
+            var_sum += d * d
+        R = R_hi - R_lo
+        var = var_sum / n
+        S = math.sqrt(var) if var > 0 else 1e-12
+        if R <= 0 or S <= 0:
+            return 0.5
+        return math.log(R / S) / math.log(n)
+    @property
+    def value(self) -> float:
+        # Lazy re-estimate: only recompute if logs have advanced > interval
+        if len(self.logs) >= 64 and self._n_since >= self._estimate_interval:
+            self._value = self._estimate()
+            self._n_since = 0
+        return self._value
+    @property
+    def ready(self) -> bool:
+        return len(self.logs) >= 64
+
+
 
 
 # =====================================================================
@@ -80,12 +146,35 @@ class ORBEngineConfig:
     # Fallback time-stop in minutes from breakout (session safety net)
     time_stop_minutes: int = 180
 
+    # --- PhD filters ---
+    # Hurst regime gate: only trade when Hurst in [hurst_min, hurst_max]
+    # For breakout strategies:  H>0.55 = trending (favourable for breakout).
+    # Default (0.0, 1.0) = filter disabled.
+    hurst_min: float = 0.0
+    hurst_max: float = 1.0
+    hurst_window: int = 200
+
+    # OU half-life gate: skip if recent mean-reversion half-life is LOW
+    # (i.e. price mean-reverts fast → breakout unlikely to extend).
+    # Default None = disabled.
+    ou_min_halflife: Optional[float] = None
+
+    # Side restriction: 0 = both, +1 = long only, -1 = short only
+    side_restrict: int = 0
+
     # Per-symbol ORB configs override this default
     default_orb: ORBConfig = field(default_factory=lambda: ORBConfig(
         or_start_hour=14, or_start_minute=30,
         or_minutes=15, trade_window_minutes=90,
         tp1_range_mult=1.0, tp2_range_mult=2.0,
     ))
+
+    # Optional external risk-% callback. If set, overrides risk_pct on a
+    # per-trade basis. Signature:
+    #   fn(symbol: str, equity: float, peak_equity: float,
+    #      open_positions: list[tuple[str,int]]) -> float (0.0 .. 1.0)
+    risk_pct_fn: Optional[Callable] = None
+
 
 
 # =====================================================================
@@ -98,14 +187,17 @@ class _ORBState:
         self.spec = spec
         self.cfg = cfg
         self.orb = OpeningRangeTracker(orb_cfg)
-        self.nr = NRFilter(lookback=cfg.nr_lookback + 2)
+        self.nr = NRFilter(lookback=max(cfg.nr_lookback + 2, 12))
         self.atr = ATR(window=cfg.atr_window)
+        self.hurst = RollingHurst(window=cfg.hurst_window)
         self.position: Optional[_ORBPosition] = None
+
         self._last_close: float = 0.0
         self._m5_h = -1e18
         self._m5_l = +1e18
         self._m5_c = 0.0
         self._m5_count = 0
+
 
 
 # =====================================================================
@@ -229,9 +321,13 @@ class ORBEngineV20:
             st._m5_l = +1e18
             st._m5_count = 0
 
+        # --- Update Hurst regime tracker ---------------------------------
+        st.hurst.update(close)
+
         st._last_close = close
 
         # --- Manage any open position (intrabar) -------------------------
+
         if st.position is not None:
             # Only manage if this bar is AFTER the entry bar (no same-bar
             # cheating — we already used the entry bar to fill).
@@ -267,6 +363,16 @@ class ORBEngineV20:
         if sig == 0:
             return
 
+        # Side restriction filter (0=both, +1=long-only, -1=short-only)
+        if self.cfg.side_restrict != 0 and sig != self.cfg.side_restrict:
+            return
+
+        # Hurst regime filter (only trade when H in [hurst_min, hurst_max])
+        if st.hurst.ready:
+            h = st.hurst.value
+            if h < self.cfg.hurst_min or h > self.cfg.hurst_max:
+                return
+
         orb_cfg = st.orb.cfg
         or_high = st.orb.or_high
         or_low = st.orb.or_low
@@ -277,12 +383,15 @@ class ORBEngineV20:
         # Entry price: realistic stop-order fill at the OR level plus half-spread
         # slippage in the adverse direction (stop order gets filled at or below the
         # trigger for longs, or above for shorts — so we pay half-spread).
+        # SL = opposite OR level + optional buffer (widens stop, reduces whipsaw)
+        sl_buf = orb_cfg.sl_buffer_range_mult * or_range
         if sig > 0:
             entry = or_high + 0.5 * st.spec.spread_pts
-            sl = or_low
+            sl = or_low - sl_buf
         else:
             entry = or_low - 0.5 * st.spec.spread_pts
-            sl = or_high
+            sl = or_high + sl_buf
+
 
         # SL must be on the correct (loss) side — by construction for OR-mirror,
         # but guard anyway
@@ -305,8 +414,18 @@ class ORBEngineV20:
         if tp1_dollars_per_lot < self.cfg.amp_hurdle * cost_dollars_per_lot:
             return  # edge too thin vs costs — skip
 
-        # Sizing: fixed risk_pct of equity
-        risk_d = self.equity * self.cfg.risk_pct
+        # Sizing: smart sizer callback if provided, else flat risk_pct
+        if self.cfg.risk_pct_fn is not None:
+            open_pos = [(s, v.position.side)
+                        for s, v in self.states.items()
+                        if v.position is not None]
+            rp = self.cfg.risk_pct_fn(st.spec.symbol, self.equity,
+                                       self.peak_equity, open_pos)
+            if rp is None or rp <= 0.0:
+                return  # sizer said "no trade"
+        else:
+            rp = self.cfg.risk_pct
+        risk_d = self.equity * rp
         denom = max(R_dist * st.spec.pip_value, 1e-9)
         lots = risk_d / denom
         lots = max(self.cfg.min_lots,

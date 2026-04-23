@@ -1,0 +1,90 @@
+{
+  "US30": {
+    "internal_name": "US30",
+    "primary_broker_ticker": "US30",
+    "resolved_broker_ticker": "US30",
+    "server": "FivePercentOnline-Real",
+    "login": "26059964",
+    "downloaded_utc": "2026-04-23T08:18:57",
+    "bars": 88216,
+    "first_bar": "2026-01-20 08:19:00",
+    "last_bar": "2026-04-21 12:08:00"
+  },
+  "US100": {
+    "internal_name": "US100",
+    "primary_broker_ticker": "NAS100",
+    "resolved_broker_ticker": "NAS100",
+    "server": "FivePercentOnline-Real",
+    "login": "26059964",
+    "downloaded_utc": "2026-04-23T08:18:57",
+    "bars": 88217,
+    "first_bar": "2026-01-20 08:19:00",
+    "last_bar": "2026-04-21 12:08:00"
+  },
+  "US500": {
+    "internal_name": "US500",
+    "primary_broker_ticker": "SP500",
+    "resolved_broker_ticker": "SP500",
+    "server": "FivePercentOnline-Real",
+    "login": "26059964",
+    "downloaded_utc": "2026-04-23T08:18:57",
+    "bars": 88190,
+    "first_bar": "2026-01-20 08:19:00",
+    "last_bar": "2026-04-21 12:08:00"
+  },
+  "DE40": {
+    "internal_name": "DE40",
+    "primary_broker_ticker": "DAX40",
+    "resolved_broker_ticker": "DAX40",
+    "server": "FivePercentOnline-Real",
+    "login": "26059964",
+    "downloaded_utc": "2026-04-23T08:18:57",
+    "bars": 87552,
+    "first_bar": "2026-01-20 08:19:00",
+    "last_bar": "2026-04-23 07:18:00"
+  },
+  "UK100": {
+    "internal_name": "UK100",
+    "primary_broker_ticker": "UK100",
+    "resolved_broker_ticker": "UK100",
+    "server": "FivePercentOnline-Real",
+    "login": "26059964",
+    "downloaded_utc": "2026-04-23T08:18:57",
+    "bars": 74316,
+    "first_bar": "2026-01-20 08:19:00",
+    "last_bar": "2026-04-09 07:17:00"
+  },
+  "JP225": {
+    "internal_name": "JP225",
+    "primary_broker_ticker": "JPN225",
+    "resolved_broker_ticker": "JPN225",
+    "server": "FivePercentOnline-Real",
+    "login": "26059964",
+    "downloaded_utc": "2026-04-23T08:18:57",
+    "bars": 76670,
+    "first_bar": "2026-01-20 08:19:00",
+    "last_bar": "2026-04-09 07:17:00"
+  },
+  "XAUUSD": {
+    "internal_name": "XAUUSD",
+    "primary_broker_ticker": "XAUUSD",
+    "resolved_broker_ticker": "XAUUSD",
+    "server": "FivePercentOnline-Real",
+    "login": "26059964",
+    "downloaded_utc": "2026-04-23T08:18:57",
+    "bars": 87502,
+    "first_bar": "2026-01-20 08:19:00",
+    "last_bar": "2026-04-21 12:08:00"
+  },
+  "XAGUSD": {
+    "internal_name": "XAGUSD",
+    "primary_broker_ticker": "XAGUSD",
+    "resolved_broker_ticker": "XAGUSD",
+    "server": "FivePercentOnline-Real",
+    "login": "26059964",
+    "downloaded_utc": "2026-04-23T08:18:57",
+    "bars": 76203,
+    "first_bar": "2026-01-20 08:19:00",
+    "last_bar": "2026-04-09 07:17:00"
+  }
+}

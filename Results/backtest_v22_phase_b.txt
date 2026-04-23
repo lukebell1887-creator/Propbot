@@ -1,0 +1,49 @@
+========================================================================================================================
+  v22 PHASE B  —  HMM regime gate  +  Deflated Sharpe  +  MC stress  +  IS/OOS walk-forward
+========================================================================================================================
+
+  [1/5] Running baseline (no HMM gate, full safety rails, 1-tick slip)...
+    Window : 2026-01-19 01:05:00 → 2026-04-07 08:37:00
+    Baseline: N=276  PnL=$+16,910  DD=1.86%  PF=1.82  Sharpe=3.81
+
+  [2/5] Fitting per-symbol 2-state HMMs on daily-range feature...
+    DE40: T=35d  μ_trend=+0.846  μ_chop=+2.008  A00=0.90 A11=0.80  trend-days=26/35
+    US30: T=37d  μ_trend=+0.792  μ_chop=+1.583  A00=0.72 A11=0.36  trend-days=27/37
+    XAUUSD: T=37d  μ_trend=+0.726  μ_chop=+2.277  A00=0.93 A11=0.59  trend-days=32/37
+    US500: T=37d  μ_trend=+0.787  μ_chop=+1.345  A00=0.80 A11=0.76  trend-days=23/37
+    UK100: insufficient data, skipping HMM (will always allow)
+
+  [3/5] Re-running WITH HMM gate (threshold P(trend) >= 0.55)...
+    With HMM: N=224  PnL=$+12,058  DD=2.37%  PF=1.69  Sharpe=2.98
+    HMM dropped 59 raw trades (20.3% of base)
+    → HMM gate does NOT improve Sharpe (2.98 ≤ 3.81). Using baseline (HMM gate OFF).
+
+  [4/5] Deflated Sharpe Ratio (corrected for multiple-testing, n_trials=648)...
+    Observed per-trade Sharpe  : +0.2287
+    Expected max-Sharpe (null) : +3.1296  (M=648 trials)
+    Skew / Excess Kurt         : -0.648  /  +0.195
+    DEFLATED SHARPE p-value    : 0.0000   [FAIL — not deflated-significant]
+
+  [5/5] Monte-Carlo stationary-bootstrap stress (1000 paths, avg-block=5)...
+    PnL  mean / median / p05 / p95      : $+17,000 / $+17,016 / $+7,875 / $+26,300
+    DD   mean / median / p95 / p99      : 2.40% / 2.23% / 4.00% / 4.71%
+    Ruin probability (DD > 4.0 %) : 5.00 %   [FAIL — above 2 %]
+
+  [6/6] IS/OOS walk-forward time-split (first 50% IS, last 50% OOS)...
+    IS  : N=138  PnL=$+7,782  DD=1.80%  PF=1.70  Sharpe=+2.44
+    OOS : N=138  PnL=$+9,127  DD=1.99%  PF=1.96  Sharpe=+2.95
+    OOS/IS PnL ratio : +117.28%   (1.0 = identical, negative = edge flipped)
+
+------------------------------------------------------------------------------------------------------------------------
+  PHASE-B EXIT GATES
+------------------------------------------------------------------------------------------------------------------------
+    ✅  PnL_OOS   >= $8,000     actual = $+9,127
+    ✅  DD_OOS    <= 2.5 %      actual = 1.99 %
+    ✅  PF_OOS    >= 1.6        actual = 1.96
+    ❌  Sharpe_OOS>= 3.0        actual = +2.95
+    ❌  DSR       >= 0.95       actual = 0.0000
+    ❌  Ruin prob <= 2.0 %      actual = 5.00 %
+    ❌  HMM degrade <= 20 %     actual = HMM $+12,058 vs base $+16,910
+
+  VERDICT : ❌ PHASE B FAILS — see failing gates above
+========================================================================================================================

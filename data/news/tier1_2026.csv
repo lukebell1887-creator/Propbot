@@ -1,0 +1,44 @@
+timestamp_utc,impact,label
+# Tier-1 macro events (USD / EUR / GBP / JPY) for 2026 — loaded into TradingCalendar
+# Format: ISO 8601 UTC, impact level, short label
+# +/- news_buffer_min (default 15 min) blocks new entries around each row.
+# This is a CURATED static calendar — refresh quarterly from ForexFactory / TradingEconomics
+# for forward deployment. Historical rows span the 2026-01 to 2026-04 backtest window
+# plus next-quarter forward coverage through 2026-07.
+#
+# === 2026 Q1 (historical - backtest window) ===
+2026-01-07T13:30:00Z,High,NFP (Dec 2025)
+2026-01-14T13:30:00Z,High,US CPI Dec
+2026-01-29T19:00:00Z,High,FOMC Rate Decision
+2026-01-29T19:30:00Z,High,FOMC Press Conference
+2026-02-06T13:30:00Z,High,NFP Jan
+2026-02-11T13:30:00Z,High,US CPI Jan
+2026-02-05T12:00:00Z,High,BoE Rate Decision
+2026-02-05T13:15:00Z,High,ECB Rate Decision (scheduled)
+2026-03-06T13:30:00Z,High,NFP Feb
+2026-03-11T12:30:00Z,High,US CPI Feb
+2026-03-18T18:00:00Z,High,FOMC Rate Decision
+2026-03-18T18:30:00Z,High,FOMC Press Conference
+2026-03-12T13:15:00Z,High,ECB Rate Decision
+2026-03-19T12:00:00Z,High,BoE Rate Decision
+#
+# === 2026 Q2 (half historical / half forward) ===
+2026-04-03T12:30:00Z,High,NFP Mar
+2026-04-10T12:30:00Z,High,US CPI Mar
+2026-04-17T12:15:00Z,High,ECB Rate Decision
+2026-05-01T12:30:00Z,High,NFP Apr
+2026-05-08T12:00:00Z,High,BoE Rate Decision
+2026-05-13T12:30:00Z,High,US CPI Apr
+2026-05-20T18:00:00Z,High,FOMC Rate Decision
+2026-05-20T18:30:00Z,High,FOMC Press Conference
+2026-06-05T12:30:00Z,High,NFP May
+2026-06-11T11:45:00Z,High,ECB Rate Decision
+2026-06-11T12:30:00Z,High,US CPI May
+2026-06-18T11:00:00Z,High,BoE Rate Decision
+2026-06-17T18:00:00Z,High,FOMC Rate Decision
+#
+# === 2026 Q3 forward ===
+2026-07-02T12:30:00Z,High,NFP Jun
+2026-07-15T12:30:00Z,High,US CPI Jun
+2026-07-24T11:15:00Z,High,ECB Rate Decision
+2026-07-30T18:00:00Z,High,FOMC Rate Decision

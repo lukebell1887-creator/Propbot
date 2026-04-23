@@ -1,0 +1,64 @@
+========================================================================================================
+  FINAL ANSWER — one sweep. All results = 1-tick slippage + full safety rails + Merton-GZ sizer.
+========================================================================================================
+
+  PAIR SET                                    RISK    N        PnL   Ret%    DD%    PF  Sharpe  RuinP(DD>4%)
+  ----------------------------------------------------------------------------------------------------
+  5 pairs  (DE40+US30+XAU+US500+UK100)     0.075%  276 $  +8,399  +8.4%  1.04%  1.81  +3.82         0.0%
+  5 pairs  (DE40+US30+XAU+US500+UK100)     0.100%  276 $ +11,229 +11.2%  1.34%  1.81  +3.82         0.8%
+  5 pairs  (DE40+US30+XAU+US500+UK100)     0.125%  276 $ +14,090 +14.1%  1.61%  1.82  +3.82         2.0%
+  5 pairs  (DE40+US30+XAU+US500+UK100)     0.150%  276 $ +16,910 +16.9%  1.86%  1.82  +3.81         4.8%
+
+  4 pairs  (drop UK100)                    0.075%  251 $  +7,445  +7.4%  1.05%  1.81  +3.62         0.0%
+  4 pairs  (drop UK100)                    0.100%  251 $  +9,948  +9.9%  1.35%  1.81  +3.61         0.4%
+  4 pairs  (drop UK100)                    0.125%  251 $ +12,476 +12.5%  1.63%  1.82  +3.61         2.2%
+  4 pairs  (drop UK100)                    0.150%  251 $ +14,941 +14.9%  1.88%  1.82  +3.60         5.0%
+
+  3 pairs  (DE40+US30+XAU only)            0.075%  218 $  +6,811  +6.8%  1.63%  1.66  +3.10         0.0%
+  3 pairs  (DE40+US30+XAU only)            0.100%  218 $  +9,100  +9.1%  2.11%  1.67  +3.10         2.0%
+  3 pairs  (DE40+US30+XAU only)            0.125%  218 $ +11,400 +11.4%  2.56%  1.67  +3.09         7.0%
+  3 pairs  (DE40+US30+XAU only)            0.150%  218 $ +13,725 +13.7%  2.99%  1.68  +3.09        14.4%
+
+  2 pairs  (DE40+US30 only)                0.075%  190 $  +4,986  +5.0%  1.79%  1.50  +2.33         0.6%
+  2 pairs  (DE40+US30 only)                0.100%  190 $  +6,710  +6.7%  2.28%  1.51  +2.35         2.8%
+  2 pairs  (DE40+US30 only)                0.125%  190 $  +8,430  +8.4%  2.75%  1.52  +2.36        10.6%
+  2 pairs  (DE40+US30 only)                0.150%  190 $ +10,144 +10.1%  3.21%  1.52  +2.36        18.4%
+
+  1 pair   (DE40 alone)                    0.075%  116 $  +2,872  +2.9%  0.86%  1.58  +2.04         0.0%
+  1 pair   (DE40 alone)                    0.100%  116 $  +3,834  +3.8%  1.14%  1.58  +2.03         0.0%
+  1 pair   (DE40 alone)                    0.125%  116 $  +4,806  +4.8%  1.43%  1.58  +2.02         0.4%
+  1 pair   (DE40 alone)                    0.150%  116 $  +5,783  +5.8%  1.71%  1.58  +2.01         1.4%
+
+========================================================================================================
+  THE WINNERS (filtered: ruin < 2%, DD < 3%, N >= 20)
+========================================================================================================
+
+  🏆 BEST RETURN
+     Pairs    : DE40, US30, XAUUSD, US500, UK100
+     Risk     : 0.100%  (Merton-GZ anchor)
+     PnL      : $+11,229  (+11.23% on $100k in 2.6 months)
+     Max DD   : 1.34%   (prop-firm cap is 4%)
+     Profit F.: 1.81  |  Sharpe: +3.82  |  WR: 66.7%
+     Ruin prob: 0.8% chance of touching 4% DD  (< 2% = safe)
+     Projected annual @ this pace: $+51,824  (no compounding)
+
+  🏆 LOWEST DD (best safety)
+     Pairs    : DE40
+     Risk     : 0.075%  (Merton-GZ anchor)
+     PnL      : $+2,872  (+2.87% on $100k in 2.6 months)
+     Max DD   : 0.86%   (prop-firm cap is 4%)
+     Profit F.: 1.58  |  Sharpe: +2.04  |  WR: 68.1%
+     Ruin prob: 0.0% chance of touching 4% DD  (< 2% = safe)
+     Projected annual @ this pace: $+13,256  (no compounding)
+
+  🏆 BEST RISK-ADJUSTED (Sharpe)
+     Pairs    : DE40, US30, XAUUSD, US500, UK100
+     Risk     : 0.075%  (Merton-GZ anchor)
+     PnL      : $+8,399  (+8.40% on $100k in 2.6 months)
+     Max DD   : 1.04%   (prop-firm cap is 4%)
+     Profit F.: 1.81  |  Sharpe: +3.82  |  WR: 66.7%
+     Ruin prob: 0.0% chance of touching 4% DD  (< 2% = safe)
+     Projected annual @ this pace: $+38,763  (no compounding)
+
+  Saved: Results/final_answer_sweep.json
+========================================================================================================
