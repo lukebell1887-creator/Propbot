@@ -171,7 +171,12 @@ class V23LiveConfig:
     symbols: List[str] = field(default_factory=lambda: ["DE40", "US30", "XAUUSD", "US500"])
     base_risk_pct: float = 0.00110           # 0.110 %
     cap_mult: float = 3.0                    # hard cap = 3× base = 0.330 %
-    gamma: float = 2.0
+    # gamma = risk-aversion for MertonGZ sizer.
+    # v24 shootout (2026-04-23, Docs/V24_SIZER_SHOOTOUT_RESULTS.md):
+    #   gamma=3.0 = portfolio Composite=124.4, PnL=$14,686, DD=1.72%, Ruin@4%=0.2%
+    #   (beats gamma=2.0 at Composite=117.4 on IDENTICAL signals).
+    # Only used if the Merton path is enabled; current runtime still uses flat.
+    gamma: float = 3.0
     ewma_alpha: float = 0.20
     warmup_trades: int = 15
     dd_cap_pct: float = 0.04                 # Grossman-Zhou barrier (4 %)
