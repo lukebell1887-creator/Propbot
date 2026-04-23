@@ -53,20 +53,22 @@ On the VPS, open MetaTrader 5 (MT5 should already be installed and logged into y
 
 Open PowerShell on the VPS:
 ```powershell
-cd C:\PropBot    # or wherever you cloned it — adjust path as needed
+cd C:\PropBot
 git pull origin main
 ```
 
-You should see commits `58f76e4` and `44b6089` come down (plus the launcher-fix commit I'm about to push).
+### Step 4: FIRST-TIME SETUP (install deps + run safety gate)
 
-### Step 4: Run the unit-test gate (catch any drift first)
-
+One command does everything — installs numpy/pandas/scipy/sklearn/hmmlearn/pytest + runs the 24-test safety gate:
 ```powershell
 cd C:\PropBot
-python -m pytest tests\test_live_backtest_parity.py tests\test_dd_breaker.py tests\test_daily_halt.py -v
+.\SETUP_VPS.ps1
 ```
 
-**Expected: 24 passed.** If anything fails → stop, do not deploy, tell me.
+**Expected last line: `[DONE] VPS is ready.`** If any test fails or pip install fails → stop, do not deploy, show me the output.
+
+Re-run this any time after `git pull` — it's idempotent.
+
 
 ### Step 5: DRY-RUN (no real orders — 2 hours minimum)
 
