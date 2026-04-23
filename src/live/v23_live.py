@@ -76,6 +76,48 @@ log = logging.getLogger("v23.live")
 
 
 # =====================================================================
+#  Bar-time parser. The MT5 bridge sends timestamps in several shapes
+#  depending on bridge version / MQL5 build:
+#    * int / float  -> unix epoch seconds (current SHF_Bridge.mq5)
+#    * str ISO-8601 "2026-04-23T14:02:00"
+#    * str MT5-native "2026.04.23 14:02:00"
+#    * datetime     (already parsed)
+#  Key name is also ambiguous: short "t" (current bridge) or long "time"
+#  (older code paths / tests). This helper accepts all of them and
+#  always returns a tz-aware UTC datetime, or None if the bar is unusable.
+#  Centralising it in ONE place prevents the warmup-vs-poll inconsistency
+#  that caused the TypeError('<' not supported between NoneType...) crash.
+# =====================================================================
+def _parse_bar_time(b: dict):
+    t = b.get("t", b.get("time"))
+    if t is None:
+        return None
+    if isinstance(t, datetime):
+        dt = t
+    elif isinstance(t, (int, float)):
+        try:
+            dt = datetime.fromtimestamp(float(t), tz=timezone.utc)
+        except (OSError, OverflowError, ValueError):
+            return None
+    elif isinstance(t, str):
+        s = t.strip()
+        if not s:
+            return None
+        try:
+            dt = datetime.fromisoformat(s)
+        except ValueError:
+            try:
+                dt = datetime.strptime(s, "%Y.%m.%d %H:%M:%S")
+            except ValueError:
+                return None
+    else:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+# =====================================================================
 #  Per-symbol ORB configs  —  copied VERBATIM from Scripts/backtest_v22_lean_uk5.py
 #  so the live runner uses the same tunings that produced $10,853 / 2.16% DD.
 # =====================================================================
@@ -874,11 +916,9 @@ class V23Live:
             for b in bars:
                 # Accept both BarData and dict shapes
                 if isinstance(b, dict):
-                    t = b.get("time")
-                    if isinstance(t, str):
-                        t = datetime.fromisoformat(t)
-                    if t and t.tzinfo is None:
-                        t = t.replace(tzinfo=timezone.utc)
+                    t = _parse_bar_time(b)
+                    if t is None:
+                        continue
                     # Bridge uses short keys {t,o,h,l,c,v}; older code paths
                     # used long keys {time,open,high,low,close,volume}.
                     # Accept both so warmup & poll never KeyError on either.
@@ -893,6 +933,8 @@ class V23Live:
                     )
                 else:
                     bar = b
+                if bar.time is None:
+                    continue
                 if st.last_bar_time and bar.time <= st.last_bar_time:
                     continue
                 day_key = bar.time.strftime("%Y-%m-%d")
@@ -929,13 +971,13 @@ class V23Live:
 
         # Normalise dict→BarData and ensure chronological order
         norm: List[BarData] = []
+        skipped_no_time = 0
         for b in bars:
             if isinstance(b, dict):
-                t = b.get("time")
-                if isinstance(t, str):
-                    t = datetime.fromisoformat(t)
-                if t and t.tzinfo is None:
-                    t = t.replace(tzinfo=timezone.utc)
+                t = _parse_bar_time(b)
+                if t is None:
+                    skipped_no_time += 1
+                    continue
                 # Bridge returns short keys {t,o,h,l,c,v}; keep legacy-long-key
                 # compat so we never KeyError regardless of bridge version.
                 bar = BarData(
@@ -948,7 +990,13 @@ class V23Live:
                 )
             else:
                 bar = b
+                if bar.time is None:
+                    skipped_no_time += 1
+                    continue
             norm.append(bar)
+        if skipped_no_time:
+            log.warning("warmup  %s  skipped %d bars with no parseable timestamp",
+                        sym, skipped_no_time)
         norm.sort(key=lambda x: x.time)
 
         # Feed bars through OR tracker + NR filter — NO trading during warmup
