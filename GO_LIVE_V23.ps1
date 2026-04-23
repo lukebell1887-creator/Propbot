@@ -1,4 +1,5 @@
 # GO_LIVE_V23.ps1 — start v23 in LIVE mode (REAL ORDERS).
+# Uses the v24d OPTIMAL sizer config: cap_mult=5.0, DD-breaker=4 %.
 # DANGER: this will place real orders on the connected broker account.
 # Do not run unless you have already done a full DRY-RUN cycle.
 #
@@ -10,6 +11,8 @@ Set-Location -LiteralPath $PSScriptRoot
 Write-Host "================================================================" -ForegroundColor Red
 Write-Host "  🔴  v23 LIVE  (REAL ORDERS WILL BE PLACED)" -ForegroundColor Red
 Write-Host "  4-pair ORB + Merton-GZ + news rails + 5ers-safe rails" -ForegroundColor Red
+Write-Host "  cap_mult=5.0  (v24d sweet-spot — 0.550 % per-trade cap)" -ForegroundColor Red
+Write-Host "  4 % DailyHalt + 4 % DDBreaker  (24 unit tests passed)" -ForegroundColor Red
 Write-Host "================================================================" -ForegroundColor Red
 
 # Double-confirm (typed, not keyboard-shortcut)
@@ -28,7 +31,7 @@ if (-not $py) { Write-Error "python not on PATH"; exit 1 }
     --live `
     --symbols "DE40,US30,XAUUSD,US500" `
     --risk 0.00110 `
-    --cap-mult 3.0 `
+    --cap-mult 5.0 `
     --account-kill 0.08 `
     --daily-breaker 0.02 `
     --magic 23000 `
