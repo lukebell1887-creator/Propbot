@@ -437,6 +437,28 @@ class V23Live:
         eq = self._current_equity()
         return max(0.0, (self.day_start_equity - eq) / self.day_start_equity * 100.0)
 
+    def _dd_breaker_tripped(self) -> bool:
+        """Read-only view of the 4 % total-DD breaker state (used by heartbeat).
+
+        The breaker itself is evaluated inside `_manage_open`; this helper
+        only inspects its current state so the heartbeat can report
+        "BLOCKED=dd_breaker(4%)" without mutating anything.
+        """
+        b = getattr(self, "total_dd_breaker_4pct", None)
+        if b is None:
+            return False
+        # DDBreaker exposes `.is_halted` (bool) in v25. Fall back to peak/eq
+        # calc if an older build doesn't have it.
+        if hasattr(b, "is_halted"):
+            return bool(b.is_halted)
+        peak = getattr(b, "peak_equity", 0.0) or 0.0
+        if peak <= 0:
+            return False
+        dd = (peak - self._current_equity()) / peak
+        halt_pct = getattr(b, "halt_pct", 0.04)
+        return dd >= halt_pct
+
+
     # -----------------------------------------------------------------
     # Broker helpers
     # -----------------------------------------------------------------
@@ -839,13 +861,69 @@ class V23Live:
                       f"lots={st.open_size_lots:.3f}  risk=${st.open_risk_usd:.0f}  "
                       f"R_hold={R_hold:+.2f}  held={hold_s:.0f}s")
             else:
-                in_win = orb.in_trade_window(now_utc.hour, now_utc.minute)
-                state = ("PRE_OR" if not orb.or_finalised
-                         else ("WAIT_BREAK" if in_win else "WINDOW_CLOSED"))
-                next_news = self._in_news_entry_block(now_utc)
-                extra = f"  news_block={next_news[1]}" if next_news else ""
-                print(f"  {sym:<6} {or_str}  state={state}  "
-                      f"close={st.last_m1_close if st.last_m1_close else 'n/a'}{extra}")
+                # ==== IDLE SYMBOL: show the full ORB decision surface ====
+                # (This is the line that replaced the useless "state=WINDOW_CLOSED close=..."
+                #  heartbeat. Every field is a real gate used by _maybe_enter.)
+                cur_m   = now_utc.hour * 60 + now_utc.minute
+                or_s_m  = orb._or_start_m
+                or_e_m  = orb._or_end_m
+                tr_e_m  = orb._trade_end_m
+                in_win  = orb.in_trade_window(now_utc.hour, now_utc.minute)
+
+                if not orb.or_finalised and cur_m < or_s_m:
+                    state = "PRE_OR"
+                    mins  = or_s_m - cur_m
+                    phase = f"t-{mins}m→OR_open"
+                elif not orb.or_finalised and or_s_m <= cur_m < or_e_m:
+                    state = "BUILDING_OR"
+                    mins  = or_e_m - cur_m
+                    phase = f"t-{mins}m→OR_close"
+                elif in_win:
+                    state = "WAIT_BREAK"
+                    mins  = tr_e_m - cur_m
+                    phase = f"t-{mins}m→window_end"
+                else:
+                    state = "WINDOW_CLOSED"
+                    # minutes until tomorrow's OR open (rough — same session offset)
+                    mins_next = (or_s_m - cur_m) % (24 * 60)
+                    phase = f"t-{mins_next}m→next_OR_open"
+
+                # Distance-to-OR-edge in % of OR range (only meaningful once OR is set)
+                dist_str = ""
+                if orb.or_high is not None and orb.or_low is not None and orb.or_range > 0 and st.last_m1_close:
+                    up = (orb.or_high - st.last_m1_close) / orb.or_range * 100.0
+                    dn = (st.last_m1_close - orb.or_low)  / orb.or_range * 100.0
+                    # Negative = already broken that side (first-touch flag consumed)
+                    dist_str = f"  up={up:+.0f}%  dn={dn:+.0f}%"
+
+                # NR7 / NR4 edge flag from the filter — drives Crabel expectancy
+                nr_str = ""
+                if st.nr_filter.daily_ranges:
+                    nr7 = "Y" if st.nr_filter.is_prev_day_narrow(7) else "n"
+                    nr4 = "Y" if st.nr_filter.is_prev_day_narrow(4) else "n"
+                    nr_str = f"  NR7={nr7} NR4={nr4}"
+
+                # Why-not-trading ladder (first rail to fire wins the blame)
+                blocked = ""
+                if self.account_killed:
+                    blocked = "  BLOCKED=account_kill"
+                elif self.day_halted:
+                    blocked = "  BLOCKED=day_halt"
+                elif self._dd_breaker_tripped():
+                    blocked = "  BLOCKED=dd_breaker(4%)"
+                else:
+                    nb = self._in_news_entry_block(now_utc)
+                    if nb:
+                        mins_to = max(0, int((nb[0] - now_utc).total_seconds() // 60))
+                        blocked = f"  BLOCKED=news±{self.cfg.news_entry_buffer_min}m ({nb[1]}, t{mins_to:+d}m)"
+                    elif self._count_open_positions() >= self.cfg.max_concurrent_positions:
+                        blocked = f"  BLOCKED=concurrency_cap({self.cfg.max_concurrent_positions})"
+                    elif state in ("WAIT_BREAK",) and (orb.break_long_triggered or orb.break_short_triggered):
+                        blocked = "  BLOCKED=break_already_fired_today"
+
+                close_str = f"{st.last_m1_close:.2f}" if st.last_m1_close else "n/a"
+                print(f"  {sym:<6} {or_str}  state={state}  close={close_str}  "
+                      f"{phase}{dist_str}{nr_str}{blocked}")
 
         # Rail counters
         print(f"  rails: news_block={self.counters.get('block_news_entry', 0)}  "

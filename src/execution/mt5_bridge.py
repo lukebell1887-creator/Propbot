@@ -771,7 +771,11 @@ class MT5Bridge:
             logger.error(f"GET_HISTORY error for {symbol}: {error}")
             return []
 
-        logger.info(f"GET_HISTORY: {symbol} — received {len(bars)} M1 bars")
+        # DEBUG not INFO: this fires every bar_poll_sec (default 5 s) × N symbols.
+        # Burying the heartbeat / gate readout in 40 lines/min of noise was the
+        # exact complaint that triggered the logging overhaul. If you need the
+        # per-poll confirmation for debugging, launch with LOG_LEVEL=DEBUG.
+        logger.debug(f"GET_HISTORY: {symbol} — received {len(bars)} M1 bars")
         return bars
 
     def get_quote(self, symbol: str) -> Optional[TickData]:
