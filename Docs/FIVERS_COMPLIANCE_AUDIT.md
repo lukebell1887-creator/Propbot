@@ -244,20 +244,44 @@ Don't offer to run this bot on someone else's 5%ers account for a fee. If you on
 
 ## The scaling plan
 
-5%ers High Stakes program doubles the account at every 10 % profit milestone (up to their cap of ~$4 M in allocation). Your bot's 3-month backtest clip:
+5%ers High Stakes program doubles the account at every 10 % profit milestone (up to their cap of ~$4 M in allocation).
 
-- **Month 1 target:** hit +8 % = $108,000 (Step 1 pass) → ~5 weeks of dry run-matched performance
-- **Month 2 target:** hit +5 % from the new $100k funded baseline = $105,000 (Step 2 pass) → fund at $100k
-- **Month 3+ scaling (after funding):** every +10 % → account doubles
-  - $100k → $110k → **$200k**
-  - $200k → $220k → **$400k**
-  - $400k → $440k → **$800k**
-  - $800k → $880k → **$1.6M**
-  - $1.6M → $1.76M → **$3.2M**
+**Evidence base:** the only hard number we have is the 3-month 5%ers backtest:
+- **$100,000 → $116,977 = +16.977 % in 92 calendar days**
+- **Geometric monthly rate: (1.16977)^(1/3) – 1 = +5.37 %/month compound**
+- (Arithmetic: 16.977 / 3 = +5.66 %/month)
 
-At the backtest's implied rate (1.27 %/month compounded), first scale-up = month 8-9, second = month 16-17, and so on. Your cap_mult = 5.0 limits **per-trade** risk to 0.55 %, so even at $3.2M the max single-trade drawdown is ~$17.6k — well within any sane risk tolerance.
+At that pace, timeline (assumes live matches backtest — see caveats below):
 
-**Important caveat:** nothing is guaranteed, the backtest is 3 months of a specific market regime, and live slippage + edge decay could halve these numbers. But structurally, the bot is fit for purpose and compliant on every 5%ers rule they publish.
+| Stage | Target | Time from start | Account |
+|---|---|---:|---:|
+| **Challenge Step 1** | +8 % | ~1.5 months | $108,000 → pass, move to Step 2 |
+| **Challenge Step 2** | +5 % (from fresh $100k) | +1 month (~2.5 months total) | $105,000 → pass, get funded at $100k |
+| **Funded Month 2** | +10 % from $100k | +1.8 months (~4.3 months total) | $100k → **$200k** (first double) |
+| **Funded Month 3** | +10 % from $200k | +1.8 months (~6.1 months total) | $200k → **$400k** |
+| **Funded Month 4** | +10 % | +1.8 months (~7.9 months total) | $400k → **$800k** |
+| **Funded Month 5** | +10 % | +1.8 months (~9.7 months total) | $800k → **$1.6M** |
+| **Funded Month 6** | +10 % | +1.8 months (~11.5 months total) | $1.6M → **$3.2M** |
+| **Funded Month 7** | +10 % | +1.8 months (~13.3 months total) | $3.2M → cap hit (~$4M max) |
+
+Your `cap_mult = 5.0` limits **per-trade** risk to 0.55 % of equity regardless of account size — so even at $3.2M the max single-trade drawdown is ~$17.6k. Well within any sane risk tolerance.
+
+**MASSIVE caveat (do not skip this):**
+1. **The backtest is 3 months of ONE market regime** (Jan-Apr 2026). That regime had elevated volatility (DE40 ATR ~0.75 %, XAU ~1.2 %). A sideways/low-vol quarter could cut returns 30-50 %.
+2. **Live slippage sensitivity test** (in `Docs/SLIPPAGE_HONEST_ANSWER.md`) showed +1 pip/side widens P&L variance materially. Real-world slippage at the Frankfurt/NY open can be 2-3× the backtest assumption.
+3. **Edge decay** — ORB edges in DAX/SPX have decayed 30-40 % over the last 10 years as more HFT players pile in. 3 months doesn't capture multi-year decay risk.
+4. **Prop-firm drawdown rules still apply** — any day you touch -4 % intraday DD halts the bot for the day. Any month you exceed -4 % max DD requires review. The bot has internal DD breakers that trip before 5%ers' limits, but they can't prevent catastrophic overnight gaps.
+
+**Honest expected rate:** realistically budget for **50-70 % of the backtest figure in live** = **2.5 – 3.8 %/month**. At 3 %/month compound, the timeline above stretches by ~1.8×:
+- Challenge pass: ~4.5 months total
+- First doubling ($100k → $200k): ~8 months after funding
+- Second doubling ($200k → $400k): ~12 months after funding
+- Reach $3.2M: ~25-30 months total
+
+That's the **honest** range. Anything better is upside; anything worse means the bot isn't tracking the backtest and needs to be halted + re-audited.
+
+**Verdict:** structurally fit for purpose, compliant on every 5%ers rule, and has a credible scaling path — but the live data we collect over the next 4-6 weeks of paper trading is what determines whether the backtest was a genuine edge or regime-luck.
+
 
 ---
 
