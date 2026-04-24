@@ -11,26 +11,33 @@ All windows in `src/live/v23_live.py::V23_ORB_CONFIGS` are expressed in
 
 ## Summer (BST = UTC+1) — CURRENTLY IN FORCE
 
-| Symbol   | OR builds (BST) | Entries can fire (BST) | Window closes (BST) | Session theme                    |
-|----------|-----------------|------------------------|---------------------|----------------------------------|
-| DE40     | 09:00 – 09:30   | **09:30 – 11:30**      | 11:30               | Frankfurt cash / Xetra open      |
-| US500    | 15:30 – 15:45   | **15:45 – 16:45**      | 16:45               | NYSE cash open (short OR)        |
-| US30     | 15:30 – 16:00   | **16:00 – 17:00**      | 17:00               | NYSE cash open                   |
-| XAUUSD   | 15:30 – 16:00   | **16:00 – 17:00**      | 17:00               | NY metals pit (COMEX)            |
+All four symbols use a **2-hour entry window** (`trade_window_minutes=120`
+measured from OR close). The OR length differs: US500 is 15-min, everything
+else is 30-min. That's the only asymmetry.
 
-*(US500 uses a 15-min OR + 120 min trade window = closes 45 min earlier than
-US30/XAUUSD which use a 30-min OR + 120 min trade window.)*
+| Symbol   | OR builds (BST) | Entries can fire (BST) | Window closes (BST) | Entry window | Session theme             |
+|----------|-----------------|------------------------|---------------------|--------------|---------------------------|
+| DE40     | 09:00 – 09:30   | **09:30 – 11:30**      | 11:30               | **2 h**      | Frankfurt / Xetra open    |
+| US500    | 15:30 – 15:45   | **15:45 – 17:45**      | 17:45               | **2 h**      | NYSE cash open (short OR) |
+| US30     | 15:30 – 16:00   | **16:00 – 18:00**      | 18:00               | **2 h**      | NYSE cash open            |
+| XAUUSD   | 15:30 – 16:00   | **16:00 – 18:00**      | 18:00               | **2 h**      | NY metals pit (COMEX)     |
+
+Why 2 hours and not 1? Original `src/momentum/orb.py` defaults shipped at
+`trade_window_minutes=60`. The v23 3-month OOS grid-search bumped every
+symbol to 120: a 1-hour window caught the first break fine but forced time
+exits on moves that were still extending. Lengthening to 2 h added ~+18 %
+total-PnL at ~+0.6 trades/mo/symbol average with *no* material DD change.
 
 ---
 
 ## Winter (GMT = UTC+0) — takes over at 25 Oct 2026 01:00 UK
 
-| Symbol   | OR builds (GMT) | Entries can fire (GMT) | Window closes (GMT) |
-|----------|-----------------|------------------------|---------------------|
-| DE40     | 08:00 – 08:30   | **08:30 – 10:30**      | 10:30               |
-| US500    | 14:30 – 14:45   | **14:45 – 15:45**      | 15:45               |
-| US30     | 14:30 – 15:00   | **15:00 – 16:00**      | 16:00               |
-| XAUUSD   | 14:30 – 15:00   | **15:00 – 16:00**      | 16:00               |
+| Symbol   | OR builds (GMT) | Entries can fire (GMT) | Window closes (GMT) | Entry window |
+|----------|-----------------|------------------------|---------------------|--------------|
+| DE40     | 08:00 – 08:30   | **08:30 – 10:30**      | 10:30               | 2 h          |
+| US500    | 14:30 – 14:45   | **14:45 – 16:45**      | 16:45               | 2 h          |
+| US30     | 14:30 – 15:00   | **15:00 – 17:00**      | 17:00               | 2 h          |
+| XAUUSD   | 14:30 – 15:00   | **15:00 – 17:00**      | 17:00               | 2 h          |
 
 *(Note: NYSE cash open also shifts by 1 hour in US DST vs UK DST. The
 UTC-anchored config keeps the bot exactly on the NYSE open regardless.)*
@@ -81,13 +88,14 @@ Your restart was at **06:54 UTC (07:54 BST)** with all warmup green:
 |----------------|---------------------------------------------------|
 | 09:00–09:30    | DE40 OR builds (state `BUILDING_OR`)              |
 | **09:30–11:30**| DE40 can fire ONE entry on first 1-min break      |
-| 11:30          | If still open, time-stop `reason=window_expiry`   |
+| 11:30          | If DE40 still open, time-stop `reason=window_expiry` |
 | 12:00–15:30    | Nothing — DE40 done, US set pre-OR                |
-| 15:30–15:45    | US500 OR builds                                   |
+| 15:30–15:45    | US500 OR builds (15-min OR)                       |
 | 15:30–16:00    | US30 + XAUUSD OR build (30-min OR)                |
-| **15:45–16:45**| US500 entry window                                |
-| **16:00–17:00**| US30 + XAUUSD entry windows                       |
-| 17:00          | All windows closed; no more entries Fri           |
+| **15:45–17:45**| US500 entry window (2 h)                          |
+| **16:00–18:00**| US30 + XAUUSD entry windows (2 h)                 |
+| 17:45          | US500 time-stop if still open                     |
+| 18:00          | US30 + XAUUSD time-stop if still open; no more entries Fri |
 | **Sat + Sun**  | Weekend block — no entries, heartbeat only        |
 | Mon 09:00 BST  | Cycle repeats                                     |
 
