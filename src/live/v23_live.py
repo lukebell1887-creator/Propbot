@@ -358,6 +358,20 @@ class V23Live:
         # Counters for telemetry
         self.counters: Dict[str, int] = defaultdict(int)
 
+        # -------------------------------------------------------------
+        # BROKER-CLOCK OFFSET CACHE (fixes held=-10775s bug).
+        # 5%ers MT5 servers are typically UTC+2/+3. The EA ships bar
+        # times as broker-server epochs, so `bar.time` is silently
+        # broker-local even though it's labelled tz=UTC by the parser.
+        # The OR/NR/breakout logic doesn't care (backtest uses the same
+        # broker-time convention — see AUDIT_INDEPENDENT_2026-04-23.md),
+        # but any code that mixes `bar.time` with real-UTC values (held
+        # seconds, news rails, time-stops) needs the offset subtracted.
+        # We cache it once at `start()` and refresh every 15 min.
+        # -------------------------------------------------------------
+        self._broker_offset_td: timedelta = timedelta(0)
+        self._broker_offset_last_refresh: float = 0.0
+
         # Paths
         self.log_dir = Path(self.cfg.log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -462,7 +476,59 @@ class V23Live:
     # -----------------------------------------------------------------
     # Broker helpers
     # -----------------------------------------------------------------
+    def _refresh_broker_offset(self, force: bool = False) -> timedelta:
+        """
+        Cache the broker-server clock offset from real UTC.
+        Called at `start()` and every 15 min from the main loop.
+        Silently degrades to zero offset if the bridge has no data yet.
+
+        Returns: the offset as a timedelta (broker = UTC + offset).
+        5%ers MT5 servers are typically UTC+2 (winter) or UTC+3 (DST).
+        """
+        now_wall = time.time()
+        if (not force) and (now_wall - self._broker_offset_last_refresh < 900):
+            return self._broker_offset_td
+        try:
+            srv = self.bridge.get_server_time()
+            if srv is not None:
+                secs = int(getattr(srv, "gmt_offset_seconds", 0) or 0)
+                new_td = timedelta(seconds=secs)
+                if new_td != self._broker_offset_td:
+                    log.info("[broker-offset] %+d s  (%.1f h ahead of UTC)  "
+                             "bar.time/open_at/news comparisons will be corrected.",
+                             secs, secs / 3600.0)
+                self._broker_offset_td = new_td
+        except Exception as e:
+            log.debug("broker offset refresh failed: %s", e)
+        self._broker_offset_last_refresh = now_wall
+        return self._broker_offset_td
+
+    def _bar_to_real_utc(self, bar_time: datetime) -> datetime:
+        """Convert a broker-labelled-UTC bar timestamp to REAL UTC.
+
+        The MT5 EA sends broker-server epochs that `_parse_bar_time` labels
+        tz=UTC. To get the true wall-clock UTC instant we subtract the
+        cached broker→UTC offset. Used for: news entry block / flatten
+        comparisons (the news CSV is in real UTC).
+        """
+        if bar_time.tzinfo is None:
+            bar_time = bar_time.replace(tzinfo=timezone.utc)
+        return bar_time - self._broker_offset_td
+
+    def _utc_to_broker_hm(self, now_utc: datetime) -> Tuple[int, int]:
+        """Convert a real-UTC `now` to (broker_hour, broker_minute).
+
+        Used by time-stops (`_manage_open.trade_end_m`) and heartbeat
+        ORB-phase display, because `or_start_hour` in the ORBConfig is in
+        broker time (see AUDIT_INDEPENDENT_2026-04-23.md — the backtest
+        CSVs are broker-time-stamped, and the tuned anchors are broker
+        hours). Without this conversion the time-stop fires ~3h late.
+        """
+        t = now_utc + self._broker_offset_td
+        return t.hour, t.minute
+
     def _current_equity(self) -> float:
+
         try:
             ai = self.bridge.get_account_info()
             return float(ai.equity) if ai else self.peak_equity
@@ -552,11 +618,16 @@ class V23Live:
             self.counters[f"block_cal_{reason}"] += 1
             return
 
-        # GATE: news entry-block (our own list, independent of calendar)
-        ev = self._in_news_entry_block(bar.time)
+        # GATE: news entry-block (our own list, independent of calendar).
+        # bar.time is broker-server time labelled as UTC; news events are
+        # REAL UTC (loaded from data/news/tier1_2026.csv). Convert before
+        # comparing, otherwise on a GMT+3 broker we shift the ±15 min buffer
+        # by 3 h and the rail silently never fires around real-UTC events.
+        ev = self._in_news_entry_block(self._bar_to_real_utc(bar.time))
         if ev is not None:
             self.counters["block_news_entry"] += 1
             return
+
 
         # TRIGGER: first breakout of the day
         direction = st.or_tracker.detect_breakout(
@@ -657,8 +728,17 @@ class V23Live:
         st.open_tp2 = tp2
         st.open_size_lots = lots
         st.open_risk_usd = risk_usd
-        st.open_at = bar.time
+        # WALL-CLOCK UTC — NOT bar.time. `bar.time` is broker-server time
+        # labelled tz=UTC (see _parse_bar_time), so on a GMT+3 broker it
+        # reads ~3 h AHEAD of real UTC. Using it here made
+        # `(now_utc - st.open_at)` return a NEGATIVE 10 775 s, which silently
+        # disabled the 65 s min-hold gate in `_manage_open` and caused the
+        # 2026-04-24 DE40 FILLED_LONG to never time-stop at window expiry.
+        # The backtest has no such problem because its "now" and "bar.time"
+        # are both naive broker-time — they cancel.
+        st.open_at = datetime.now(timezone.utc)
         self.counters["entries"] += 1
+
 
         self._log_trade({
             "ts_utc": bar.time.isoformat(),
@@ -729,21 +809,32 @@ class V23Live:
                 self.counters["halt_day"] += 1
             # don’t force-close; broker SL/TPs still manage existing risk
 
-        # Time-stop: close any position whose ORB trade-window has expired
+        # Time-stop: close any position whose ORB trade-window has expired.
+        # IMPORTANT: `or_start_hour` in ORBConfig is BROKER-LOCAL (the backtest
+        # CSVs are broker-time stamped; see AUDIT_INDEPENDENT_2026-04-23.md),
+        # so `trade_end_m` is a broker-minute. We must convert `now_utc` to the
+        # broker clock before comparing — else the gate fires ~3 h too late
+        # on a GMT+3 broker.
+        brk_h, brk_m = self._utc_to_broker_hm(now_utc)
+        now_m = brk_h * 60 + brk_m
+        # Broker-side date (for same-day carryover guard, matching OR's day_key)
+        now_broker_date = (now_utc + self._broker_offset_td).date()
         for sym, st in self.states.items():
             if st.open_ticket is None:
                 continue
             trade_end_m = (st.orb_cfg.or_start_hour * 60 + st.orb_cfg.or_start_minute
                            + st.orb_cfg.or_minutes + st.orb_cfg.trade_window_minutes)
-            now_m = now_utc.hour * 60 + now_utc.minute
-            # Only apply if we’re on the SAME UTC day as entry (avoid stale carryover)
-            if st.open_at and st.open_at.date() == now_utc.date() and now_m >= trade_end_m:
-                # Enforce 60 s minimum hold (HFT-compliance belt-and-braces)
+            # open_at is real wall-clock UTC; compare its broker-local date
+            open_broker_date = (st.open_at + self._broker_offset_td).date() if st.open_at else None
+            if open_broker_date == now_broker_date and now_m >= trade_end_m:
+                # Enforce 60 s minimum hold (HFT-compliance belt-and-braces).
+                # Both sides are wall-clock UTC now, so this is unambiguous.
                 hold_s = (now_utc - st.open_at).total_seconds()
                 if hold_s < self.cfg.min_hold_seconds:
                     continue
                 self._close_one(sym, "window_expiry")
                 self.counters["exit_window"] += 1
+
 
         # Sync with broker: if broker-side SL/TP has fired, reconcile local state.
         # IMPORTANT: in dry-run mode, orders are NEVER sent to MT5 (see
@@ -874,11 +965,17 @@ class V23Live:
                 # ==== IDLE SYMBOL: show the full ORB decision surface ====
                 # (This is the line that replaced the useless "state=WINDOW_CLOSED close=..."
                 #  heartbeat. Every field is a real gate used by _maybe_enter.)
-                cur_m   = now_utc.hour * 60 + now_utc.minute
+                # or_tracker's *_m fields and `in_trade_window` are BROKER-LOCAL
+                # — convert now_utc to broker h/m first, else the phase display
+                # is 3 h off on a GMT+3 server (PRE_OR shows when we're really
+                # already BUILDING_OR, etc.).
+                brk_h_hb, brk_m_hb = self._utc_to_broker_hm(now_utc)
+                cur_m   = brk_h_hb * 60 + brk_m_hb
                 or_s_m  = orb._or_start_m
                 or_e_m  = orb._or_end_m
                 tr_e_m  = orb._trade_end_m
-                in_win  = orb.in_trade_window(now_utc.hour, now_utc.minute)
+                in_win  = orb.in_trade_window(brk_h_hb, brk_m_hb)
+
 
                 if not orb.or_finalised and cur_m < or_s_m:
                     state = "PRE_OR"
@@ -1143,10 +1240,17 @@ class V23Live:
         log.info("[START] equity=$%.2f  mode=%s", eq, "DRY-RUN" if self.dry_run else "LIVE")
         self._log_event("START", equity=eq, dry_run=self.dry_run, cfg=vars(self.cfg))
 
+        # Force an initial broker-clock offset refresh so time-stop / news /
+        # held-seconds are correct from the very first bar. (Bridge may need
+        # a moment to receive the first DATA push — guarded by force=True.)
+        off = self._refresh_broker_offset(force=True)
+        log.info("[broker-clock] initial offset = %+d s", int(off.total_seconds()))
+
         # PRE-SEED per-symbol OR tracker + NR filter from 48h of M1 history.
         # Must happen BEFORE run() or the first trading day will have no OR.
         self._warmup_all()
         return 0
+
 
 
     def stop(self) -> None:
