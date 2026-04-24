@@ -745,19 +745,29 @@ class V23Live:
                 self._close_one(sym, "window_expiry")
                 self.counters["exit_window"] += 1
 
-        # Sync with broker: if broker-side SL/TP has fired, reconcile local state
-        open_by_broker = {p.ticket: p for p in self._broker_positions()}
-        for sym, st in self.states.items():
-            if st.open_ticket is not None and st.open_ticket not in open_by_broker:
-                # Position closed at broker (SL/TP/manual). Feed realised R to
-                # the Merton-GZ sizer BEFORE we clear state, so μ̂/σ̂² update.
-                self._log_event("POS_CLOSED_BY_BROKER",
-                                symbol=sym,
-                                ticket=st.open_ticket,
-                                side=st.open_side)
-                self._feed_sizer_on_close(sym, reason="broker_close")
-                self._clear_state(sym)
-                self.counters["exit_broker"] += 1
+        # Sync with broker: if broker-side SL/TP has fired, reconcile local state.
+        # IMPORTANT: in dry-run mode, orders are NEVER sent to MT5 (see
+        # `_maybe_enter`: a fake ticket is generated via `time.time()`). Querying
+        # the real broker for our fake ticket would always return "not present",
+        # causing every simulated position to be phantom-closed as
+        # `POS_CLOSED_BY_BROKER` on the very next poll. Skip the reconciliation
+        # in dry-run — simulated positions are closed by the window-expiry
+        # time-stop above, by news-flatten, by the DD breakers, or by an
+        # explicit `self._close_one()` call.
+        if not self.dry_run:
+            open_by_broker = {p.ticket: p for p in self._broker_positions()}
+            for sym, st in self.states.items():
+                if st.open_ticket is not None and st.open_ticket not in open_by_broker:
+                    # Position closed at broker (SL/TP/manual). Feed realised R
+                    # to the Merton-GZ sizer BEFORE we clear state, so μ̂/σ̂²
+                    # update.
+                    self._log_event("POS_CLOSED_BY_BROKER",
+                                    symbol=sym,
+                                    ticket=st.open_ticket,
+                                    side=st.open_side)
+                    self._feed_sizer_on_close(sym, reason="broker_close")
+                    self._clear_state(sym)
+                    self.counters["exit_broker"] += 1
 
     def _flatten_all(self, reason: str) -> None:
         log.warning("[FLATTEN-ALL] %s", reason)
