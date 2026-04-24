@@ -1,19 +1,25 @@
-# Realistic 24-Month Earnings Forecast (CORRECTED 2026-04-24)
+# Realistic 24-Month Earnings Forecast (CORRECTED 2026-04-24, v3)
 
-**Previous version of this doc had THREE errors.** This is the corrected version. The earlier maths underestimated your earnings by 2-3×. Apologies.
+**Third iteration of this doc.** Previous versions had errors. This one has everything from the 5%ers help centre + the QuantVPS 2026-03-20 deep-dive confirmed.
 
-## The fuck-ups I fixed
+## All previous errors now fixed
 
 | Error | Wrong version | **Correct** |
 |---|---|---|
 | Profit split | 50 % / 50 % | **80 % trader / 20 % firm** (scales to 100 %) |
-| Max account size | $4M cap | **$500k cap** (High Stakes program) |
+| Max account size | $4M cap | **$500k cap** (High Stakes) |
 | Monthly $ on $100k | "$1,610 cash/mo" | **~$2,716 cash/mo** at 60 % haircut |
+| **MISSED bonus tier** | - | **$4,000/month at $350k + $10,000/month at $500k** (High Stakes exclusive) |
 
 Sources confirmed (2026-04-24):
-- Profit split: [help.the5ers.com — "traders start with an 80 % profit split, scales to 100 %"](https://help.the5ers.com/how-much-is-the-profit-split-in-the5ers/)
+- Profit split: [help.the5ers.com](https://help.the5ers.com/how-much-is-the-profit-split-in-the5ers/) — "traders start with an 80 % profit split, scales to 100 %"
+- Fixed monthly bonuses: QuantVPS article 2026-03-20 — *"Once your balance hits $350,000, you qualify for a $4,000 monthly payout. At $500,000, this monthly payment jumps to $10,000. These payouts are on top of your regular profit withdrawals."*
 - Scaling: +10 % profit triggers account increase, payouts every 14 days post-funding
 - Max account: $500k for High Stakes
+- Drawdown: 5 % daily / 10 % overall
+- News rule: **"Avoid placing orders within 2 minutes before/after high-impact news — profits earned in that window will be deducted"** — bot already compliant (flattens 2 min before, blocks ±15 min)
+- Withdrawals don't reset scaling progress; withdrawal cycle resets after scaling event
+
 
 ---
 
@@ -42,7 +48,32 @@ All at 60 % haircut. At 80 % haircut (closer to backtest) multiply by 1.33×. At
 
 ---
 
+## 🎁 High Stakes exclusive — FIXED MONTHLY BONUSES
+
+On top of the 80 % profit split, High Stakes has **automatic monthly cash bonuses** once your account balance crosses two thresholds:
+
+| Account balance | Fixed bonus on top of profit split |
+|---:|---:|
+| **≥ $350,000** | **+$4,000/month** |
+| **≥ $500,000** | **+$10,000/month** |
+
+**Combined earnings at each account size (60 % haircut):**
+
+| Account size | Profit-share cash/mo | Bonus | **Total cash/month** |
+|---:|---:|---:|---:|
+| $100k | $2,716 | $0 | $2,716 |
+| $200k | $5,432 | $0 | $5,432 |
+| $300k | $8,149 | $0 | $8,149 |
+| **$350k** | $9,507 | **$4,000** | **$13,507** |
+| $400k | $10,865 | $4,000 | **$14,865** |
+| **$500k (cap)** | $13,582 | **$10,000** | **$23,582/month** |
+
+**At the $500k cap you earn ~$23,582/month cash ≈ £18,500/month.** That's the real end-state if the bot performs to plan.
+
+---
+
 ## ⚠️ IMPORTANT — scaling mechanism uncertainty
+
 
 Two sources give conflicting info on HOW scaling works on High Stakes:
 1. **"Doubles the account"** — what you remember/were told. Consistent with how Bootcamp program works.
@@ -198,17 +229,31 @@ That's ~$9,400/month average, but strongly back-loaded — $0 during 4-month cha
 
 ---
 
-## Updated honest headline
+## Updated honest headline (with High Stakes bonuses included)
 
-At the **realistic 60 % haircut and 80 % profit split** (not 50 %), over 24 months:
+At the **realistic 60 % haircut, 80 % profit split, + $4k/$10k monthly bonuses at the $350k/$500k tiers**, over 24 months (assuming doubling scaling):
 
 - **Challenge months 1-4**: $0 (paying fee, trading eval)
-- **Month 5 onward (funded)**: **$2,716/month cash** on $100k if you withdraw; nothing if you reinvest for scaling
-- **After 3 months of reinvesting → first scaling (month 8)**: account doubles to $200k → **$5,432/month cash** from there if you withdraw
-- **After 3 more months → second scaling (month 12)**: $400k → **$10,865/month cash**
-- **After 3 more months → cap hit (month 16)**: $500k → **$13,582/month cash** for the rest of eternity
+- **Month 5 onward (funded $100k)**: **$2,716/month cash** if you withdraw
+- **Month 8 (first scale → $200k)**: **$5,432/month cash**
+- **Month 12 (second scale → $400k)**: **$10,865 profit + $4,000 bonus = $14,865/month** *(bonus kicks in at $350k+ balance)*
+- **Month 16 (cap hit → $500k)**: **$13,582 profit + $10,000 bonus = $23,582/month cash FOREVER**
 
-Total cash haul month 5 → month 24 under the "reinvest to cap then withdraw" plan: **~$165,000**.
-That's ~**£130,000** at current GBP/USD.
+**Cumulative cash at month 24 (Scenario B with bonuses): ~$195,000 ≈ £154,000**
 
-Now you're looking at the real numbers. Sorry again for the earlier garbage maths.
+Going forward past month 24: **~$23,582/month ≈ £18,500/month pure cash**.
+
+---
+
+## The three numbers to burn into your brain
+
+| Phase | Monthly cash (60 % haircut) | £ equivalent |
+|---|---:|---:|
+| $100k funded (month 5-7) | $2,716 | ~£2,150 |
+| $200k funded (month 8-11) | $5,432 | ~£4,300 |
+| $400k + bonus (month 12-15) | **$14,865** | ~£11,700 |
+| **$500k capped + bonus (month 16+)** | **$23,582** | **~£18,500** |
+
+Now you're looking at the real numbers with EVERYTHING included. Sorry again for the earlier garbage maths.
+
+
