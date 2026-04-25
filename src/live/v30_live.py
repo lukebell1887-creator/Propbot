@@ -1057,6 +1057,42 @@ class V30Live:
               f"entries_today={self.counters.get('entries', 0)}  "
               f"nochase_blocks={self.counters.get('block_nochase_cooldown', 0)}")
 
+        # ------------------------------------------------------------------
+        # MARKET STATUS banner - honest about weekend/rollover/holiday/news
+        # so the per-symbol "t-XXXm->next_OR_open" countdowns aren't read
+        # as "the bot will fire at that moment". The calendar gates *every*
+        # entry attempt; if we are in any of these windows nothing fires.
+        # ------------------------------------------------------------------
+        try:
+            allowed, reason = self.calendar.can_enter("ANY", now_utc)
+        except Exception:
+            allowed, reason = True, ""
+        if not allowed:
+            if reason == "weekend":
+                # compute time-until Sunday 22:00 UTC re-open
+                week_min = now_utc.weekday() * 1440 + now_utc.hour * 60 + now_utc.minute
+                reopen_min = 6 * 1440 + 22 * 60          # Sun 22:00 UTC
+                if week_min < reopen_min:
+                    delta = reopen_min - week_min
+                else:                                    # Fri 21:00 -> next Sun 22:00 wraps
+                    delta = (7 * 1440 - week_min) + reopen_min
+                hh, mm = divmod(delta, 60)
+                banner = (f"  *** MARKET STATUS: WEEKEND CLOSED  "
+                          f"-> re-opens Sun 22:00 UTC ({hh}h {mm}m away).  "
+                          f"NO TRADES will fire — bot stays warm. ***")
+            elif reason == "rollover":
+                banner = ("  *** MARKET STATUS: BROKER ROLLOVER  "
+                          "(spread blackout) — entries blocked, positions managed. ***")
+            elif reason == "holiday":
+                banner = "  *** MARKET STATUS: HOLIDAY — entries blocked. ***"
+            elif reason == "news":
+                banner = "  *** MARKET STATUS: TIER-1 NEWS BUFFER — entries blocked. ***"
+            else:
+                banner = f"  *** MARKET STATUS: BLOCKED ({reason}) ***"
+            print(banner)
+        else:
+            print("  MARKET STATUS: OPEN — entries allowed by calendar (subject to OR window + rails).")
+
         for sym, st in self.states.items():
             orb = st.or_tracker
             or_str = (f"OR=[{orb.or_low:.2f}-{orb.or_high:.2f}]"

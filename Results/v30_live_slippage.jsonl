@@ -1,3 +1,6 @@
 {"ts_utc": "2026-04-25T08:43:22+00:00", "symbol": "DE40", "side": "LONG", "intended_px": 17500.0, "fill_px": 17500.5, "lots": 0.1, "tick_size": 1.0, "slip_ticks": 0.5, "slip_dollars": 0.05, "dry_run": true}
 {"ts_utc": "2026-04-25T08:43:22+00:00", "symbol": "DE40", "side": "LONG", "intended_px": 17500.0, "fill_px": 17499.0, "lots": 0.1, "tick_size": 1.0, "slip_ticks": -1.0, "slip_dollars": -0.1, "dry_run": true}
 {"ts_utc": "2026-04-25T08:43:22+00:00", "symbol": "US30", "side": "SHORT", "intended_px": 38000.0, "fill_px": 37998.0, "lots": 0.2, "tick_size": 1.0, "slip_ticks": 2.0, "slip_dollars": 0.4, "dry_run": true}
+{"ts_utc": "2026-04-25T09:08:14+00:00", "symbol": "DE40", "side": "LONG", "intended_px": 17500.0, "fill_px": 17500.5, "lots": 0.1, "tick_size": 1.0, "slip_ticks": 0.5, "slip_dollars": 0.05, "dry_run": true}
+{"ts_utc": "2026-04-25T09:08:14+00:00", "symbol": "DE40", "side": "LONG", "intended_px": 17500.0, "fill_px": 17499.0, "lots": 0.1, "tick_size": 1.0, "slip_ticks": -1.0, "slip_dollars": -0.1, "dry_run": true}
+{"ts_utc": "2026-04-25T09:08:14+00:00", "symbol": "US30", "side": "SHORT", "intended_px": 38000.0, "fill_px": 37998.0, "lots": 0.2, "tick_size": 1.0, "slip_ticks": 2.0, "slip_dollars": 0.4, "dry_run": true}
