@@ -1,16 +1,20 @@
 @echo off
 REM =====================================================================
-REM  PropBot v15 — VPS watchdog launcher
+REM  PropBot v23 — VPS watchdog launcher (24/7 auto-restart)
 REM  - Activates venv
 REM  - Runs live engine in infinite restart loop (auto-recover on crash)
 REM  - Logs every session to logs\live_YYYY-MM-DD.log
+REM
+REM  RISK_SCALE : 0.0 = dry-run (no orders sent)
+REM               0.5 = half size
+REM               1.0 = full live size
 REM =====================================================================
 
 setlocal EnableDelayedExpansion
 
 REM --- config: edit these two lines if you want a different risk-scale --
-set RISK_SCALE=0.5
-set PYTHON_MAIN=Scripts\run_v15_live.py
+set RISK_SCALE=1.0
+set PYTHON_MAIN=Scripts\run_v23_live.py
 REM ----------------------------------------------------------------------
 
 cd /d "%~dp0"
@@ -18,8 +22,8 @@ if not exist logs mkdir logs
 
 echo.
 echo =====================================================================
-echo  PropBot v15 live runner starting on %COMPUTERNAME% at %DATE% %TIME%
-echo  Risk scale: %RISK_SCALE%   (0.5 = half size; 1.0 = full)
+echo  PropBot v23 live runner starting on %COMPUTERNAME% at %DATE% %TIME%
+echo  Risk scale: %RISK_SCALE%   (0.0 = dry-run; 1.0 = full live)
 echo  Python   : %PYTHON_MAIN%
 echo =====================================================================
 

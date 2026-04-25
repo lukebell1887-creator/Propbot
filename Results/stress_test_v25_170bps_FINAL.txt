@@ -1,0 +1,172 @@
+========================================================================================================================
+  V25-ULTRA STRESS TEST â€” AGGRESSIVE+ no-chase config @ 0.170 % base risk
+  Bot: v23 ORB + news rails + Merton-GZ (base=0.170 %, cap=5x, Î³=3.0, DD_cap=4 %)
+       + no-chase filter (300 s) + 4 %-daily-halt + 4 %-rolling-DD breaker
+  Data: real 3-month 5ers M1 (DE40, US30, XAUUSD, US500) with 14 scenario warps
+  Rails: all live safety rails + 1.0-tick slippage haircut
+  Luke's kill ladder:
+     today's P&L  <= -4 %  â†’  daily halt, no more trades today
+     rolling DD   >= 4 %   â†’  flatten + lock for week
+     5ers daily limit  = 5 %  (1 % safety below)
+     5ers total limit  = 8 %  (4 % safety below)
+========================================================================================================================
+
+  Running 14 scenarios Ã— 4 symbols ...
+
+
+========================================================================================================================
+  HEADLINE TABLE  â€”  base_risk = 0.170 %
+========================================================================================================================
+  Legend          ðŸŸ¢ good   âšª baseline   ðŸŸ  stress   ðŸ”´ severe   â˜ ï¸  catastrophe
+
+  âšª Baseline (real data)                 N= 274 PnL=$  +27,668 Ret=+27.67% DD= 3.16% WorstDay= -2.02% halt_days= 0 âœ… PASS
+  ðŸŸ¢ Bull Melt-Up (+0.5σ/day)             N=  89 PnL=$     +526 Ret= +0.53% DD= 2.96% WorstDay= -0.92% halt_days= 0 âœ… PASS
+  ðŸŸ¢ Strong Bull (+1σ + 1.2× vol)         N= 110 PnL=$      +41 Ret= +0.04% DD= 3.87% WorstDay= -1.78% halt_days= 0 âœ… PASS
+  ðŸŸ¢ Low-Vol Grind (0.5× vol)             N=  95 PnL=$   +2,659 Ret= +2.66% DD= 4.06% WorstDay= -2.01% halt_days= 0 âš ï¸  WARN
+  ðŸŸ  High-Vol (2× vol)                    N=  35 PnL=$   -2,493 Ret= -2.49% DD= 2.68% WorstDay= -1.68% halt_days= 0 âš ï¸  WARN
+  ðŸ”´ Vol Explosion (3× vol)               N=  30 PnL=$   -3,266 Ret= -3.27% DD= 3.45% WorstDay= -1.50% halt_days= 0 âš ï¸  WARN
+  ðŸ”´ Chop-Hell (zero-trend + alt)         N=  76 PnL=$   -2,236 Ret= -2.24% DD= 4.01% WorstDay= -1.79% halt_days= 0 âš ï¸  WARN
+  ðŸŸ  Bear Market (-1σ/day)                N=  92 PnL=$     -709 Ret= -0.71% DD= 3.56% WorstDay= -1.38% halt_days= 0 âš ï¸  WARN
+  ðŸ”´ Fat-Tail Storm (Taleb)               N=  39 PnL=$   -2,974 Ret= -2.97% DD= 3.16% WorstDay= -1.24% halt_days= 0 âš ï¸  WARN
+  ðŸ”´ Flash Crash (single -8σ gap)         N= 232 PnL=$  +20,616 Ret=+20.62% DD= 3.16% WorstDay= -1.99% halt_days= 0 âœ… PASS
+  ðŸŸ  Regime Flip (+1σ → -1σ)              N= 274 PnL=$  +28,761 Ret=+28.76% DD= 2.76% WorstDay= -1.91% halt_days= 0 âœ… PASS
+  ðŸ”´ Two Flash Crashes (-6σ × 2)          N= 230 PnL=$  +18,805 Ret=+18.80% DD= 3.61% WorstDay= -1.97% halt_days= 0 âœ… PASS
+  ðŸŸ  Weekend-News Gaps (±3σ)              N= 119 PnL=$   +9,171 Ret= +9.17% DD= 4.04% WorstDay= -1.89% halt_days= 0 âš ï¸  WARN
+  â˜ ï¸  CATASTROPHE (3×vol + -1σ + gaps)     N=  95 PnL=$     -730 Ret= -0.73% DD= 3.03% WorstDay= -1.34% halt_days= 0 âš ï¸  WARN
+
+========================================================================================================================
+  PER-SYMBOL BREAKDOWN
+========================================================================================================================
+
+  [N] Baseline (real data)
+      (Real 5ers data, no transform. Should reproduce v24d sweep.)
+      DE40    N= 114  PnL=$   +8,392  DD= 3.23%  PF=1.59  WR=68.4%
+      US30    N=  88  PnL=$  +10,552  DD= 3.48%  PF=1.67  WR=55.7%
+      XAUUSD  N=  24  PnL=$   +6,073  DD= 0.16%  PF=28.70  WR=79.2%
+      US500   N=  48  PnL=$   +2,651  DD= 0.94%  PF=3.17  WR=75.0%
+
+  [V+] Bull Melt-Up (+0.5σ/day)
+      (Persistent +0.5σ/day drift: best case for breakout + trend.)
+      DE40    N=  39  PnL=$     -426  DD= 1.88%  PF=0.90  WR=56.4%
+      US30    N=  29  PnL=$     -878  DD= 2.20%  PF=0.72  WR=51.7%
+      XAUUSD  N=  11  PnL=$   +2,498  DD= 0.01%  PF=104.16  WR=81.8%
+      US500   N=  10  PnL=$     -668  DD= 0.94%  PF=0.31  WR=60.0%
+
+  [V+] Strong Bull (+1σ + 1.2× vol)
+      (Aggressive trending boom; 1.2× wider ORs, wider TPs.)
+      DE40    N=  42  PnL=$   -3,092  DD= 3.11%  PF=0.51  WR=52.4%
+      US30    N=  34  PnL=$   +1,928  DD= 1.51%  PF=1.67  WR=50.0%
+      XAUUSD  N=   9  PnL=$   +1,665  DD= 0.01%  PF=129.27  WR=66.7%
+      US500   N=  25  PnL=$     -460  DD= 0.92%  PF=0.56  WR=64.0%
+
+  [+] Low-Vol Grind (0.5× vol)
+      (Summer doldrums: half normal range. Small trades, small DD.)
+      DE40    N=  51  PnL=$   +1,040  DD= 1.91%  PF=1.15  WR=72.5%
+      US30    N=  41  PnL=$   +1,539  DD= 3.91%  PF=1.16  WR=56.1%
+      XAUUSD  N=   1  PnL=$      -15  DD= 0.02%  PF=0.00  WR= 0.0%
+      US500   N=   2  PnL=$      +95  DD= 0.03%  PF=4.50  WR=50.0%
+
+  [-] High-Vol (2× vol)
+      (October '18 / COVID style: 2× vol, no direction.)
+      DE40    N=  15  PnL=$   +1,459  DD= 0.30%  PF=5.62  WR=66.7%
+      US30    N=   6  PnL=$     +523  DD= 0.90%  PF=1.49  WR=66.7%
+      XAUUSD  N=   6  PnL=$   -3,279  DD= 3.28%  PF=0.00  WR=16.7%
+      US500   N=   8  PnL=$   -1,197  DD= 1.22%  PF=0.03  WR=37.5%
+
+  [V-] Vol Explosion (3× vol)
+      (VIX-spike: 3× vol, wider whipsaws, likely DD rise.)
+      DE40    N=  13  PnL=$   +1,001  DD= 0.30%  PF=4.21  WR=76.9%
+      US30    N=   3  PnL=$     +741  DD= 0.17%  PF=5.33  WR=66.7%
+      XAUUSD  N=   6  PnL=$   -2,924  DD= 2.92%  PF=0.00  WR= 0.0%
+      US500   N=   8  PnL=$   -2,084  DD= 2.11%  PF=0.02  WR=25.0%
+
+  [V-] Chop-Hell (zero-trend + alt)
+      (Alternating +/- daily drift: mean-reversion poison for ORB.)
+      DE40    N=  34  PnL=$   -1,292  DD= 2.15%  PF=0.68  WR=55.9%
+      US30    N=  25  PnL=$   -1,780  DD= 2.33%  PF=0.48  WR=40.0%
+      XAUUSD  N=  10  PnL=$   +1,940  DD= 0.01%  PF=154.13  WR=90.0%
+      US500   N=   7  PnL=$   -1,105  DD= 1.11%  PF=0.11  WR=28.6%
+
+  [-] Bear Market (-1σ/day)
+      (Steady -1σ/day drift: ORB's short side fires a lot.)
+      DE40    N=  44  PnL=$   -2,882  DD= 3.71%  PF=0.45  WR=61.4%
+      US30    N=  32  PnL=$     -195  DD= 1.96%  PF=0.95  WR=53.1%
+      XAUUSD  N=   9  PnL=$   +1,923  DD= 0.01%  PF=332.43  WR=88.9%
+      US500   N=   7  PnL=$     +445  DD= 0.04%  PF=11.94  WR=71.4%
+
+  [V-] Fat-Tail Storm (Taleb)
+      (2.5× vol + random 3-5σ shocks on ~20% of days.)
+      DE40    N=  16  PnL=$   +1,218  DD= 0.68%  PF=2.21  WR=68.8%
+      US30    N=   4  PnL=$     +299  DD= 1.06%  PF=1.28  WR=50.0%
+      XAUUSD  N=   9  PnL=$   -3,315  DD= 3.34%  PF=0.01  WR=33.3%
+      US500   N=  10  PnL=$   -1,177  DD= 1.21%  PF=0.04  WR=50.0%
+
+  [V-] Flash Crash (single -8σ gap)
+      (One big -8σ gap on day 30. Tests SL integrity + sizer cutback.)
+      DE40    N=  99  PnL=$   +7,608  DD= 3.23%  PF=1.60  WR=72.7%
+      US30    N=  69  PnL=$   +7,168  DD= 3.49%  PF=1.47  WR=55.1%
+      XAUUSD  N=  18  PnL=$   +3,330  DD= 0.99%  PF=3.81  WR=66.7%
+      US500   N=  46  PnL=$   +2,510  DD= 0.94%  PF=3.16  WR=78.3%
+
+  [-] Regime Flip (+1σ → -1σ)
+      (Bull first half, bear second. Pure learning-rate stress.)
+      DE40    N= 106  PnL=$   +4,721  DD= 3.31%  PF=1.44  WR=58.5%
+      US30    N=  90  PnL=$  +17,225  DD= 2.16%  PF=3.27  WR=51.1%
+      XAUUSD  N=  15  PnL=$   +3,132  DD= 0.06%  PF=39.68  WR=73.3%
+      US500   N=  63  PnL=$   +3,683  DD= 0.09%  PF=11.31  WR=69.8%
+
+  [V-] Two Flash Crashes (-6σ × 2)
+      (Two big gaps (day 20 + day 50). Clustered tail risk.)
+      DE40    N=  98  PnL=$   +6,966  DD= 3.24%  PF=1.55  WR=72.4%
+      US30    N=  69  PnL=$   +5,865  DD= 3.48%  PF=1.39  WR=55.1%
+      XAUUSD  N=  17  PnL=$   +3,664  DD= 0.55%  PF=6.04  WR=64.7%
+      US500   N=  46  PnL=$   +2,309  DD= 0.95%  PF=2.98  WR=78.3%
+
+  [-] Weekend-News Gaps (±3σ)
+      (Random ±3σ gap every Monday open. Tests weekend-flat rail.)
+      DE40    N=  57  PnL=$   +3,881  DD= 2.76%  PF=1.48  WR=73.7%
+      US30    N=  39  PnL=$   +2,424  DD= 2.79%  PF=1.29  WR=59.0%
+      XAUUSD  N=  11  PnL=$   +3,395  DD= 0.01%  PF=458.28  WR=81.8%
+      US500   N=  12  PnL=$     -530  DD= 0.94%  PF=0.48  WR=58.3%
+
+  [X] CATASTROPHE (3×vol + -1σ + gaps)
+      (Kitchen-sink worst case: 3× vol, -1σ/day, two -6σ crashes.)
+      DE40    N=  33  PnL=$   +2,241  DD= 0.87%  PF=1.86  WR=63.6%
+      US30    N=  14  PnL=$     -845  DD= 1.21%  PF=0.64  WR=57.1%
+      XAUUSD  N=  16  PnL=$   +1,072  DD= 1.38%  PF=1.78  WR=68.8%
+      US500   N=  32  PnL=$   -3,198  DD= 3.32%  PF=0.18  WR=68.8%
+
+========================================================================================================================
+  EXIT-GATE ANALYSIS â€” survives the 5ers challenge @ 0.170 %?
+  Rule: DD â‰¤ 4 %  AND  WorstDay â‰¥ -4 %  AND  (ret > 0  OR  catastrophic)
+========================================================================================================================
+
+  âœ… SURVIVED (9/14):
+      baseline          DD=3.16%  WorstDay=-2.02%  Ret=+27.67%  nochase=3  halt_days=0
+      bull_melt         DD=2.96%  WorstDay=-0.92%  Ret=+0.53%  nochase=2  halt_days=0
+      strong_bull       DD=3.87%  WorstDay=-1.78%  Ret=+0.04%  nochase=2  halt_days=0
+      vol_explosion     DD=3.45%  WorstDay=-1.50%  Ret=-3.27%  nochase=0  halt_days=0
+      fat_tail          DD=3.16%  WorstDay=-1.24%  Ret=-2.97%  nochase=0  halt_days=0
+      flash_crash       DD=3.16%  WorstDay=-1.99%  Ret=+20.62%  nochase=4  halt_days=0
+      regime_flip       DD=2.76%  WorstDay=-1.91%  Ret=+28.76%  nochase=4  halt_days=0
+      two_crashes       DD=3.61%  WorstDay=-1.97%  Ret=+18.80%  nochase=4  halt_days=0
+      catastrophe       DD=3.03%  WorstDay=-1.34%  Ret=-0.73%  nochase=2  halt_days=0
+
+  âš ï¸  WARNINGS (5):
+      low_vol           DD=4.06%  WorstDay=-2.01%  Ret=+2.66%  halt_days=0
+      high_vol          DD=2.68%  WorstDay=-1.68%  Ret=-2.49%  halt_days=0
+      chop_hell         DD=4.01%  WorstDay=-1.79%  Ret=-2.24%  halt_days=0
+      bear_trend        DD=3.56%  WorstDay=-1.38%  Ret=-0.71%  halt_days=0
+      monday_gaps       DD=4.04%  WorstDay=-1.89%  Ret=+9.17%  halt_days=0
+
+========================================================================================================================
+  SUMMARY  â€”  v25-ULTRA @ 0.170 % base risk
+========================================================================================================================
+    Passed    :  9 / 14
+    Warnings  :  5 / 14
+    Failed    :  0 / 14
+    Survival rate = 64.3 %
+
+    BASELINE : PnL=$+27,668  DD=3.16%  WR=66.4%  PF=1.88
+    (v25 @ 0.165 % baseline was $+27,023 / 3.09 % DD â€” this is the same bot with +9 % base risk)
+========================================================================================================================

@@ -1,0 +1,44 @@
+======================================================================
+CSV timestamp audit — when does volume actually peak?
+======================================================================
+
+DE40      top-5 hours (CSV clock) and mean ticks/bar:
+          CSV hour 10:00 -> mean    111 ticks/bar
+          CSV hour 11:00 -> mean    112 ticks/bar
+          CSV hour 16:00 -> mean    151 ticks/bar
+          CSV hour 17:00 -> mean    167 ticks/bar
+          CSV hour 18:00 -> mean    131 ticks/bar
+
+US30      top-5 hours (CSV clock) and mean ticks/bar:
+          CSV hour 16:00 -> mean    272 ticks/bar
+          CSV hour 17:00 -> mean    326 ticks/bar
+          CSV hour 18:00 -> mean    270 ticks/bar
+          CSV hour 19:00 -> mean    231 ticks/bar
+          CSV hour 20:00 -> mean    215 ticks/bar
+
+US500     top-5 hours (CSV clock) and mean ticks/bar:
+          CSV hour 16:00 -> mean    181 ticks/bar
+          CSV hour 17:00 -> mean    202 ticks/bar
+          CSV hour 18:00 -> mean    151 ticks/bar
+          CSV hour 19:00 -> mean    124 ticks/bar
+          CSV hour 20:00 -> mean    113 ticks/bar
+
+XAUUSD    top-5 hours (CSV clock) and mean ticks/bar:
+          CSV hour 15:00 -> mean    878 ticks/bar
+          CSV hour 16:00 -> mean   1053 ticks/bar
+          CSV hour 17:00 -> mean   1101 ticks/bar
+          CSV hour 18:00 -> mean    979 ticks/bar
+          CSV hour 19:00 -> mean    855 ticks/bar
+
+======================================================================
+INTERPRETATION
+======================================================================
+
+Known facts (April 2026, during DST):
+  - NYSE opens 13:30 UTC, first-hour is 13:30-14:30 UTC (highest vol for equities)
+  - NYSE close 20:00 UTC
+  - If CSV peak is 16:00-19:00 -> CSV clock is UTC+2-3 (BROKER TIME)
+  - If CSV peak is 13:00-16:00 -> CSV clock is real UTC
+
+Gold is cleanest — it peaks at London-NY overlap = 13:00-16:00 UTC real.
+

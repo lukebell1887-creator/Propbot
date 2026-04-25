@@ -29,12 +29,22 @@ running both (it should not, but the ticket distinction protects you).
 
 ---
 
-## 2. Two locked-in config flips (v25.1 ship recommendation)
+## 2. Three locked-in config flips (v25.1 ship + 5ers DD compliance)
 
-These are the only two parameter changes vs `V23LiveConfig`. Everything
-else (4 ORB symbols, anchors, TP1/TP2, news rails, 4 % daily halt, 4 %
-DD breaker, calendar, 65 s min hold, 2-position concurrency cap) is byte-
-for-byte identical.
+The two parameter changes recommended by V25_1, **plus** one DD-rail flip
+to honour the 5ers High-Stakes account spec (10 % total / 5 % daily).
+Everything else (4 ORB symbols, anchors, TP1/TP2, news rails, calendar,
+65 s min hold, 2-position concurrency cap) is byte-for-byte identical.
+
+| # | Knob | v23 (current) | **v30 (new)** | Why |
+|---|------|---------------|---------------|-----|
+| 1 | `base_risk_pct`        | 0.00110 | **0.00170** | V25_1 §2.1 — +62.9 % expected P&L |
+| 2 | `nochase_cooldown_s`   | 0.0     | **300.0**   | V25_1 §2.2 — kills cross-symbol queue chasing |
+| 3 | `DDBreaker.halt_pct`   | 0.04    | **0.08**    | 5ers compliance — total kill is 10 %, leave 2-pt slip buffer |
+
+The hard **daily** halt stays at 4 % (5ers daily kill is 5 %, 1-pt buffer).
+Both layers (hard daily + hard total) flatten on trip; the 8 % total layer
+is the one that actually changed for v30.
 
 ### 2.1 `base_risk_pct: 0.00110 → 0.00170`
 

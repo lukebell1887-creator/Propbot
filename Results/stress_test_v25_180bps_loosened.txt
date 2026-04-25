@@ -1,0 +1,110 @@
+========================================================================================================================
+  V25 — 0.180 % BASE RISK + LOOSENED dd_cap STRESS TEST
+  Luke's argument: my 4 % daily halt is already 1 % inside 5ers' 5 % rule,
+                   so the sizer's dd_cap can match 5ers reality (5 %) safely.
+========================================================================================================================
+
+  Configurations:
+    A_CONTROL_165_dd4      base_risk=0.165%  dd_cap=4.0%  daily_halt=4%  breaker=4%
+    B_PRIOR_180_dd4        base_risk=0.180%  dd_cap=4.0%  daily_halt=4%  breaker=4%
+    C_LUKE_180_dd5         base_risk=0.180%  dd_cap=5.0%  daily_halt=4%  breaker=4%
+    D_ULTRA_180_dd6        base_risk=0.180%  dd_cap=6.0%  daily_halt=4%  breaker=4%
+
+  Running 4 configs × 14 scenarios = 56 runs ...
+
+========================================================================================================================
+  COMPARISON HEADLINE — same scenarios, 4 sizing configs
+========================================================================================================================
+  Scenario                       CONTROL_165_dd4     PRIOR_180_dd4      LUKE_180_dd5     ULTRA_180_dd6
+  (severity)                          PnL     DD        PnL     DD        PnL     DD        PnL     DD
+  --------------------------------------------------------------------------------------------------------------------
+  ⚪ Baseline (real data)        $ +27,023  3.09%  $  +6,533  2.64%  $ +28,704  3.99%  $ +28,531  4.50%
+  🟢 Bull Melt-Up (+0.5σ/day)    $    +354  3.03%  $    +904  2.84%  $    -581  4.27%  $    -825  4.51%
+  🟢 Strong Bull (+1σ + 1.2×     $     -85  3.89%  $    +275  3.86%  $    -355  4.49%  $    -316  4.47%
+  🟢 Low-Vol Grind (0.5× vol)    $  +1,704  4.82%  $  +2,805  4.08%  $  +3,119  4.23%  $  +3,030  4.34%
+  🟠 High-Vol (2× vol)           $  +5,779  4.28%  $  -2,589  2.79%  $  +9,916  4.60%  $ +10,270  4.54%
+  🔴 Vol Explosion (3× vol)      $  -3,131  3.31%  $  -3,474  3.67%  $  -3,228  3.42%  $  +8,292  4.42%
+  🔴 Chop-Hell (zero-trend +     $  -3,038  4.74%  $  -2,308  4.18%  $  -2,519  4.39%  $  -2,652  4.52%
+  🟠 Bear Market (-1σ/day)       $    -859  3.62%  $    -287  3.30%  $  -1,032  4.03%  $  -1,213  4.20%
+  🔴 Fat-Tail Storm (Taleb)      $  -3,068  3.25%  $  -2,737  2.93%  $  +6,830  4.56%  $  +8,487  4.47%
+  🔴 Flash Crash (single -8σ     $ +20,165  3.01%  $  +6,533  2.64%  $ +20,521  3.18%  $ +19,667  4.21%
+  🟠 Regime Flip (+1σ → -1σ)     $ +28,022  2.71%  $ +30,047  2.86%  $ +30,538  3.53%  $  -2,951  4.01%
+  🔴 Two Flash Crashes (-6σ ×    $ +19,702  3.20%  $  +6,202  2.94%  $ +20,091  3.34%  $ +19,279  4.18%
+  🟠 Weekend-News Gaps (±3σ)     $  +8,794  4.17%  $  +6,217  4.29%  $ +10,041  4.26%  $ +10,547  4.19%
+  ☠️  CATASTROPHE (3×vol + -1σ    $    -504  3.02%  $  -1,090  3.05%  $    -484  3.65%  $  -1,161  4.20%
+
+========================================================================================================================
+  PER-CONFIG SUMMARY
+========================================================================================================================
+
+  A_CONTROL_165_dd4  (base=0.165%, dd_cap=4.0%)
+    Baseline (real data) :  PnL=$+27,023  DD=3.09%  WorstDay=-1.95%  halts=0  breakers=0
+    Across all 14 scenarios:
+      Worst DD seen      : 4.82%
+      Worst single day   : -1.95%
+      PASS/WARN/FAIL     : 8 / 4 / 0
+      Daily halts (sum)  : 0
+      Breaker trips (sum): 29
+
+  B_PRIOR_180_dd4  (base=0.180%, dd_cap=4.0%)
+    Baseline (real data) :  PnL=$+6,533  DD=2.64%  WorstDay=-2.01%  halts=0  breakers=0
+    Across all 14 scenarios:
+      Worst DD seen      : 4.29%
+      Worst single day   : -2.13%
+      PASS/WARN/FAIL     : 9 / 3 / 0
+      Daily halts (sum)  : 0
+      Breaker trips (sum): 7
+
+  C_LUKE_180_dd5  (base=0.180%, dd_cap=5.0%)
+    Baseline (real data) :  PnL=$+28,704  DD=3.99%  WorstDay=-2.02%  halts=0  breakers=0
+    Across all 14 scenarios:
+      Worst DD seen      : 4.60%
+      Worst single day   : -2.14%
+      PASS/WARN/FAIL     : 6 / 8 / 0
+      Daily halts (sum)  : 0
+      Breaker trips (sum): 104
+
+  D_ULTRA_180_dd6  (base=0.180%, dd_cap=6.0%)
+    Baseline (real data) :  PnL=$+28,531  DD=4.50%  WorstDay=-2.02%  halts=0  breakers=1
+    Across all 14 scenarios:
+      Worst DD seen      : 4.54%
+      Worst single day   : -2.14%
+      PASS/WARN/FAIL     : 0 / 14 / 0
+      Daily halts (sum)  : 0
+      Breaker trips (sum): 250
+
+========================================================================================================================
+  VERDICT — does loosening dd_cap unlock 0.180 % profit?
+========================================================================================================================
+
+  A. CURRENT v25 (0.165 %, dd_cap=4 %)
+        baseline PnL=$+27,023  worst-DD=4.82%  PASS=8/14
+
+  B. PRIOR FAIL (0.180 %, dd_cap=4 %)
+        baseline PnL=$+6,533  worst-DD=4.29%  PASS=9/14
+        delta vs A: -20,490 (the sizer self-throttle)
+
+  C. LUKE'S PROPOSAL (0.180 %, dd_cap=5 %)
+        baseline PnL=$+28,704  worst-DD=4.60%  PASS=6/14
+        delta vs A: +1,680
+        delta vs B: +22,170  ←  did loosening help?
+
+  D. EXTRA LOOSE (0.180 %, dd_cap=6 %)
+        baseline PnL=$+28,531  worst-DD=4.54%  PASS=0/14
+        delta vs C: -173
+
+  KEY SAFETY CHECK (Luke's argument:
+     'my 4 % daily halt is the ultimate safety net'):
+    A_CONTROL_165_dd4       WorstDay=-1.95%  vs Luke's 4% halt: ✅   vs 5ers 5%: ✅   halts/3mo=0
+    B_PRIOR_180_dd4         WorstDay=-2.13%  vs Luke's 4% halt: ✅   vs 5ers 5%: ✅   halts/3mo=0
+    C_LUKE_180_dd5          WorstDay=-2.14%  vs Luke's 4% halt: ✅   vs 5ers 5%: ✅   halts/3mo=0
+    D_ULTRA_180_dd6         WorstDay=-2.14%  vs Luke's 4% halt: ✅   vs 5ers 5%: ✅   halts/3mo=0
+
+========================================================================================================================
+  RECOMMENDATION (auto-derived from numbers above)
+========================================================================================================================
+
+  Best CONFIG that satisfies all safety rules: C_LUKE_180_dd5
+    base_risk=0.180%  dd_cap=5.0%
+    baseline PnL=$+28,704  worst-day=-2.14%  max-DD=4.60%
+    PASS=6/14  WARN=8  FAIL=0

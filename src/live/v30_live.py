@@ -1,5 +1,6 @@
 """
-V30 LIVE RUNNER  —  v25.1 ship config (4-pair ORB + Merton-GZ + news + 4 % rails).
+V30 LIVE RUNNER  —  v25.1 ship config (4-pair ORB + Merton-GZ + news +
+                                       4 % daily / 8 % total DD rails).
 
 This file is a forked, version-bumped copy of `src/live/v23_live.py`.
 Per `Docs/V25_1_SHIP_RECOMMENDATION.md` it ships the two recommended
@@ -16,10 +17,11 @@ Plus a NEW operational feature requested for the v30 dry-run:
         -- per-symbol roll-up + portfolio total in the heartbeat
         -- one JSON line per trade in `Results/v30_live_slippage.jsonl`
 
-NOTHING ELSE CHANGES vs v23 live: identical ORB anchors, identical TP/SL math,
-identical news rails, identical 4 % daily-halt + 4 % DD-breaker, identical
-sizer (Merton × Grossman-Zhou). The 126-backtest evidence base in V25_1_SHIP
-applies verbatim.
+Other vs v23 live: identical ORB anchors, TP/SL math, news rails, sizer
+(Merton × Grossman-Zhou). The hard TOTAL-DD breaker is widened 4 % → 8 %
+for 5ers compliance — the 5ers High-Stakes 100 K kills the account at
+10 % total / 5 % daily, so we run with a 2-pt buffer on total (8 %) and a
+1-pt buffer on daily (4 %). Otherwise byte-identical to v23.
 
 Magic number is bumped 23000 → 30000 so v30 trades are cleanly distinguishable
 from any leftover v23 paper / live tickets at the broker.
@@ -37,9 +39,14 @@ from any leftover v23 paper / live tickets at the broker.
 - NO ONE-SIDED:     ORB is direction-agnostic
 - NO 3RD-PARTY EA:  all source code is in your own repo
 - HARD SL ON BROKER:every ORDER_SEND carries sl AND tp at submission time
-- ACCOUNT KILL:     flatten + halt if equity DD ≥ 8 %
-- DD BREAKER:       flatten + lock for the session if equity DD ≥ 4 %
-- DAILY HALT:       halt today's entries if today's static-DD ≥ 4 %
+- DAILY HARD KILL : flatten today's positions + halt entries when today's
+                    static DD ≥ 4 %  (5ers kill = 5 %, 1-pt buffer for slip)
+- TOTAL HARD KILL: flatten + lock account when rolling peak-to-trough DD
+                    ≥ 8 %            (5ers kill = 10 %, 2-pt buffer for slip)
+- ACCOUNT KILL :    legacy soft ceiling — flatten if equity DD ≥ 8 %
+                    (same threshold as TOTAL HARD KILL; both layers active)
+- DAILY BREAKER:    halt new entries (positions stay open) if today's
+                    rolling DD ≥ daily_breaker_dd (default 2 %)
 - NO-CHASE 300 s:   block cross-symbol queue-release entries (NEW in v30)
 """
 from __future__ import annotations
@@ -63,7 +70,7 @@ from src.momentum.orb import ORBConfig, OpeningRangeTracker, NRFilter
 from src.trading_calendar import TradingCalendar
 from src.smartbb_engine import SMARTBB_UNIVERSE   # authoritative pip_value table
 from src.daily_halt import DailyHalt              # 4 % static-DD daily kill-switch
-from src.dd_breaker import DDBreaker              # 4 % TOTAL (peak-to-trough) DD breaker
+from src.dd_breaker import DDBreaker              # 8 % TOTAL (peak-to-trough) DD breaker
 from src.dynamic_sizer_v21 import (               # Merton × Grossman-Zhou sizer
     MertonGZSizer, MertonGZSizerConfig,
 )
@@ -276,10 +283,10 @@ class V30LiveConfig:
         gamma               = 3.0       (risk-aversion)
         dd_cap_pct          = 0.04      (Grossman-Zhou barrier → size → 0 at 4 % DD)
         nochase_cooldown_s  = 300.0     ★ NEW — cross-symbol queue-release filter
-        DailyHalt           = 4 %       (static, prop-firm style)
-        DDBreaker           = 4 %       (rolling peak-to-trough)
-        account_kill_dd     = 8 %       (legacy soft ceiling)
-        daily_breaker_dd    = 2 %       (rolling intra-day halt-entries)
+        DailyHalt           = 4 %       (static daily hard kill — 5ers kills @ 5 %)
+        DDBreaker           = 8 %       (rolling peak-to-trough — 5ers kills @ 10 %)
+        account_kill_dd     = 8 %       (soft ceiling, same number as DDBreaker)
+        daily_breaker_dd    = 2 %       (rolling intra-day halt-entries; soft)
 
     Expected uplift over v23 live (3-month real 5ers data, same costs):
         +$10,691  /  +62.9 %   (Net P&L  $16,977 → $27,668)
@@ -392,11 +399,12 @@ class V30Live:
         self.account_killed: bool = False
         self.day_halted: bool = False
 
-        # STATIC 4 % daily hard kill-switch.
+        # STATIC 4 % daily hard kill-switch (5ers daily limit = 5 %; 1-pt buffer).
         self.daily_halt_4pct = DailyHalt(halt_pct=0.04)
 
-        # HARD TOTAL-DD (peak-to-trough) 4 % BREAKER.
-        self.total_dd_breaker_4pct = DDBreaker(halt_pct=0.04)
+        # HARD TOTAL-DD (peak-to-trough) 8 % BREAKER (5ers total limit = 10 %; 2-pt buffer).
+        # Variable name is `*_4pct` for code-stability with v23 — value is now 0.08.
+        self.total_dd_breaker_4pct = DDBreaker(halt_pct=0.08)
 
         # Counters for telemetry
         self.counters: Dict[str, int] = defaultdict(int)
@@ -505,7 +513,7 @@ class V30Live:
         if peak <= 0:
             return False
         dd = (peak - self._current_equity()) / peak
-        halt_pct = getattr(b, "halt_pct", 0.04)
+        halt_pct = getattr(b, "halt_pct", 0.08)
         return dd >= halt_pct
 
     # -----------------------------------------------------------------
@@ -876,20 +884,20 @@ class V30Live:
             self.counters["flatten_news"] += 1
             return
 
-        # HARD TOTAL-DD 4 % BREAKER
+        # HARD TOTAL-DD 8 % BREAKER (5ers compliance: account dies @ 10 %)
         eq_now = self._current_equity()
         halted, cur_dd = self.total_dd_breaker_4pct.check(
             now_utc.timestamp(), eq_now,
         )
         if halted and not self.account_killed:
-            self._flatten_all(f"dd_breaker_4pct:dd={cur_dd*100:.2f}%")
-            self._log_event("TOTAL_DD_BREAKER_4PCT",
+            self._flatten_all(f"dd_breaker_8pct:dd={cur_dd*100:.2f}%")
+            self._log_event("TOTAL_DD_BREAKER_8PCT",
                             dd_pct=round(cur_dd * 100, 3),
                             peak_equity=self.total_dd_breaker_4pct.peak_equity,
                             equity=eq_now,
                             total_halts=self.total_dd_breaker_4pct.total_halts)
             self.account_killed = True
-            self.counters["kill_total_dd_4pct"] += 1
+            self.counters["kill_total_dd_8pct"] += 1
             return
 
         # Account kill (legacy 8 % soft ceiling)
@@ -1113,7 +1121,7 @@ class V30Live:
                 elif self.day_halted:
                     blocked = "  BLOCKED=day_halt"
                 elif self._dd_breaker_tripped():
-                    blocked = "  BLOCKED=dd_breaker(4%)"
+                    blocked = "  BLOCKED=dd_breaker(8%)"
                 else:
                     nb = self._in_news_entry_block(now_utc)
                     if nb:

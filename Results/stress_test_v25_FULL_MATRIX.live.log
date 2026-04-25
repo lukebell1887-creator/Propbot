@@ -1,0 +1,280 @@
+==================================================================================================================================
+  V25 FULL-MATRIX STRESS — 14 scenarios × 7 risk levels × {300 s cooldown + 4 % daily halt + 4 % DD breaker}
+  Luke's safety ladder:
+      Today's P&L  <=  -4 %   →  DAILY HALT (stop trading today)
+      Rolling DD    >=  4 %   →  DD BREAKER (flatten + lock week)
+      5ers daily limit  = 5 %  (1 % below = your 4 %)
+      5ers total limit  = 8 %  (4 % below = your DD breaker)
+==================================================================================================================================
+  Risk levels: ['0.110%', '0.130%', '0.150%', '0.165%', '0.170%', '0.175%', '0.180%']
+  Scenarios  : 14
+  Symbols    : ['DE40', 'US30', 'XAUUSD', 'US500']
+
+    [  1/98] baseline         risk=0.110% ... N_sizer=297  N_final=280  PnL=$ +18,127  DD= 2.98%  worst_day=-1.26%  halts=0  break=0  (4.7s)
+    [  2/98] baseline         risk=0.130% ... N_sizer=297  N_final=280  PnL=$ +21,116  DD= 3.51%  worst_day=-1.51%  halts=0  break=0  (4.7s)
+    [  3/98] baseline         risk=0.150% ... N_sizer=293  N_final=275  PnL=$ +24,546  DD= 3.26%  worst_day=-1.76%  halts=0  break=0  (4.3s)
+    [  4/98] baseline         risk=0.165% ... N_sizer=293  N_final=274  PnL=$ +27,023  DD= 3.09%  worst_day=-1.95%  halts=0  break=0  (4.3s)
+    [  5/98] baseline         risk=0.170% ... N_sizer=293  N_final=274  PnL=$ +27,668  DD= 3.16%  worst_day=-2.02%  halts=0  break=0  (4.2s)
+    [  6/98] baseline         risk=0.175% ... N_sizer=135  N_final=127  PnL=$  +6,087  DD= 3.78%  worst_day=-1.96%  halts=0  break=0  (4.5s)
+    [  7/98] baseline         risk=0.180% ... N_sizer=107  N_final= 99  PnL=$  +6,533  DD= 2.64%  worst_day=-2.01%  halts=0  break=0  (4.9s)
+    [  8/98] bull_melt        risk=0.110% ... N_sizer=112  N_final=101  PnL=$  -1,124  DD= 3.38%  worst_day=-0.63%  halts=0  break=0  (9.7s)
+    [  9/98] bull_melt        risk=0.130% ... N_sizer=100  N_final= 89  PnL=$    -619  DD= 3.29%  worst_day=-0.73%  halts=0  break=0  (10.1s)
+    [ 10/98] bull_melt        risk=0.150% ... N_sizer=100  N_final= 89  PnL=$    -170  DD= 3.24%  worst_day=-0.83%  halts=0  break=0  (8.6s)
+    [ 11/98] bull_melt        risk=0.165% ... N_sizer=100  N_final= 89  PnL=$    +354  DD= 3.03%  worst_day=-0.90%  halts=0  break=0  (8.6s)
+    [ 12/98] bull_melt        risk=0.170% ... N_sizer=100  N_final= 89  PnL=$    +526  DD= 2.96%  worst_day=-0.92%  halts=0  break=0  (9.8s)
+    [ 13/98] bull_melt        risk=0.175% ... N_sizer=100  N_final= 89  PnL=$    +722  DD= 2.89%  worst_day=-0.94%  halts=0  break=0  (8.7s)
+    [ 14/98] bull_melt        risk=0.180% ... N_sizer= 99  N_final= 88  PnL=$    +904  DD= 2.84%  worst_day=-0.91%  halts=0  break=0  (9.5s)
+    [ 15/98] strong_bull      risk=0.110% ... N_sizer=356  N_final=316  PnL=$ +20,907  DD= 3.99%  worst_day=-1.19%  halts=0  break=0  (10.7s)
+    [ 16/98] strong_bull      risk=0.130% ... N_sizer=127  N_final=112  PnL=$  -1,019  DD= 4.03%  worst_day=-1.36%  halts=0  break=1  (8.8s)
+    [ 17/98] strong_bull      risk=0.150% ... N_sizer=126  N_final=111  PnL=$    -447  DD= 3.91%  worst_day=-1.57%  halts=0  break=0  (8.7s)
+    [ 18/98] strong_bull      risk=0.165% ... N_sizer=125  N_final=110  PnL=$     -85  DD= 3.89%  worst_day=-1.73%  halts=0  break=0  (10.2s)
+    [ 19/98] strong_bull      risk=0.170% ... N_sizer=124  N_final=110  PnL=$     +41  DD= 3.87%  worst_day=-1.78%  halts=0  break=0  (9.3s)
+    [ 20/98] strong_bull      risk=0.175% ... N_sizer=352  N_final=313  PnL=$ +36,099  DD= 3.83%  worst_day=-1.97%  halts=0  break=0  (10.0s)
+    [ 21/98] strong_bull      risk=0.180% ... N_sizer=123  N_final=109  PnL=$    +275  DD= 3.86%  worst_day=-1.88%  halts=0  break=0  (8.9s)
+    [ 22/98] low_vol          risk=0.110% ... N_sizer=215  N_final=213  PnL=$  +8,187  DD= 3.76%  worst_day=-1.31%  halts=0  break=0  (8.0s)
+    [ 23/98] low_vol          risk=0.130% ... N_sizer=202  N_final= 99  PnL=$  +1,081  DD= 4.15%  worst_day=-1.52%  halts=0  break=31  (8.3s)
+    [ 24/98] low_vol          risk=0.150% ... N_sizer=106  N_final= 99  PnL=$  +1,473  DD= 4.53%  worst_day=-1.77%  halts=0  break=3  (7.8s)
+    [ 25/98] low_vol          risk=0.165% ... N_sizer= 99  N_final= 99  PnL=$  +1,704  DD= 4.82%  worst_day=-1.95%  halts=0  break=1  (8.9s)
+    [ 26/98] low_vol          risk=0.170% ... N_sizer= 99  N_final= 95  PnL=$  +2,659  DD= 4.06%  worst_day=-2.01%  halts=0  break=2  (7.5s)
+    [ 27/98] low_vol          risk=0.175% ... N_sizer= 99  N_final= 95  PnL=$  +2,725  DD= 4.13%  worst_day=-2.07%  halts=0  break=2  (7.7s)
+    [ 28/98] low_vol          risk=0.180% ... N_sizer= 99  N_final= 92  PnL=$  +2,805  DD= 4.08%  worst_day=-2.13%  halts=0  break=3  (9.1s)
+    [ 29/98] high_vol         risk=0.110% ... N_sizer=344  N_final=299  PnL=$ +11,508  DD= 3.83%  worst_day=-1.18%  halts=0  break=0  (8.7s)
+    [ 30/98] high_vol         risk=0.130% ... N_sizer=179  N_final=155  PnL=$  +5,992  DD= 4.58%  worst_day=-1.40%  halts=0  break=1  (8.6s)
+    [ 31/98] high_vol         risk=0.150% ... N_sizer=178  N_final=149  PnL=$  +7,128  DD= 4.31%  worst_day=-1.62%  halts=0  break=2  (8.9s)
+    [ 32/98] high_vol         risk=0.165% ... N_sizer=175  N_final=144  PnL=$  +5,779  DD= 4.28%  worst_day=-1.78%  halts=0  break=3  (8.3s)
+    [ 33/98] high_vol         risk=0.170% ... N_sizer= 42  N_final= 35  PnL=$  -2,493  DD= 2.68%  worst_day=-1.68%  halts=0  break=0  (7.8s)
+    [ 34/98] high_vol         risk=0.175% ... N_sizer= 37  N_final= 31  PnL=$  -2,537  DD= 2.73%  worst_day=-1.73%  halts=0  break=0  (8.6s)
+    [ 35/98] high_vol         risk=0.180% ... N_sizer= 37  N_final= 31  PnL=$  -2,589  DD= 2.79%  worst_day=-1.78%  halts=0  break=0  (8.6s)
+    [ 36/98] vol_explosion    risk=0.110% ... N_sizer=361  N_final=306  PnL=$  +6,836  DD= 3.55%  worst_day=-1.20%  halts=0  break=0  (9.4s)
+    [ 37/98] vol_explosion    risk=0.130% ... N_sizer=255  N_final=215  PnL=$  +5,921  DD= 3.86%  worst_day=-1.41%  halts=0  break=0  (7.9s)
+    [ 38/98] vol_explosion    risk=0.150% ... N_sizer= 39  N_final= 30  PnL=$  -2,696  DD= 2.86%  worst_day=-1.21%  halts=0  break=0  (9.3s)
+    [ 39/98] vol_explosion    risk=0.165% ... N_sizer= 39  N_final= 30  PnL=$  -3,131  DD= 3.31%  worst_day=-1.43%  halts=0  break=0  (9.4s)
+    [ 40/98] vol_explosion    risk=0.170% ... N_sizer= 39  N_final= 30  PnL=$  -3,266  DD= 3.45%  worst_day=-1.50%  halts=0  break=0  (9.8s)
+    [ 41/98] vol_explosion    risk=0.175% ... N_sizer= 39  N_final= 30  PnL=$  -3,370  DD= 3.56%  worst_day=-1.56%  halts=0  break=0  (9.5s)
+    [ 42/98] vol_explosion    risk=0.180% ... N_sizer= 39  N_final= 30  PnL=$  -3,474  DD= 3.67%  worst_day=-1.63%  halts=0  break=0  (10.7s)
+    [ 43/98] chop_hell        risk=0.110% ... N_sizer=246  N_final= 92  PnL=$  -3,073  DD= 4.22%  worst_day=-1.16%  halts=0  break=28  (8.6s)
+    [ 44/98] chop_hell        risk=0.130% ... N_sizer=102  N_final= 88  PnL=$  -3,172  DD= 4.52%  worst_day=-1.37%  halts=0  break=2  (8.4s)
+    [ 45/98] chop_hell        risk=0.150% ... N_sizer=100  N_final= 84  PnL=$  -2,843  DD= 4.40%  worst_day=-1.58%  halts=0  break=2  (9.7s)
+    [ 46/98] chop_hell        risk=0.165% ... N_sizer= 96  N_final= 84  PnL=$  -3,038  DD= 4.74%  worst_day=-1.73%  halts=0  break=1  (10.1s)
+    [ 47/98] chop_hell        risk=0.170% ... N_sizer= 96  N_final= 76  PnL=$  -2,236  DD= 4.01%  worst_day=-1.79%  halts=0  break=3  (9.8s)
+    [ 48/98] chop_hell        risk=0.175% ... N_sizer= 96  N_final= 76  PnL=$  -2,272  DD= 4.09%  worst_day=-1.84%  halts=0  break=3  (9.2s)
+    [ 49/98] chop_hell        risk=0.180% ... N_sizer= 96  N_final= 76  PnL=$  -2,308  DD= 4.18%  worst_day=-1.89%  halts=0  break=3  (9.9s)
+    [ 50/98] bear_trend       risk=0.110% ... N_sizer=114  N_final=105  PnL=$  -1,535  DD= 3.39%  worst_day=-1.16%  halts=0  break=0  (10.2s)
+    [ 51/98] bear_trend       risk=0.130% ... N_sizer=100  N_final= 92  PnL=$  -1,678  DD= 3.86%  worst_day=-1.38%  halts=0  break=0  (10.1s)
+    [ 52/98] bear_trend       risk=0.150% ... N_sizer=100  N_final= 92  PnL=$  -1,305  DD= 3.82%  worst_day=-1.31%  halts=0  break=0  (10.0s)
+    [ 53/98] bear_trend       risk=0.165% ... N_sizer=100  N_final= 92  PnL=$    -859  DD= 3.62%  worst_day=-1.37%  halts=0  break=0  (8.9s)
+    [ 54/98] bear_trend       risk=0.170% ... N_sizer=100  N_final= 92  PnL=$    -709  DD= 3.56%  worst_day=-1.38%  halts=0  break=0  (10.1s)
+    [ 55/98] bear_trend       risk=0.175% ... N_sizer= 97  N_final= 89  PnL=$    -389  DD= 3.33%  worst_day=-1.40%  halts=0  break=0  (13.1s)
+    [ 56/98] bear_trend       risk=0.180% ... N_sizer= 97  N_final= 89  PnL=$    -287  DD= 3.30%  worst_day=-1.42%  halts=0  break=0  (11.3s)
+    [ 57/98] fat_tail         risk=0.110% ... N_sizer=359  N_final=307  PnL=$  +9,239  DD= 3.76%  worst_day=-1.22%  halts=0  break=0  (13.3s)
+    [ 58/98] fat_tail         risk=0.130% ... N_sizer=190  N_final=162  PnL=$  +4,786  DD= 4.51%  worst_day=-1.11%  halts=0  break=1  (10.7s)
+    [ 59/98] fat_tail         risk=0.150% ... N_sizer=183  N_final=155  PnL=$  +4,164  DD= 4.59%  worst_day=-1.28%  halts=0  break=1  (12.1s)
+    [ 60/98] fat_tail         risk=0.165% ... N_sizer= 48  N_final= 39  PnL=$  -3,068  DD= 3.25%  worst_day=-1.20%  halts=0  break=0  (9.9s)
+    [ 61/98] fat_tail         risk=0.170% ... N_sizer= 48  N_final= 39  PnL=$  -2,974  DD= 3.16%  worst_day=-1.24%  halts=0  break=0  (10.6s)
+    [ 62/98] fat_tail         risk=0.175% ... N_sizer= 48  N_final= 39  PnL=$  -2,854  DD= 3.05%  worst_day=-1.28%  halts=0  break=0  (9.1s)
+    [ 63/98] fat_tail         risk=0.180% ... N_sizer= 48  N_final= 39  PnL=$  -2,737  DD= 2.93%  worst_day=-1.31%  halts=0  break=0  (8.8s)
+    [ 64/98] flash_crash      risk=0.110% ... N_sizer=294  N_final=274  PnL=$ +13,353  DD= 3.15%  worst_day=-1.25%  halts=0  break=0  (9.0s)
+    [ 65/98] flash_crash      risk=0.130% ... N_sizer=280  N_final=260  PnL=$ +15,975  DD= 3.28%  worst_day=-1.49%  halts=0  break=0  (9.0s)
+    [ 66/98] flash_crash      risk=0.150% ... N_sizer=252  N_final=232  PnL=$ +18,161  DD= 3.31%  worst_day=-1.74%  halts=0  break=0  (8.9s)
+    [ 67/98] flash_crash      risk=0.165% ... N_sizer=252  N_final=232  PnL=$ +20,165  DD= 3.01%  worst_day=-1.92%  halts=0  break=0  (8.4s)
+    [ 68/98] flash_crash      risk=0.170% ... N_sizer=252  N_final=232  PnL=$ +20,616  DD= 3.16%  worst_day=-1.99%  halts=0  break=0  (8.7s)
+    [ 69/98] flash_crash      risk=0.175% ... N_sizer=135  N_final=127  PnL=$  +6,087  DD= 3.78%  worst_day=-1.96%  halts=0  break=0  (8.6s)
+    [ 70/98] flash_crash      risk=0.180% ... N_sizer=107  N_final= 99  PnL=$  +6,533  DD= 2.64%  worst_day=-2.01%  halts=0  break=0  (9.6s)
+    [ 71/98] regime_flip      risk=0.110% ... N_sizer=299  N_final=278  PnL=$ +18,205  DD= 2.77%  worst_day=-1.18%  halts=0  break=0  (8.8s)
+    [ 72/98] regime_flip      risk=0.130% ... N_sizer=297  N_final=276  PnL=$ +21,388  DD= 2.79%  worst_day=-1.41%  halts=0  break=0  (7.9s)
+    [ 73/98] regime_flip      risk=0.150% ... N_sizer=295  N_final=275  PnL=$ +24,954  DD= 2.73%  worst_day=-1.65%  halts=0  break=0  (8.3s)
+    [ 74/98] regime_flip      risk=0.165% ... N_sizer=294  N_final=274  PnL=$ +28,022  DD= 2.71%  worst_day=-1.84%  halts=0  break=0  (7.8s)
+    [ 75/98] regime_flip      risk=0.170% ... N_sizer=294  N_final=274  PnL=$ +28,761  DD= 2.76%  worst_day=-1.91%  halts=0  break=0  (9.6s)
+    [ 76/98] regime_flip      risk=0.175% ... N_sizer=294  N_final=272  PnL=$ +29,349  DD= 2.81%  worst_day=-1.97%  halts=0  break=0  (9.4s)
+    [ 77/98] regime_flip      risk=0.180% ... N_sizer=294  N_final=272  PnL=$ +30,047  DD= 2.86%  worst_day=-2.04%  halts=0  break=0  (9.1s)
+    [ 78/98] two_crashes      risk=0.110% ... N_sizer=296  N_final=274  PnL=$ +12,756  DD= 3.39%  worst_day=-1.25%  halts=0  break=0  (8.9s)
+    [ 79/98] two_crashes      risk=0.130% ... N_sizer=280  N_final=260  PnL=$ +15,540  DD= 3.30%  worst_day=-1.49%  halts=0  break=0  (9.4s)
+    [ 80/98] two_crashes      risk=0.150% ... N_sizer=250  N_final=230  PnL=$ +17,744  DD= 3.30%  worst_day=-1.74%  halts=0  break=0  (8.0s)
+    [ 81/98] two_crashes      risk=0.165% ... N_sizer=250  N_final=230  PnL=$ +19,702  DD= 3.20%  worst_day=-1.92%  halts=0  break=0  (7.9s)
+    [ 82/98] two_crashes      risk=0.170% ... N_sizer=250  N_final=230  PnL=$ +18,805  DD= 3.61%  worst_day=-1.97%  halts=0  break=0  (8.7s)
+    [ 83/98] two_crashes      risk=0.175% ... N_sizer=124  N_final=116  PnL=$  +6,017  DD= 3.51%  worst_day=-1.96%  halts=0  break=0  (8.7s)
+    [ 84/98] two_crashes      risk=0.180% ... N_sizer=105  N_final= 97  PnL=$  +6,202  DD= 2.94%  worst_day=-2.01%  halts=0  break=0  (9.7s)
+    [ 85/98] monday_gaps      risk=0.110% ... N_sizer=310  N_final=287  PnL=$ +16,642  DD= 3.52%  worst_day=-1.25%  halts=0  break=0  (8.4s)
+    [ 86/98] monday_gaps      risk=0.130% ... N_sizer=310  N_final=287  PnL=$ +20,225  DD= 3.62%  worst_day=-1.50%  halts=0  break=0  (9.5s)
+    [ 87/98] monday_gaps      risk=0.150% ... N_sizer=305  N_final=282  PnL=$ +22,825  DD= 3.55%  worst_day=-1.74%  halts=0  break=0  (8.8s)
+    [ 88/98] monday_gaps      risk=0.165% ... N_sizer=274  N_final=132  PnL=$  +8,794  DD= 4.17%  worst_day=-1.83%  halts=0  break=24  (8.0s)
+    [ 89/98] monday_gaps      risk=0.170% ... N_sizer=140  N_final=119  PnL=$  +9,171  DD= 4.04%  worst_day=-1.89%  halts=0  break=3  (8.0s)
+    [ 90/98] monday_gaps      risk=0.175% ... N_sizer=140  N_final=119  PnL=$  +8,505  DD= 4.13%  worst_day=-1.94%  halts=0  break=3  (10.0s)
+    [ 91/98] monday_gaps      risk=0.180% ... N_sizer=127  N_final=117  PnL=$  +6,217  DD= 4.29%  worst_day=-2.00%  halts=0  break=1  (9.6s)
+    [ 92/98] catastrophe      risk=0.110% ... N_sizer=168  N_final=116  PnL=$  -2,173  DD= 4.04%  worst_day=-1.52%  halts=0  break=4  (10.4s)
+    [ 93/98] catastrophe      risk=0.130% ... N_sizer=135  N_final=110  PnL=$  -1,256  DD= 3.43%  worst_day=-1.72%  halts=0  break=0  (10.4s)
+    [ 94/98] catastrophe      risk=0.150% ... N_sizer=129  N_final=105  PnL=$    -810  DD= 3.23%  worst_day=-1.85%  halts=0  break=0  (9.8s)
+    [ 95/98] catastrophe      risk=0.165% ... N_sizer=118  N_final= 95  PnL=$    -504  DD= 3.02%  worst_day=-1.30%  halts=0  break=0  (10.3s)
+    [ 96/98] catastrophe      risk=0.170% ... N_sizer=118  N_final= 95  PnL=$    -730  DD= 3.03%  worst_day=-1.34%  halts=0  break=0  (10.2s)
+    [ 97/98] catastrophe      risk=0.175% ... N_sizer=118  N_final= 95  PnL=$    -952  DD= 3.05%  worst_day=-1.38%  halts=0  break=0  (9.6s)
+    [ 98/98] catastrophe      risk=0.180% ... N_sizer=118  N_final= 95  PnL=$  -1,090  DD= 3.05%  worst_day=-1.40%  halts=0  break=0  (9.5s)
+
+  Done in 14.7 min.
+
+==================================================================================================================================
+  HEADLINE — net PnL ($) by (scenario, risk)
+==================================================================================================================================
+  scenario                         0.110%   0.130%   0.150%   0.165%   0.170%   0.175%   0.180%
+  -----------------------------------------------------------------------------------------------
+  Baseline (real data)            $+18,127  $+21,116  $+24,546  $+27,023  $+27,668  $+6,087  $+6,533
+  Bull Melt-Up (+0.5σ/day)        $-1,124  $  -619  $  -170  $  +354  $  +526  $  +722  $  +904
+  Strong Bull (+1σ + 1.2× vol)    $+20,907  $-1,019  $  -447  $   -85  $   +41  $+36,099  $  +275
+  Low-Vol Grind (0.5× vol)        $+8,187  $+1,081  $+1,473  $+1,704  $+2,659  $+2,725  $+2,805
+  High-Vol (2× vol)               $+11,508  $+5,992  $+7,128  $+5,779  $-2,493  $-2,537  $-2,589
+  Vol Explosion (3× vol)          $+6,836  $+5,921  $-2,696  $-3,131  $-3,266  $-3,370  $-3,474
+  Chop-Hell (zero-trend + alt)    $-3,073  $-3,172  $-2,843  $-3,038  $-2,236  $-2,272  $-2,308
+  Bear Market (-1σ/day)           $-1,535  $-1,678  $-1,305  $  -859  $  -709  $  -389  $  -287
+  Fat-Tail Storm (Taleb)          $+9,239  $+4,786  $+4,164  $-3,068  $-2,974  $-2,854  $-2,737
+  Flash Crash (single -8σ gap)    $+13,353  $+15,975  $+18,161  $+20,165  $+20,616  $+6,087  $+6,533
+  Regime Flip (+1σ → -1σ)         $+18,205  $+21,388  $+24,954  $+28,022  $+28,761  $+29,349  $+30,047
+  Two Flash Crashes (-6σ × 2)     $+12,756  $+15,540  $+17,744  $+19,702  $+18,805  $+6,017  $+6,202
+  Weekend-News Gaps (±3σ)         $+16,642  $+20,225  $+22,825  $+8,794  $+9,171  $+8,505  $+6,217
+  CATASTROPHE (3×vol + -1σ + gap  $-2,173  $-1,256  $  -810  $  -504  $  -730  $  -952  $-1,090
+
+==================================================================================================================================
+  DD % by (scenario, risk)
+==================================================================================================================================
+  scenario                         0.110%   0.130%   0.150%   0.165%   0.170%   0.175%   0.180%
+  -----------------------------------------------------------------------------------------------
+  Baseline (real data)              2.98%    3.51%    3.26%    3.09%    3.16%    3.78%    2.64%
+  Bull Melt-Up (+0.5σ/day)          3.38%    3.29%    3.24%    3.03%    2.96%    2.89%    2.84%
+  Strong Bull (+1σ + 1.2× vol)      3.99%    4.03%    3.91%    3.89%    3.87%    3.83%    3.86%
+  Low-Vol Grind (0.5× vol)          3.76%    4.15%    4.53%    4.82%    4.06%    4.13%    4.08%
+  High-Vol (2× vol)                 3.83%    4.58%    4.31%    4.28%    2.68%    2.73%    2.79%
+  Vol Explosion (3× vol)            3.55%    3.86%    2.86%    3.31%    3.45%    3.56%    3.67%
+  Chop-Hell (zero-trend + alt)      4.22%    4.52%    4.40%    4.74%    4.01%    4.09%    4.18%
+  Bear Market (-1σ/day)             3.39%    3.86%    3.82%    3.62%    3.56%    3.33%    3.30%
+  Fat-Tail Storm (Taleb)            3.76%    4.51%    4.59%    3.25%    3.16%    3.05%    2.93%
+  Flash Crash (single -8σ gap)      3.15%    3.28%    3.31%    3.01%    3.16%    3.78%    2.64%
+  Regime Flip (+1σ → -1σ)           2.77%    2.79%    2.73%    2.71%    2.76%    2.81%    2.86%
+  Two Flash Crashes (-6σ × 2)       3.39%    3.30%    3.30%    3.20%    3.61%    3.51%    2.94%
+  Weekend-News Gaps (±3σ)           3.52%    3.62%    3.55%    4.17%    4.04%    4.13%    4.29%
+  CATASTROPHE (3×vol + -1σ + gap    4.04%    3.43%    3.23%    3.02%    3.03%    3.05%    3.05%
+
+==================================================================================================================================
+  Worst-single-day % by (scenario, risk)    — rule: must be > −4 % (Luke's halt) to pass
+==================================================================================================================================
+  scenario                         0.110%   0.130%   0.150%   0.165%   0.170%   0.175%   0.180%
+  -----------------------------------------------------------------------------------------------
+  Baseline (real data)            -1.26%   -1.51%   -1.76%   -1.95%   -2.02%   -1.96%   -2.01% 
+  Bull Melt-Up (+0.5σ/day)        -0.63%   -0.73%   -0.83%   -0.90%   -0.92%   -0.94%   -0.91% 
+  Strong Bull (+1σ + 1.2× vol)    -1.19%   -1.36%   -1.57%   -1.73%   -1.78%   -1.97%   -1.88% 
+  Low-Vol Grind (0.5× vol)        -1.31%   -1.52%   -1.77%   -1.95%   -2.01%   -2.07%   -2.13% 
+  High-Vol (2× vol)               -1.18%   -1.40%   -1.62%   -1.78%   -1.68%   -1.73%   -1.78% 
+  Vol Explosion (3× vol)          -1.20%   -1.41%   -1.21%   -1.43%   -1.50%   -1.56%   -1.63% 
+  Chop-Hell (zero-trend + alt)    -1.16%   -1.37%   -1.58%   -1.73%   -1.79%   -1.84%   -1.89% 
+  Bear Market (-1σ/day)           -1.16%   -1.38%   -1.31%   -1.37%   -1.38%   -1.40%   -1.42% 
+  Fat-Tail Storm (Taleb)          -1.22%   -1.11%   -1.28%   -1.20%   -1.24%   -1.28%   -1.31% 
+  Flash Crash (single -8σ gap)    -1.25%   -1.49%   -1.74%   -1.92%   -1.99%   -1.96%   -2.01% 
+  Regime Flip (+1σ → -1σ)         -1.18%   -1.41%   -1.65%   -1.84%   -1.91%   -1.97%   -2.04% 
+  Two Flash Crashes (-6σ × 2)     -1.25%   -1.49%   -1.74%   -1.92%   -1.97%   -1.96%   -2.01% 
+  Weekend-News Gaps (±3σ)         -1.25%   -1.50%   -1.74%   -1.83%   -1.89%   -1.94%   -2.00% 
+  CATASTROPHE (3×vol + -1σ + gap  -1.52%   -1.72%   -1.85%   -1.30%   -1.34%   -1.38%   -1.40% 
+
+==================================================================================================================================
+  FINAL trade count by (scenario, risk)    — if this collapses, see the funnel below
+==================================================================================================================================
+  scenario                         0.110%   0.130%   0.150%   0.165%   0.170%   0.175%   0.180%
+  -----------------------------------------------------------------------------------------------
+  Baseline (real data)                280      280      275      274      274      127       99
+  Bull Melt-Up (+0.5σ/day)            101       89       89       89       89       89       88
+  Strong Bull (+1σ + 1.2× vol)        316      112      111      110      110      313      109
+  Low-Vol Grind (0.5× vol)            213       99       99       99       95       95       92
+  High-Vol (2× vol)                   299      155      149      144       35       31       31
+  Vol Explosion (3× vol)              306      215       30       30       30       30       30
+  Chop-Hell (zero-trend + alt)         92       88       84       84       76       76       76
+  Bear Market (-1σ/day)               105       92       92       92       92       89       89
+  Fat-Tail Storm (Taleb)              307      162      155       39       39       39       39
+  Flash Crash (single -8σ gap)        274      260      232      232      232      127       99
+  Regime Flip (+1σ → -1σ)             278      276      275      274      274      272      272
+  Two Flash Crashes (-6σ × 2)         274      260      230      230      230      116       97
+  Weekend-News Gaps (±3σ)             287      287      282      132      119      119      117
+  CATASTROPHE (3×vol + -1σ + gap      116      110      105       95       95       95       95
+
+==================================================================================================================================
+  DAILY-HALT FIRINGS by (scenario, risk)   — how many days Luke's 4 % halt actually triggered
+==================================================================================================================================
+  scenario                         0.110%   0.130%   0.150%   0.165%   0.170%   0.175%   0.180%
+  -----------------------------------------------------------------------------------------------
+  Baseline (real data)                  0        0        0        0        0        0        0
+  Bull Melt-Up (+0.5σ/day)              0        0        0        0        0        0        0
+  Strong Bull (+1σ + 1.2× vol)          0        0        0        0        0        0        0
+  Low-Vol Grind (0.5× vol)              0        0        0        0        0        0        0
+  High-Vol (2× vol)                     0        0        0        0        0        0        0
+  Vol Explosion (3× vol)                0        0        0        0        0        0        0
+  Chop-Hell (zero-trend + alt)          0        0        0        0        0        0        0
+  Bear Market (-1σ/day)                 0        0        0        0        0        0        0
+  Fat-Tail Storm (Taleb)                0        0        0        0        0        0        0
+  Flash Crash (single -8σ gap)          0        0        0        0        0        0        0
+  Regime Flip (+1σ → -1σ)               0        0        0        0        0        0        0
+  Two Flash Crashes (-6σ × 2)           0        0        0        0        0        0        0
+  Weekend-News Gaps (±3σ)               0        0        0        0        0        0        0
+  CATASTROPHE (3×vol + -1σ + gap        0        0        0        0        0        0        0
+
+==================================================================================================================================
+  SIZER RAW TRADE COUNT (before any filter)   — if this drops, the sizer itself is refusing trades
+==================================================================================================================================
+  scenario                         0.110%   0.130%   0.150%   0.165%   0.170%   0.175%   0.180%
+  -----------------------------------------------------------------------------------------------
+  Baseline (real data)                297      297      293      293      293      135      107
+  Bull Melt-Up (+0.5σ/day)            112      100      100      100      100      100       99
+  Strong Bull (+1σ + 1.2× vol)        356      127      126      125      124      352      123
+  Low-Vol Grind (0.5× vol)            215      202      106       99       99       99       99
+  High-Vol (2× vol)                   344      179      178      175       42       37       37
+  Vol Explosion (3× vol)              361      255       39       39       39       39       39
+  Chop-Hell (zero-trend + alt)        246      102      100       96       96       96       96
+  Bear Market (-1σ/day)               114      100      100      100      100       97       97
+  Fat-Tail Storm (Taleb)              359      190      183       48       48       48       48
+  Flash Crash (single -8σ gap)        294      280      252      252      252      135      107
+  Regime Flip (+1σ → -1σ)             299      297      295      294      294      294      294
+  Two Flash Crashes (-6σ × 2)         296      280      250      250      250      124      105
+  Weekend-News Gaps (±3σ)             310      310      305      274      140      140      127
+  CATASTROPHE (3×vol + -1σ + gap      168      135      129      118      118      118      118
+
+==================================================================================================================================
+  FUNNEL BREAKDOWN — baseline scenario only, per risk
+==================================================================================================================================
+  risk         sizer  -news_blk  -news_flat   -safety  -nochase   -halt  -breaker   final
+  -------------------------------------------------------------------------------------
+  0.110%       297          0           0        14         3       0         0     280
+  0.130%       297          0           0        14         3       0         0     280
+  0.150%       293          0           0        15         3       0         0     275
+  0.165%       293          0           0        16         3       0         0     274
+  0.170%       293          0           0        16         3       0         0     274
+  0.175%       135          0           0         6         2       0         0     127
+  0.180%       107          0           0         6         2       0         0      99
+
+==================================================================================================================================
+  BEST RISK PER SCENARIO — max PnL where DD <= 4 % AND worst_day >= -4 %
+==================================================================================================================================
+  scenario                              best_risk    best_net  best_DD   worst_day
+  -------------------------------------------------------------------------------------
+  Baseline (real data)                     0.170%  $  +27,668    3.16%      -2.02%
+  Bull Melt-Up (+0.5σ/day)                 0.180%  $     +904    2.84%      -0.91%
+  Strong Bull (+1σ + 1.2× vol)             0.175%  $  +36,099    3.83%      -1.97%
+  Low-Vol Grind (0.5× vol)                 0.110%  $   +8,187    3.76%      -1.31%
+  High-Vol (2× vol)                        0.110%  $  +11,508    3.83%      -1.18%
+  Vol Explosion (3× vol)                   0.110%  $   +6,836    3.55%      -1.20%
+  Chop-Hell (zero-trend + alt)                  —           —        —           —
+  Bear Market (-1σ/day)                    0.180%  $     -287    3.30%      -1.42%
+  Fat-Tail Storm (Taleb)                   0.110%  $   +9,239    3.76%      -1.22%
+  Flash Crash (single -8σ gap)             0.170%  $  +20,616    3.16%      -1.99%
+  Regime Flip (+1σ → -1σ)                  0.180%  $  +30,047    2.86%      -2.04%
+  Two Flash Crashes (-6σ × 2)              0.165%  $  +19,702    3.20%      -1.92%
+  Weekend-News Gaps (±3σ)                  0.150%  $  +22,825    3.55%      -1.74%
+  CATASTROPHE (3×vol + -1σ + gaps)         0.165%  $     -504    3.02%      -1.30%
+
+==================================================================================================================================
+  RISK-LEVEL SUMMARY — worst case across all 14 scenarios
+==================================================================================================================================
+  risk       worst_net  worst_dd   worst_day  halt_fires  break_fires  baseline_net
+  --------------------------------------------------------------------------------
+  0.110%    $   -3,073     4.22%      -1.52%           0           32  $   +18,127
+  0.130%    $   -3,172     4.58%      -1.72%           0           36  $   +21,116
+  0.150%    $   -2,843     4.59%      -1.85%           0            8  $   +24,546
+  0.165%    $   -3,131     4.82%      -1.95%           0           29  $   +27,023
+  0.170%    $   -3,266     4.06%      -2.02%           0            8  $   +27,668
+  0.175%    $   -3,370     4.13%      -2.07%           0            8  $    +6,087
+  0.180%    $   -3,474     4.29%      -2.13%           0            7  $    +6,533
+
+  Saved: Results/stress_test_v25_FULL_MATRIX.txt + .json

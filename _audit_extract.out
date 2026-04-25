@@ -1,0 +1,26 @@
+==============================================================================================
+  v23 FINAL (control + news) — audit extract
+==============================================================================================
+  Window:   2026-01-20 08:19:00  →  2026-04-21 12:08:00
+  Balance:  $100,000
+  Symbols:  ['DE40', 'US30', 'XAUUSD', 'US500']
+
+  TOTAL:    N=283  net=$+16,977  return=+16.98%  maxDD=3.35%  worstDay=-1.26%  worstDailyDD=1.15%  PF=1.74  WR=65.4%  Sharpe=3.26
+
+  PER-SYMBOL:
+    sym         N        pnl$    ret%    WR%   subDD%  worstDay%   sub60s   same-bar
+    DE40      115  $   +4,663  +4.66%  67.8%    2.84%     -0.66%        0          0
+    US30       94  $   +6,906  +6.91%  55.3%    2.26%     -0.63%        0          0
+    US500      48  $   +1,672  +1.67%  75.0%    0.61%     -0.59%        0          0
+    XAUUSD     26  $   +3,735  +3.74%  73.1%    0.14%     -0.14%        0          0
+
+  COMPLIANCE FLAGS:
+    Any trade held < 60 seconds?            NO  (count=0)
+    Same-M1-bar entry+exit (scalp flag)?    0 of 283  (0.00%)
+    Max DD vs 4% internal cap:              3.35% / 4.00%  (UNDER)
+    Max DD vs 10% prop-firm cap:            3.35% / 10.00%  (UNDER)
+    DD-BREAKER TRIGGERED?                   NO
+
+  HOLD DURATION (seconds):  min=60  median=4500  mean=4464  p90=9096  max=10800
+==============================================================================================
+  Saved: C:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Results\_audit_extract.json

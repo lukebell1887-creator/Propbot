@@ -1,0 +1,23 @@
+========================================================================================================================
+  v23 FINAL — 4 pairs ['DE40', 'US30', 'XAUUSD', 'US500'], risk=0.110%, cap_mult=3.0
+  A/B: CONTROL vs CONTROL + news rails only
+========================================================================================================================
+
+  [A] CONTROL (no news rails) — should reproduce $10,841 / 2.16% DD ...
+
+  [B] v23-news (identical + news block + news flatten) ...
+
+========================================================================================================================
+  RESULTS (A/B SIDE BY SIDE)
+========================================================================================================================
+    [A] CONTROL       N=283  net=$  +16,957  DD= 3.35%  PF=1.74  WR=65.4%  Sharpe=3.26  WorstDay=-1.26%  DailyDD=1.15%  ruin5=5.1%  sub60s=0
+    [B] v23 + news    N=283  net=$  +16,977  DD= 3.35%  PF=1.74  WR=65.4%  Sharpe=3.26  WorstDay=-1.26%  DailyDD=1.15%  ruin5=5.1%  sub60s=0
+
+    delta net PnL  :  $+20
+    delta Max DD   :  -0.00 pp
+
+  Expected: CONTROL matches the $10,841 / 2.16% number exactly.
+  Expected: news rails subtract a tiny number (rarely fire — session timing mismatch).
+
+  Saved: C:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Results\v23_final.json
+========================================================================================================================

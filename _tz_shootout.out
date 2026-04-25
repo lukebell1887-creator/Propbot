@@ -1,0 +1,55 @@
+
+========================================================================
+  Running: A_CURRENT (broker 14:30 / 08:00 = pre-market)
+========================================================================
+
+========================================================================
+  Running: B_REALMARKET (broker 16:30 / 10:00 = NYSE & Xetra open)
+========================================================================
+
+========================================================================
+  Running: C_POSTOPEN (broker 17:30 / 11:00 = 1h post-open)
+========================================================================
+
+====================================================================================================
+  TZ SHOOTOUT RESULTS — where does the edge actually live?
+====================================================================================================
+  scenario                                        N        net$    ret%    DD%    PF    WR%  worstDay%
+  ----------------------------------------------------------------------------------------------------
+  A_CURRENT (broker 14:30 / 08:00 = pre-market)  283  $  +16,977  +16.98%  3.35%  1.74  65.4%     -1.26%
+  B_REALMARKET (broker 16:30 / 10:00 = NYSE & Xetra open)  240  $   -1,742  -1.74%  4.13%  0.88  61.3%     -1.21%
+  C_POSTOPEN (broker 17:30 / 11:00 = 1h post-open)  143  $   -4,117  -4.12%  4.55%  0.62  56.6%     -1.15%
+
+  Per-symbol PnL by scenario:
+  symbol     A_CURRENT (b  B_REALMARKET  C_POSTOPEN (
+  DE40       N=115 $ +4,663   N=65 $   +866   N=45 $ +1,356
+  US30       N=94 $ +6,906   N=43 $ -1,830   N=32 $ -2,892
+  US500      N=48 $ +1,672   N=101 $   +784   N=54 $ -1,431
+  XAUUSD     N=26 $ +3,735   N=31 $ -1,562   N=12 $ -1,150
+
+  Other flags (all scenarios):
+    A_CURRENT (b:  sub60s=0  same-bar%=0.0  DD-breaker=no
+    B_REALMARKET:  sub60s=0  same-bar%=0.0  DD-breaker=no
+    C_POSTOPEN (:  sub60s=0  same-bar%=0.0  DD-breaker=no
+
+  Saved: C:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Results\_tz_shootout.json
+====================================================================================================
+
+  HOW TO READ:
+
+  - If CURRENT dominates (A > B and A > C): edge is real at the current anchor,
+    even though the label says "NY open" it's actually NY pre-market that matters.
+    Keep the bot as-is. Fix the misleading docstring only.
+
+  - If REALMARKET (B) dominates: author's original intent was correct but data
+    was timezone-shifted; fixing the anchors +2h gives the TRUE edge. Update
+    config, re-run parity tests, restart dry-run.
+
+  - If BOTH A and B look similar (within ±15% on net and DD): edge is broad
+    across the session — low risk either way, but "real NY open" is better
+    hygiene.
+
+  - If NEITHER is decisively positive, or only A is positive: the backtest
+    result may be overfit to a thin-liquidity window and the edge is fragile.
+    Don't go live until a proper session-aligned backtest confirms.
+

@@ -1,0 +1,112 @@
+============================================================================================================================
+  V25 — REAL-WORLD SLIPPAGE STRESS MATRIX
+  Question: at what slippage does each risk level fall off the cliff?
+============================================================================================================================
+
+  Risks tested (6) : R150_dd4, R165_dd4, R170_dd4, R175_dd4, R180_dd4, R180_dd5
+  Slip grid (8)    : [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0]  (1 tick = backtest assumption)
+  Daily halt       : 4 %
+  DD breaker       : 4 %
+
+============================================================================================================================
+  LAYER 1 — RISK × SLIPPAGE on baseline (real 5ers data, 3-mo)
+============================================================================================================================
+
+  TABLE — Net PnL ($)  by  risk × slippage
+  risk_cfg        slip=0.5    slip=1.0    slip=1.5    slip=2.0    slip=2.5    slip=3.0    slip=4.0    slip=5.0
+  ------------------------------------------------------------------------------------------------------------
+  R150_dd4      $  +25,791  $  +24,546  $  +23,301  $  +22,055  $  +20,810  $  +19,565  $  +17,074  $   +2,047
+  R165_dd4      $  +28,372  $  +27,023  $  +25,675  $  +24,326  $  +22,978  $  +21,629  $   +3,192  $   +2,588
+  R170_dd4      $  +29,047  $  +27,668  $  +26,289  $  +24,909  $  +23,530  $  +22,151  $   +2,990  $   +2,417
+  R175_dd4      $   +6,852  $   +6,087  $   +5,321  $   +4,556  $   +3,791  $   +3,522  $   +3,028  $   +2,687
+  R180_dd4      $   +7,005  $   +6,533  $   +6,061  $   +5,589  $   +5,117  $   +4,645  $   +3,700  $   +2,756
+  R180_dd5      $  +30,175  $  +28,704  $  +27,232  $  +26,170  $  +24,704  $  +23,238  $   +3,730  $   +3,019
+
+  TABLE — Max DD (%)  by  risk × slippage
+  risk_cfg        slip=0.5    slip=1.0    slip=1.5    slip=2.0    slip=2.5    slip=3.0    slip=4.0    slip=5.0
+  ------------------------------------------------------------------------------------------------------------
+  R150_dd4           3.10%       3.26%       3.42%       3.58%       3.75%       3.92%       4.26%       4.26%
+  R165_dd4           2.93%       3.09%       3.25%       3.42%       3.59%       3.76%       4.16%       4.08%
+  R170_dd4           3.05%       3.16%       3.28%       3.39%       3.55%       3.72%       4.38%       4.39%
+  R175_dd4           3.64%       3.78%       3.92%       4.06%       4.34%       4.36%       4.42%       4.33%
+  R180_dd4           2.41%       2.64%       2.86%       3.08%       3.31%       3.54%       3.99%       4.45%
+  R180_dd5           3.82%       3.99%       4.15%       4.01%       4.17%       4.34%       4.49%       4.44%
+
+  TABLE — Worst single-day (%)  by  risk × slippage
+  risk_cfg        slip=0.5    slip=1.0    slip=1.5    slip=2.0    slip=2.5    slip=3.0    slip=4.0    slip=5.0
+  ------------------------------------------------------------------------------------------------------------
+  R150_dd4          -1.74%      -1.76%      -1.78%      -1.81%      -1.83%      -1.86%      -1.91%      -1.96%
+  R165_dd4          -1.93%      -1.95%      -1.98%      -2.01%      -2.03%      -2.06%      -2.09%      -2.17%
+  R170_dd4          -1.99%      -2.02%      -2.05%      -2.07%      -2.10%      -2.13%      -2.15%      -2.24%
+  R175_dd4          -1.91%      -1.96%      -2.00%      -2.04%      -2.09%      -2.13%      -2.21%      -2.30%
+  R180_dd4          -1.97%      -2.01%      -2.05%      -2.10%      -2.14%      -2.19%      -2.28%      -2.36%
+  R180_dd5          -1.97%      -2.02%      -2.06%      -2.11%      -2.15%      -2.20%      -2.29%      -2.38%
+
+============================================================================================================================
+  LAYER 2 — STRESS VALIDATION of R170_dd4 (adverse scenarios × elevated slippage)
+============================================================================================================================
+
+  Validates that the chosen ship config holds up when BOTH the
+  market is hostile (vol explosion, chop, illiquidity) AND fills
+  are 2-3 ticks worse than backtest.
+
+
+  TABLE — R170_dd4 : Net PnL by  scenario × slippage
+  scenario                   slip=1.0     slip=2.0     slip=3.0
+  -------------------------------------------------------------
+  baseline                $   +27,668  $   +24,909  $   +22,151
+  vol_explosion           $    -3,266  $    -3,349  $    -3,431
+  chop_hell               $    -2,236  $    -2,706  $    -2,712
+  catastrophe             $      -730  $    -1,005  $    -1,280
+
+  TABLE — R170_dd4 : Max DD (%) by  scenario × slippage
+  scenario                   slip=1.0     slip=2.0     slip=3.0
+  -------------------------------------------------------------
+  baseline                      3.16%        3.39%        3.72%
+  vol_explosion                 3.45%        3.53%        3.61%
+  chop_hell                     4.01%        4.24%        4.02%
+  catastrophe                   3.03%        3.15%        3.28%
+
+  TABLE — R170_dd4 : Worst-day (%) by  scenario × slippage
+  scenario                   slip=1.0     slip=2.0     slip=3.0
+  -------------------------------------------------------------
+  baseline                     -2.02%       -2.07%       -2.13%
+  vol_explosion                -1.50%       -1.52%       -1.54%
+  chop_hell                    -1.79%       -1.82%       -1.86%
+  catastrophe                  -1.34%       -1.40%       -1.46%
+
+============================================================================================================================
+  LAYER 3 — CLIFF EDGES AND ROBUSTNESS VERDICT
+============================================================================================================================
+
+  Cliff = highest slippage that keeps both rules satisfied:
+    rule 1 : Net PnL ≥ 0   (still profitable)
+    rule 2 : Max DD ≤ 4 %   (5ers daily/halt limit)
+    rule 3 : Worst-day ≥ -4 % (Luke's halt holds)
+
+  risk_cfg       slip@PnL>=0   slip@DD<=4%   slip@WD>=-4%  verdict                        @slip=2.0 PnL   @slip=3.0 PnL
+  --------------------------------------------------------------------------------------------------------------------------
+  R150_dd4              5.0t          3.0t           5.0t  robust to NY-open whipsaw     $     +22,055  $     +19,565
+  R165_dd4              5.0t          3.0t           5.0t  robust to NY-open whipsaw     $     +24,326  $     +21,629
+  R170_dd4              5.0t          3.0t           5.0t  robust to NY-open whipsaw     $     +24,909  $     +22,151
+  R175_dd4              5.0t          1.5t           5.0t  borderline, retail-MT5 risk   $      +4,556  $      +3,522
+  R180_dd4              5.0t          4.0t           5.0t  robust to NY-open whipsaw     $      +5,589  $      +4,645
+  R180_dd5              5.0t          1.0t           5.0t  FRAGILE — backtest-only OK    $     +26,170  $     +23,238
+
+  ROBUSTNESS RANKING — best risk to ship by assumed real-world slippage
+  ----------------------------------------------------------------------------------------------------
+  if real slip = 1.0 ticks  →  best safe ship = R180_dd5      PnL=$  +28,704  DD=3.99%  WD=-2.02%
+  if real slip = 1.5 ticks  →  best safe ship = R170_dd4      PnL=$  +26,289  DD=3.28%  WD=-2.05%
+  if real slip = 2.0 ticks  →  best safe ship = R170_dd4      PnL=$  +24,909  DD=3.39%  WD=-2.07%
+  if real slip = 2.5 ticks  →  best safe ship = R170_dd4      PnL=$  +23,530  DD=3.55%  WD=-2.10%
+  if real slip = 3.0 ticks  →  best safe ship = R170_dd4      PnL=$  +22,151  DD=3.72%  WD=-2.13%
+
+============================================================================================================================
+  HEADLINE — does the recommended ship hold up?
+============================================================================================================================
+
+  Recommended ship   (R170_dd4):  cliff @ slip = 3.0 ticks  → robust to NY-open whipsaw
+  Current v25 ship   (R165_dd4):  cliff @ slip = 3.0 ticks  → robust to NY-open whipsaw
+  The 'fall-off' case (R175_dd4): cliff @ slip = 1.5 ticks  → borderline, retail-MT5 risk
+
+  ✅ Both 0.165 % and 0.170 % survive 2+ tick slippage. 0.170 % is shippable.

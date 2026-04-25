@@ -1,0 +1,17 @@
+==========================================================================================
+  A/B VERIFICATION — reference pipeline (the one Luke quoted)
+==========================================================================================
+  risk=0.150%   n= 275   net=$ +24,546   DD= 3.26%   PF=1.86   WR=66.2%
+  risk=0.165%   n= 274   net=$ +27,023   DD= 3.09%   PF=1.88   WR=66.4%
+  risk=0.180%   n=  99   net=$  +6,533   DD= 2.64%   PF=1.56   WR=68.7%
+
+==========================================================================================
+  Now the SAME risks through the 180bps stress-test harness (+breaker+halt)
+==========================================================================================
+  risk=0.165%   n= 274   net=$ +27,023   DD= 3.09%   PF=1.88   WR=66.4%   breaker_trips=0   breaker_dropped=0   chases_dropped=3   daily_halts=0
+  risk=0.180%   n=  99   net=$  +6,533   DD= 2.64%   PF=1.56   WR=68.7%   breaker_trips=0   breaker_dropped=0   chases_dropped=2   daily_halts=0
+
+==========================================================================================
+  EXPECTED: reference rows should match Luke's risk-sweep table exactly
+  EXPECTED: 180bps-harness rows should show whether extra filters cut trades
+==========================================================================================

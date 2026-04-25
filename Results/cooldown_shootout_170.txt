@@ -1,0 +1,8 @@
+========================================================================================
+  COOLDOWN SHOOT-OUT @ 0.170 % — Results/cooldown_shootout_170.txt
+========================================================================================
+  Config       unique      Net PnL      DD%     PF     WR%  Description
+  A_RAW           157  $   25,845    3.60%   1.78    0.7%  no cooldown filter
+  B_300S          154  $   27,668    3.16%   1.88    0.7%  300 s cross-symbol cooldown (current v25)
+  C_ONE           157  $   25,845    3.60%   1.78    0.7%  one-shot per (symbol, UTC date)
+  D_BOTH          154  $   27,668    3.16%   1.88    0.7%  300 s cross-symbol + one-shot per session
