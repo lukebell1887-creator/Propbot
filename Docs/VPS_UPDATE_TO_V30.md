@@ -86,7 +86,7 @@ then within ~5 seconds you'll see:
 ```
 [v30] CONFIG  risk=0.170%  cap_mult=5.0x  max_per_trade=0.850%
 [v30] CONFIG  nochase_cd=300s  magic=30000  comment=SHF_v30
-[v30] CONFIG  daily_halt=4.0%  dd_breaker=4.0%  account_kill=8.0%
+[v30] CONFIG  hard_daily=4.0%  hard_total=8.0%  soft_daily=2.0%  soft_total=8.0%   <-- 5ers compliant
 [v30] WARMUP  pulling 2880 M1 bars/symbol from broker ...
 ```
 
