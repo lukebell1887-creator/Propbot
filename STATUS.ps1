@@ -67,14 +67,21 @@ Write-Host ""
 if ($LOG -and (Test-Path $LOG)) {
     $lf = Get-Item $LOG
     $ageSec = [int]((Get-Date) - $lf.LastWriteTime).TotalSeconds
+    # Pretty-print age (s / m / h / d)
+    if     ($ageSec -lt 120)    { $ageStr = "${ageSec}s ago" }
+    elseif ($ageSec -lt 7200)   { $ageStr = ("{0}m ago" -f [int]($ageSec/60)) }
+    elseif ($ageSec -lt 172800) { $ageStr = ("{0}h ago" -f [int]($ageSec/3600)) }
+    else                        { $ageStr = ("{0}d ago" -f [int]($ageSec/86400)) }
+
     Write-Host ("  Active log ({0}):" -f $LOG_LABEL)
     Write-Host ("     {0}" -f $LOG) -ForegroundColor DarkGray
-    if ($ageSec -lt 120) {
-        Write-Host ("  [OK]   size={0:N1} KB   last update {1}s ago" -f ($lf.Length/1KB), $ageSec) -ForegroundColor Green
-    } elseif ($ageSec -lt 1800 -and -not $py) {
-        Write-Host ("  [INFO] size={0:N1} KB   last update {1}s ago (engine stopped, log idle - normal)" -f ($lf.Length/1KB), $ageSec) -ForegroundColor Cyan
+    if (-not $py) {
+        # Engine intentionally stopped -- old log is normal, never warn
+        Write-Host ("  [INFO] size={0:N1} KB   last update {1} (engine stopped, log idle - normal)" -f ($lf.Length/1KB), $ageStr) -ForegroundColor Cyan
+    } elseif ($ageSec -lt 120) {
+        Write-Host ("  [OK]   size={0:N1} KB   last update {1}" -f ($lf.Length/1KB), $ageStr) -ForegroundColor Green
     } else {
-        Write-Host ("  [WARN] size={0:N1} KB   last update {1}s ago (>120s - engine may be stalled)" -f ($lf.Length/1KB), $ageSec) -ForegroundColor Yellow
+        Write-Host ("  [WARN] size={0:N1} KB   last update {1} (>120s - engine running but log not updating, may be stalled)" -f ($lf.Length/1KB), $ageStr) -ForegroundColor Yellow
     }
 } else {
     Write-Host "  [INFO] No log file yet for today --  engine has not been started today." -ForegroundColor Cyan
@@ -110,8 +117,9 @@ if (Test-Path $TRADES) {
 # 4. heartbeat line + last 50 lines
 # --------------------------------------------------------------------
 if ($LOG -and (Test-Path $LOG)) {
-    $tail = Get-Content $LOG -Tail 200 -ErrorAction SilentlyContinue
-    $hb = $tail | Where-Object { $_ -match 'HEARTBEAT|MARKET STATUS|heartbeat' } | Select-Object -Last 1
+    # NOTE: do not name this variable $tail -- it collides with the script's [switch]$Tail parameter.
+    $lastLines = Get-Content $LOG -Tail 200 -ErrorAction SilentlyContinue
+    $hb = $lastLines | Where-Object { $_ -match 'HEARTBEAT|MARKET STATUS|heartbeat' } | Select-Object -Last 1
     if ($hb) {
         Write-Host ""
         Write-Host "  Latest heartbeat:" -ForegroundColor Cyan
