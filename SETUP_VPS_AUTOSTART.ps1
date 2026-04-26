@@ -12,11 +12,16 @@
 $ErrorActionPreference = "Stop"
 $ROOT   = "C:\PropBot"
 $BATCH  = Join-Path $ROOT "start_live.bat"
+# NOTE: task name kept as 'PropBot_v15_live' for backward compatibility
+# (so existing VPS installs don't end up with two duplicate scheduled tasks).
+# It runs the v30 bot via start_live.bat.
 $TASK   = "PropBot_v15_live"
 $LOGS   = Join-Path $ROOT "logs"
 
 Write-Host "============================================================"
-Write-Host "  PropBot v15  --  VPS autostart setup"
+Write-Host "  PropBot v30  --  VPS autostart setup"
+Write-Host "  (task name kept as 'PropBot_v15_live' for compatibility;"
+Write-Host "   it launches start_live.bat which now runs v30)"
 Write-Host "============================================================`n"
 
 # ----- 0. sanity --------------------------------------------------------
