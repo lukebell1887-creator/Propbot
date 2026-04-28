@@ -1097,12 +1097,75 @@ class V30Live:
         self._record_close(sym)
         self._clear_state(sym)
 
+    def _infer_broker_close_px(self, st) -> Tuple[float, str]:
+        """v30.2 — best-effort inference of the broker's actual close fill.
+
+        Background
+        ----------
+        The MT5 bridge (SHF_Bridge.mq5) reports the **open** fill price but
+        not the **close** fill price. When the broker's server-side SL or TP
+        fires, Python only sees `POS_CLOSED_BY_BROKER` — the price field is
+        gone. Previously we fell back to `last_m1_close`, which under-counts
+        both wins (TP fills below the M1 close in our favour) and losses
+        (SL fills above the M1 close against us). The bias is one-sided and
+        leaks into the Merton EWMA, systematically under-estimating μ̂ and
+        therefore under-sizing live trades.
+
+        Inference rule
+        --------------
+        Because the broker only carries SL + TP1 server-side (TP2 is bot-
+        managed and routes through `_close_one`, not the broker-close path),
+        a `broker_close` event MUST be either an SL hit or a TP1 hit.
+        We classify by the relationship between the most recent M1 close
+        and the two levels:
+
+            LONG   close ≥ TP1 → TP1 hit
+                   close ≤ SL  → SL hit
+                   else        → ambiguous (price retraced inside the range
+                                 between fill and bar-close); pick the level
+                                 closer to last_m1_close (this is the level
+                                 the broker most likely fired against).
+            SHORT  symmetric.
+
+        Returns
+        -------
+        (close_px, source) where source ∈ {"snap_tp1", "snap_sl", "m1_close"}
+        for telemetry / auditing.
+        """
+        if st.open_sl is None or st.open_tp1 is None or st.last_m1_close is None:
+            return float(st.last_m1_close or 0.0), "m1_close"
+        last = float(st.last_m1_close)
+        sl = float(st.open_sl)
+        tp1 = float(st.open_tp1)
+        if st.open_side == "LONG":
+            if last >= tp1:
+                return tp1, "snap_tp1"
+            if last <= sl:
+                return sl, "snap_sl"
+        elif st.open_side == "SHORT":
+            if last <= tp1:
+                return tp1, "snap_tp1"
+            if last >= sl:
+                return sl, "snap_sl"
+        # Ambiguous (intra-bar retrace): snap to the closer of the two.
+        d_tp = abs(tp1 - last)
+        d_sl = abs(sl - last)
+        return (tp1, "snap_tp1") if d_tp < d_sl else (sl, "snap_sl")
+
     def _feed_sizer_on_close(self, sym: str, reason: str) -> None:
         st = self.states[sym]
         if st.open_entry is None or st.last_m1_close is None or st.open_risk_usd in (None, 0):
             return
-        mv = (st.last_m1_close - st.open_entry) if st.open_side == "LONG" \
-             else (st.open_entry - st.last_m1_close)
+        # v30.2 — only the broker-close path needs inference; bot-initiated
+        # closes (TP2 manage, time stop, news flatten, daily-halt flatten)
+        # close at the prevailing market price, which is well-approximated
+        # by the most recent M1 close.
+        if reason == "broker_close":
+            close_px, close_src = self._infer_broker_close_px(st)
+        else:
+            close_px, close_src = float(st.last_m1_close), "m1_close"
+        mv = (close_px - st.open_entry) if st.open_side == "LONG" \
+             else (st.open_entry - close_px)
         pip_val = self.specs[sym].pip_value_per_lot
         tick_sz = self.specs[sym].tick_size
         pnl_approx = (mv / tick_sz) * pip_val * (st.open_size_lots or 0)
@@ -1113,7 +1176,9 @@ class V30Live:
         self.merton_sizer.on_trade_closed(sym, realised_R)
         self._log_event("SIZER_FEEDBACK", symbol=sym, reason=reason,
                         realised_R=round(realised_R, 3),
-                        pnl_approx=round(pnl_approx, 2))
+                        pnl_approx=round(pnl_approx, 2),
+                        close_px=round(close_px, 5),
+                        close_px_src=close_src)
         # ★ v30.1 — flush sizer + breaker state to disk RIGHT NOW so a crash
         # immediately after this trade still preserves the freshly-updated
         # μ̂/σ̂². save_state is atomic (write-tmp + replace), so concurrent
