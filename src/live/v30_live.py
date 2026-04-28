@@ -1531,20 +1531,26 @@ class V30Live:
         #   * Heartbeat path — for the VPS-side monitor
         #   * Persistence paths — so you know where state lives
         # ----------------------------------------------------------------
-        # Sizer summary
+        # Sizer summary — handle both pooled (_GLOBAL_) and per-symbol modes.
+        # The sizer stores μ̂/σ̂² in `_mu` / `_var` defaultdicts keyed by
+        # `self._key(symbol)` which returns "_GLOBAL_" when cfg.pool_symbols=True.
         n_seen = sum(self.merton_sizer._n_seen.values())
-        global_state = self.merton_sizer._state.get("_GLOBAL_") if \
-            self.merton_sizer.cfg.pool_symbols else None
-        if global_state is not None:
-            mu = global_state.mu_ewma
-            var = global_state.var_ewma
-            edge_str = f"μ̂={mu:+.3f}  σ̂²={var:.3f}"
-            if n_seen >= self.merton_sizer.cfg.warmup_trades:
-                edge_str += "  (Merton ACTIVE)"
+        if self.merton_sizer.cfg.pool_symbols:
+            key = "_GLOBAL_"
+            if key in self.merton_sizer._mu:
+                mu = self.merton_sizer._mu[key]
+                var = self.merton_sizer._var[key]
+                edge_str = f"μ̂={mu:+.3f}  σ̂²={var:.3f}"
+                if n_seen >= self.merton_sizer.cfg.warmup_trades:
+                    edge_str += "  (Merton ACTIVE)"
+                else:
+                    edge_str += f"  (warm-up {n_seen}/{self.merton_sizer.cfg.warmup_trades})"
             else:
-                edge_str += f"  (warm-up {n_seen}/{self.merton_sizer.cfg.warmup_trades})"
+                edge_str = f"μ̂=n/a  (cold start, no trades yet)"
         else:
-            edge_str = "n/a (per-symbol pool)"
+            # Per-symbol mode: show count of symbols with edge data
+            n_syms_with_edge = len(self.merton_sizer._mu)
+            edge_str = f"per-symbol mode  ({n_syms_with_edge} symbols with edge data)"
 
         # Mode-specific colouring
         mode_label = "DRY-RUN" if self.dry_run else "LIVE TRADING"
