@@ -74,6 +74,7 @@ from src.dd_breaker import DDBreaker              # 8 % TOTAL (peak-to-trough) D
 from src.dynamic_sizer_v21 import (               # Merton × Grossman-Zhou sizer
     MertonGZSizer, MertonGZSizerConfig,
 )
+from src.live.heartbeat import write_heartbeat    # ★ Stage 2 — atomic JSON snapshots
 
 
 log = logging.getLogger("v30.live")
@@ -333,6 +334,20 @@ class V30LiveConfig:
     trades_name: str = "v30_live_trades.jsonl"
     slippage_name: str = "v30_live_slippage.jsonl"
 
+    # ★ NEW v30.1 — STATE PERSISTENCE
+    # Live μ̂/σ̂² (sizer) and DD-breaker peak/halted state are written
+    # atomically after every trade close. On startup the bot tries:
+    #   (1) load live state    (Results/v30_state/*.json)
+    #   (2) on miss → seed sizer from a 3-month backtest trade list
+    #   (3) on miss → cold-start (warm-up risk for 15 trades)
+    state_dir: str = "Results/v30_state"
+    sizer_state_name: str = "sizer_mertongz.json"
+    breaker_state_name: str = "dd_breaker.json"
+    seed_trades_path: str = "Results/v30_fresh_trades.json"
+    # Reject saved state older than 14 days — we'd rather re-seed from a
+    # fresh backtest than resume on a stale view of the world.
+    state_max_age_days: float = 14.0
+
 
 class V30Live:
     """
@@ -437,10 +452,113 @@ class V30Live:
         self.trades_path = self.log_dir / self.cfg.trades_name
         self.slippage_path = self.log_dir / self.cfg.slippage_name
 
+        # ★ NEW v30.1 — state persistence paths
+        self.state_dir = Path(self.cfg.state_dir)
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+        self.sizer_state_path = self.state_dir / self.cfg.sizer_state_name
+        self.breaker_state_path = self.state_dir / self.cfg.breaker_state_name
+        # ★ Stage 2 — heartbeat JSON snapshot path + uptime anchor
+        self.heartbeat_path = self.log_dir / "heartbeat_v30.json"
+        self._started_at_unix: float = time.time()
+        # Init counters used by persistence layer
+        self._restore_source: str = "cold_start"
+        self._restore_detail: str = ""
+        # Try to restore live state (resume after restart) before any
+        # ticks are processed. If that fails, fall back to seeding from
+        # the most recent backtest trade list. If THAT fails, cold-start.
+        self._init_persistence()
+
         log.info("V30Live initialised  symbols=%s  risk=%.3f%%  cap=%.1fx  "
-                 "nochase=%.0fs  news_events=%d  dry_run=%s",
+                 "nochase=%.0fs  news_events=%d  dry_run=%s  restore=%s",
                  self.cfg.symbols, self.cfg.base_risk_pct * 100, self.cfg.cap_mult,
-                 self.cfg.nochase_cooldown_s, len(self.news_events), self.dry_run)
+                 self.cfg.nochase_cooldown_s, len(self.news_events), self.dry_run,
+                 self._restore_source)
+
+    # -----------------------------------------------------------------
+    # ★ NEW v30.1 — STARTUP STATE RESTORE
+    # -----------------------------------------------------------------
+    #  Priority order (first that succeeds wins; no double-loading):
+    #
+    #    (1) live state files     (Results/v30_state/*.json)
+    #          – produced by save calls below after every closed trade.
+    #          – schema-checked, age-checked (≤14 d), config-checked.
+    #
+    #    (2) seed from backtest   (Results/v30_fresh_trades.json)
+    #          – 264 trades from `Scripts/backtest_v30_fresh.py`.
+    #          – replays each through on_trade_closed in order, building
+    #            up a realistic μ̂/σ̂² before live trading begins.
+    #
+    #    (3) cold start           (warm-up risk for first 15 trades)
+    #          – preserves the legacy v23 behaviour as a safety net.
+    #
+    #  All three outcomes are logged + announced via WARMUP_RESTORE event,
+    #  so post-mortems can see which branch the bot took on every restart.
+    # -----------------------------------------------------------------
+    def _init_persistence(self) -> None:
+        max_age = float(self.cfg.state_max_age_days) * 86400.0
+
+        # ---- (1) live sizer state ----
+        ok, reason = self.merton_sizer.load_state(
+            self.sizer_state_path, max_age_seconds=max_age,
+        )
+        if ok:
+            self._restore_source = "live_state"
+            self._restore_detail = f"sizer: {reason}"
+            log.info("[restore] sizer  ✓ %s", reason)
+        else:
+            log.info("[restore] sizer  ✗ %s — falling back to seed", reason)
+            # ---- (2) seed from backtest trade list ----
+            seed_path = Path(self.cfg.seed_trades_path)
+            if seed_path.exists():
+                try:
+                    trades = json.loads(seed_path.read_text(encoding="utf-8"))
+                    n = self.merton_sizer.seed_from_trades(trades)
+                    if n > 0:
+                        self._restore_source = "seeded_from_backtest"
+                        self._restore_detail = (
+                            f"seeded sizer with {n} trades from "
+                            f"{seed_path.name}")
+                        log.info("[restore] sizer  ✓ seeded with %d trades from %s",
+                                 n, seed_path.name)
+                    else:
+                        log.warning("[restore] sizer  seed file had 0 valid trades")
+                        self._restore_source = "cold_start"
+                        self._restore_detail = "seed file empty"
+                except (OSError, json.JSONDecodeError) as e:
+                    log.warning("[restore] sizer  seed load failed: %s", e)
+                    self._restore_source = "cold_start"
+                    self._restore_detail = f"seed load error: {e}"
+            else:
+                log.info("[restore] sizer  no seed file at %s — cold start", seed_path)
+                self._restore_source = "cold_start"
+                self._restore_detail = "no seed file"
+
+        # ---- breaker state (independent — peak_equity is critical) ----
+        ok, reason = self.total_dd_breaker_4pct.load_state(self.breaker_state_path)
+        if ok:
+            log.info("[restore] dd_breaker  ✓ %s", reason)
+        else:
+            log.info("[restore] dd_breaker  ✗ %s — starting fresh", reason)
+
+        self._log_event("WARMUP_RESTORE",
+                        sizer_source=self._restore_source,
+                        sizer_detail=self._restore_detail,
+                        breaker_loaded=ok,
+                        breaker_detail=(reason if ok else None),
+                        sizer_n_seen=sum(self.merton_sizer._n_seen.values()),
+                        breaker_peak=self.total_dd_breaker_4pct.peak_equity)
+
+    def _save_state_safe(self) -> None:
+        """Persist sizer + breaker state. Never raises — IO errors logged but
+        cannot crash the live loop."""
+        try:
+            self.merton_sizer.save_state(self.sizer_state_path)
+        except Exception as e:
+            log.error("save_state(sizer) failed: %s", e)
+        try:
+            self.total_dd_breaker_4pct.save_state(self.breaker_state_path)
+        except Exception as e:
+            log.error("save_state(breaker) failed: %s", e)
 
     # -----------------------------------------------------------------
     # News loader (same schema as data/news/tier1_2026.csv)
@@ -996,6 +1114,12 @@ class V30Live:
         self._log_event("SIZER_FEEDBACK", symbol=sym, reason=reason,
                         realised_R=round(realised_R, 3),
                         pnl_approx=round(pnl_approx, 2))
+        # ★ v30.1 — flush sizer + breaker state to disk RIGHT NOW so a crash
+        # immediately after this trade still preserves the freshly-updated
+        # μ̂/σ̂². save_state is atomic (write-tmp + replace), so concurrent
+        # readers (e.g. another Python process inspecting state) cannot
+        # observe a half-written file.
+        self._save_state_safe()
 
     def _clear_state(self, sym: str) -> None:
         st = self.states[sym]
@@ -1240,6 +1364,18 @@ class V30Live:
         with open(self.telemetry_path, "w", encoding="utf-8") as f:
             json.dump(snapshot, f, indent=2, default=str)
 
+        # ★ Stage 2 — atomic JSON heartbeat snapshot for VPS-side monitors.
+        # Wrapped: a heartbeat IO error MUST NOT take down the live loop.
+        # `write_heartbeat` is itself defensive (each block in build_v30_snapshot
+        # has its own try/except), so by the time we get here a failure is
+        # almost always a disk-level problem (full / readonly / removed),
+        # which we want to log but otherwise ignore.
+        try:
+            write_heartbeat(self.heartbeat_path, self,
+                            started_at_unix=self._started_at_unix)
+        except Exception as e:
+            log.warning("heartbeat write failed: %s", e)
+
     # -----------------------------------------------------------------
     # Day rollover (reset day-DD and per-symbol bar counter)
     # -----------------------------------------------------------------
@@ -1385,6 +1521,76 @@ class V30Live:
                  eq, "DRY-RUN" if self.dry_run else "LIVE")
         self._log_event("START", equity=eq, dry_run=self.dry_run, version="v30",
                         cfg=vars(self.cfg))
+
+        # ----------------------------------------------------------------
+        # ★ PROMINENT STARTUP BANNER — answers the "where do I stand?"
+        # questions at a glance, every launch:
+        #   * Did sizer restore from live state, seed, or cold-start?
+        #   * Current μ̂/σ̂² (live edge estimate)
+        #   * DD breaker peak — is this a fresh start or a resumed run?
+        #   * Heartbeat path — for the VPS-side monitor
+        #   * Persistence paths — so you know where state lives
+        # ----------------------------------------------------------------
+        # Sizer summary
+        n_seen = sum(self.merton_sizer._n_seen.values())
+        global_state = self.merton_sizer._state.get("_GLOBAL_") if \
+            self.merton_sizer.cfg.pool_symbols else None
+        if global_state is not None:
+            mu = global_state.mu_ewma
+            var = global_state.var_ewma
+            edge_str = f"μ̂={mu:+.3f}  σ̂²={var:.3f}"
+            if n_seen >= self.merton_sizer.cfg.warmup_trades:
+                edge_str += "  (Merton ACTIVE)"
+            else:
+                edge_str += f"  (warm-up {n_seen}/{self.merton_sizer.cfg.warmup_trades})"
+        else:
+            edge_str = "n/a (per-symbol pool)"
+
+        # Mode-specific colouring
+        mode_label = "DRY-RUN" if self.dry_run else "LIVE TRADING"
+
+        # Equity guards
+        ddb = self.total_dd_breaker_4pct
+        breaker_state = (
+            "RESUMED" if (ddb.peak_equity and ddb.peak_equity != eq) else "FRESH"
+        )
+
+        banner = "\n".join([
+            "",
+            "=" * 78,
+            f"  V30 BOT STARTING — {mode_label}",
+            "=" * 78,
+            f"  starting_equity     ${eq:>14,.2f}",
+            f"  symbols             {', '.join(self.cfg.symbols)}",
+            f"  base_risk_pct       {self.cfg.base_risk_pct * 100:.3f}% "
+            f"(per-trade cap = {self.cfg.cap_mult:.0f}× = "
+            f"{self.cfg.base_risk_pct * self.cfg.cap_mult * 100:.2f}% of equity)",
+            f"  daily_kill          {self.daily_halt_4pct.halt_pct * 100:.0f}%   "
+            f"(5ers daily limit = 5%)",
+            f"  total_kill          {ddb.halt_pct * 100:.0f}%   "
+            f"(5ers total limit = 10%)",
+            f"  no-chase cooldown   {self.cfg.nochase_cooldown_s:.0f}s   "
+            f"(cross-symbol)",
+            f"  max_concurrent      {self.cfg.max_concurrent_positions} positions",
+            "-" * 78,
+            f"  STATE RESTORE       source = {self._restore_source.upper()}",
+            f"                      detail = {self._restore_detail or '(none)'}",
+            f"  SIZER (Merton-GZ)   trades_seen = {n_seen}   {edge_str}",
+            f"  DD BREAKER          peak = ${ddb.peak_equity:>12,.2f}   "
+            f"({breaker_state})",
+            "-" * 78,
+            f"  TELEMETRY (60s)     {self.telemetry_path}",
+            f"  HEARTBEAT  (60s)    {self.heartbeat_path}",
+            f"  TRADES jsonl        {self.trades_path}",
+            f"  EVENTS log          {self.events_path}",
+            f"  STATE dir           {self.state_dir} (auto-saved on every close)",
+            "=" * 78,
+        ])
+        # Use both `print` (visible on console) and `log.info` (goes to log file
+        # via the StreamHandler in run_v30_live.py).
+        print(banner, flush=True)
+        for line in banner.splitlines():
+            log.info(line)
 
         off = self._refresh_broker_offset(force=True)
         log.info("[broker-clock] initial offset = %+d s", int(off.total_seconds()))

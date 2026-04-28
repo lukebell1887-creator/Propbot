@@ -1,0 +1,82 @@
+{
+  "config": {
+    "risk_pct": 0.0017,
+    "cap_mult": 5.0,
+    "gamma": 3.0,
+    "symbols": [
+      "DE40",
+      "US30",
+      "XAUUSD",
+      "US500"
+    ],
+    "balance": 100000.0,
+    "news_rails": true,
+    "data_window": {
+      "first_trade": "1769417400.0",
+      "last_trade": "1776676320.0",
+      "n_calendar_days": 61
+    }
+  },
+  "headline": {
+    "n_trades": 264,
+    "net_pnl": 26020.76,
+    "ret_pct": 26.021,
+    "max_dd_pct": 3.603,
+    "profit_factor": 1.81,
+    "sharpe": 3.333,
+    "win_rate_pct": 65.53,
+    "worst_day_pnl": -2018.11,
+    "worst_day_pct": -2.018,
+    "worst_daily_dd_pct": 1.751,
+    "ruin_3pct": 77.4,
+    "ruin_4pct": 46.02,
+    "ruin_5pct": 24.02,
+    "median_hold_min": 75.0,
+    "p10_hold_min": 12.3,
+    "p90_hold_min": 152.0,
+    "sub60s_trades": 0
+  },
+  "concurrency_pct": {
+    "0": 90.66,
+    "1": 4.77,
+    "2": 2.81,
+    "3": 1.43,
+    "4": 0.15,
+    "5": 0.13,
+    "6": 0.05
+  },
+  "per_symbol": {
+    "DE40": {
+      "n_trades": 108,
+      "net_pnl": 8186.67,
+      "win_rate_pct": 68.52,
+      "profit_factor": 1.585,
+      "max_dd_dollars": 3392.93,
+      "max_dd_pct_of_balance": 3.393
+    },
+    "US30": {
+      "n_trades": 83,
+      "net_pnl": 9273.09,
+      "win_rate_pct": 53.01,
+      "profit_factor": 1.564,
+      "max_dd_dollars": 3807.22,
+      "max_dd_pct_of_balance": 3.807
+    },
+    "US500": {
+      "n_trades": 48,
+      "net_pnl": 2692.93,
+      "win_rate_pct": 75.0,
+      "profit_factor": 3.205,
+      "max_dd_dollars": 947.93,
+      "max_dd_pct_of_balance": 0.948
+    },
+    "XAUUSD": {
+      "n_trades": 25,
+      "net_pnl": 5868.07,
+      "win_rate_pct": 76.0,
+      "profit_factor": 14.368,
+      "max_dd_dollars": 217.37,
+      "max_dd_pct_of_balance": 0.217
+    }
+  }
+}

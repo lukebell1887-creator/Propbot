@@ -31,11 +31,15 @@ Usage (integration with ORB v20):
 
 from __future__ import annotations
 
+import json
 import math
+import os
 import threading
+import time as _time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Deque, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Deque, Dict, Iterable, List, Optional, Tuple
 
 
 # =====================================================================
@@ -256,6 +260,198 @@ class MertonGZSizer:
             self._last_equity = 0.0
             self._last_peak = 0.0
             self._last_dd = 0.0
+
+    # =================================================================
+    #  PERSISTENCE  +  SEEDING       (added v30.1 — 2026-04-28)
+    # =================================================================
+    #  Reasoning:
+    #    1.  on a planned/unplanned restart we MUST resume the live μ̂/σ̂²
+    #        otherwise the bot reverts to flat warm-up risk and throws
+    #        away every R-value it has ever seen → real money lost while
+    #        the EWMA re-learns from scratch.
+    #    2.  on first-ever launch (no live state yet) we want to seed
+    #        from a backtest-trade list so we DON'T start in warm-up.
+    #
+    #  Both are persisted as plain JSON. Atomic writes (write-tmp + replace)
+    #  guarantee the live state file is never half-written, even if the
+    #  process is killed mid-flush.
+    # =================================================================
+
+    SCHEMA_VERSION = 1
+    """Increment on incompatible state-file format changes."""
+
+    def to_state(self) -> Dict[str, Any]:
+        """Snapshot every piece of learned state needed to resume identically.
+
+        Returns a JSON-safe dict. Acquires the lock so concurrent
+        on_trade_closed() calls cannot tear the snapshot.
+        """
+        with self._lock:
+            return {
+                "schema": self.SCHEMA_VERSION,
+                "saved_at_unix": _time.time(),
+                "saved_at_iso": _time.strftime("%Y-%m-%dT%H:%M:%S",
+                                              _time.gmtime()),
+                "config": {
+                    "base_risk_pct": self.cfg.base_risk_pct,
+                    "cap_mult": self.cfg.cap_mult,
+                    "gamma": self.cfg.gamma,
+                    "ewma_alpha": self.cfg.ewma_alpha,
+                    "warmup_trades": self.cfg.warmup_trades,
+                    "history_len": self.cfg.history_len,
+                    "dd_cap_pct": self.cfg.dd_cap_pct,
+                    "pool_symbols": self.cfg.pool_symbols,
+                    "no_edge_multiplier": self.cfg.no_edge_multiplier,
+                },
+                "mu": dict(self._mu),
+                "var": dict(self._var),
+                "n_seen": dict(self._n_seen),
+                "r_history": {k: list(v) for k, v in self._r_history.items()},
+                "diag": {
+                    "n_calls": self._n_calls,
+                    "n_warmup": self._n_warmup,
+                    "n_no_edge": self._n_no_edge,
+                    "n_capped": self._n_capped,
+                    "n_gz_zero": self._n_gz_zero,
+                    "last_equity": self._last_equity,
+                    "last_peak": self._last_peak,
+                    "last_dd": self._last_dd,
+                },
+            }
+
+    def from_state(self, state: Dict[str, Any], *,
+                   strict_config: bool = True) -> None:
+        """Restore state previously produced by to_state().
+
+        Raises ValueError on schema mismatch, or — if strict_config is True —
+        on any change to the *EWMA-relevant* config keys (alpha, pool, history).
+        Cosmetic config changes (cap_mult, gamma, dd_cap_pct, base_risk_pct)
+        are intentionally tolerated: those govern the OUTPUT scaling, not the
+        STATE; you can re-tune those without throwing away learning.
+        """
+        if not isinstance(state, dict):
+            raise ValueError("state must be a dict")
+        schema = state.get("schema")
+        if schema != self.SCHEMA_VERSION:
+            raise ValueError(
+                f"state schema {schema} != current {self.SCHEMA_VERSION}; "
+                "fall back to seed-from-trades or cold start.")
+        saved_cfg = state.get("config", {})
+        if strict_config:
+            for key in ("ewma_alpha", "pool_symbols", "history_len"):
+                exp = getattr(self.cfg, key)
+                got = saved_cfg.get(key, exp)
+                if got != exp:
+                    raise ValueError(
+                        f"state config mismatch on '{key}': "
+                        f"file={got!r} runtime={exp!r}.")
+        with self._lock:
+            self._mu.clear()
+            self._var.clear()
+            self._n_seen.clear()
+            self._r_history.clear()
+            for k, v in (state.get("mu") or {}).items():
+                self._mu[k] = float(v)
+            for k, v in (state.get("var") or {}).items():
+                self._var[k] = float(v)
+            for k, v in (state.get("n_seen") or {}).items():
+                self._n_seen[k] = int(v)
+            for k, lst in (state.get("r_history") or {}).items():
+                dq = deque(maxlen=self.cfg.history_len)
+                for r in lst:
+                    if math.isfinite(float(r)):
+                        dq.append(float(r))
+                self._r_history[k] = dq
+            d = state.get("diag") or {}
+            self._n_calls   = int(d.get("n_calls", 0))
+            self._n_warmup  = int(d.get("n_warmup", 0))
+            self._n_no_edge = int(d.get("n_no_edge", 0))
+            self._n_capped  = int(d.get("n_capped", 0))
+            self._n_gz_zero = int(d.get("n_gz_zero", 0))
+            self._last_equity = float(d.get("last_equity", 0.0))
+            self._last_peak   = float(d.get("last_peak", 0.0))
+            self._last_dd     = float(d.get("last_dd", 0.0))
+
+    def save_state(self, path: os.PathLike | str) -> None:
+        """Atomically persist state to JSON. Safe to call from any thread.
+
+        Atomicity: writes to ``<path>.tmp``, then ``os.replace`` (POSIX +
+        Windows guaranteed atomic). A crash mid-write leaves the previous
+        good file intact.
+        """
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix(p.suffix + ".tmp")
+        snap = self.to_state()
+        tmp.write_text(json.dumps(snap, indent=2), encoding="utf-8")
+        os.replace(tmp, p)
+
+    def load_state(self, path: os.PathLike | str, *,
+                   max_age_seconds: Optional[float] = 14 * 86400,
+                   strict_config: bool = True) -> Tuple[bool, str]:
+        """Try to restore state from JSON.
+
+        Returns (ok, reason).  On any failure we DO NOT mutate the sizer —
+        callers can fall back to seed-from-trades or cold start.
+
+        max_age_seconds : if the file's saved_at_unix is older than this,
+                          we refuse the load (stale state ≠ better than
+                          fresh seed). Default 14 days.
+        """
+        p = Path(path)
+        if not p.exists():
+            return False, f"file not found: {p}"
+        try:
+            text = p.read_text(encoding="utf-8")
+        except OSError as e:
+            return False, f"read error: {e}"
+        try:
+            state = json.loads(text)
+        except json.JSONDecodeError as e:
+            return False, f"json decode error: {e}"
+        if max_age_seconds is not None:
+            saved = float(state.get("saved_at_unix", 0))
+            age = _time.time() - saved
+            if age > max_age_seconds:
+                return False, (f"state too old ({age/86400:.1f} days "
+                               f"> {max_age_seconds/86400:.1f} days)")
+        try:
+            self.from_state(state, strict_config=strict_config)
+        except ValueError as e:
+            return False, str(e)
+        n_total = sum(self._n_seen.values())
+        return True, (f"loaded ok: {n_total} trades across "
+                      f"{len(self._n_seen)} keys")
+
+    def seed_from_trades(self, trades: Iterable[Dict[str, Any]],
+                         *, clip_R: float = 5.0) -> int:
+        """Replay a list of trade dicts to build up EWMA state from scratch.
+
+        Each item must have at least 'symbol' and 'realised_R' (or 'R').
+        Trades are applied in iteration order — the caller is responsible
+        for chronological sorting if that matters (it does for σ̂² to
+        reflect recent regime).
+
+        Returns the number of trades successfully ingested.
+        """
+        n = 0
+        for t in trades:
+            if not isinstance(t, dict):
+                continue
+            sym = t.get("symbol") or t.get("sym")
+            R = t.get("realised_R", t.get("R"))
+            if sym is None or R is None:
+                continue
+            try:
+                R = float(R)
+            except (TypeError, ValueError):
+                continue
+            if not math.isfinite(R):
+                continue
+            R = max(-clip_R, min(clip_R, R))
+            self.on_trade_closed(symbol=str(sym), realised_R=R)
+            n += 1
+        return n
 
 
 # =====================================================================

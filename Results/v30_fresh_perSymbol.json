@@ -1,0 +1,34 @@
+{
+  "DE40": {
+    "n_trades": 108,
+    "net_pnl": 8186.67,
+    "win_rate_pct": 68.52,
+    "profit_factor": 1.585,
+    "max_dd_dollars": 3392.93,
+    "max_dd_pct_of_balance": 3.393
+  },
+  "US30": {
+    "n_trades": 83,
+    "net_pnl": 9273.09,
+    "win_rate_pct": 53.01,
+    "profit_factor": 1.564,
+    "max_dd_dollars": 3807.22,
+    "max_dd_pct_of_balance": 3.807
+  },
+  "US500": {
+    "n_trades": 48,
+    "net_pnl": 2692.93,
+    "win_rate_pct": 75.0,
+    "profit_factor": 3.205,
+    "max_dd_dollars": 947.93,
+    "max_dd_pct_of_balance": 0.948
+  },
+  "XAUUSD": {
+    "n_trades": 25,
+    "net_pnl": 5868.07,
+    "win_rate_pct": 76.0,
+    "profit_factor": 14.368,
+    "max_dd_dollars": 217.37,
+    "max_dd_pct_of_balance": 0.217
+  }
+}

@@ -40,9 +40,13 @@ other safety rails. This simulates:
 """
 from __future__ import annotations
 
+import json
+import os
+import time as _time
 from dataclasses import dataclass, field, replace
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # =============================================================================
@@ -147,6 +151,77 @@ class DDBreaker:
                 f"trips={self.total_halts} "
                 f"halted_today={self.halted} "
                 f"({'BLOCKED' if self.halted else 'OPEN'})")
+
+    # ------------------------------------------------------------------
+    #  PERSISTENCE     (added v30.1 — 2026-04-28)
+    # ------------------------------------------------------------------
+    #  CRITICAL invariant: after a restart the breaker MUST resume with
+    #  the same `peak_equity` it had before, otherwise the new (lower)
+    #  starting equity becomes the peak and DD measurement resets to 0%.
+    #  That would silently disable our 8% account-DD circuit-breaker.
+    SCHEMA_VERSION = 1
+
+    def to_state(self) -> Dict[str, Any]:
+        return {
+            "schema": self.SCHEMA_VERSION,
+            "saved_at_unix": _time.time(),
+            "halt_pct": self.halt_pct,
+            "server_tz_offset_h": self.server_tz_offset_h,
+            "peak_equity": self.peak_equity,
+            "halted": self.halted,
+            "current_day": self.current_day.isoformat() if self.current_day else None,
+            "total_halts": self.total_halts,
+            "max_dd_pct_seen": self.max_dd_pct_seen,
+            "trip_times": [
+                (dt.isoformat() if hasattr(dt, "isoformat") else str(dt), float(p))
+                for (dt, p) in self.trip_times
+            ],
+        }
+
+    def from_state(self, state: Dict[str, Any]) -> None:
+        if state.get("schema") != self.SCHEMA_VERSION:
+            raise ValueError(
+                f"DDBreaker state schema {state.get('schema')!r} "
+                f"!= current {self.SCHEMA_VERSION}")
+        self.peak_equity = float(state.get("peak_equity", 0.0))
+        self.halted = bool(state.get("halted", False))
+        cd = state.get("current_day")
+        if cd:
+            try:
+                self.current_day = date.fromisoformat(cd)
+            except ValueError:
+                self.current_day = None
+        else:
+            self.current_day = None
+        self.total_halts = int(state.get("total_halts", 0))
+        self.max_dd_pct_seen = float(state.get("max_dd_pct_seen", 0.0))
+        self.trip_times = []
+        for item in state.get("trip_times", []) or []:
+            try:
+                ts_str, pct = item
+                self.trip_times.append((datetime.fromisoformat(ts_str), float(pct)))
+            except (TypeError, ValueError):
+                continue
+
+    def save_state(self, path) -> None:
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix(p.suffix + ".tmp")
+        tmp.write_text(json.dumps(self.to_state(), indent=2), encoding="utf-8")
+        os.replace(tmp, p)
+
+    def load_state(self, path) -> Tuple[bool, str]:
+        p = Path(path)
+        if not p.exists():
+            return False, f"file not found: {p}"
+        try:
+            state = json.loads(p.read_text(encoding="utf-8"))
+            self.from_state(state)
+            return True, (f"peak=${self.peak_equity:,.0f} "
+                          f"max_dd_seen={self.max_dd_pct_seen*100:.2f}% "
+                          f"halted_today={self.halted}")
+        except (OSError, ValueError, json.JSONDecodeError) as e:
+            return False, str(e)
 
 
 # =============================================================================
