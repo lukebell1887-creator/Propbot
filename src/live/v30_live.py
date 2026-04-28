@@ -75,6 +75,9 @@ from src.dynamic_sizer_v21 import (               # Merton × Grossman-Zhou size
     MertonGZSizer, MertonGZSizerConfig,
 )
 from src.live.heartbeat import write_heartbeat    # ★ Stage 2 — atomic JSON snapshots
+# v30.3 — TP1+TP2+trail in-bar partial-close ladder (parity with backtest)
+from src.live.atr_tracker import ATRTracker
+from src.live.partial_manager import PartialCloseManager, PartialState
 
 
 log = logging.getLogger("v30.live")
@@ -202,6 +205,10 @@ class LiveSymbolState:
     open_at: Optional[datetime] = None     # for 60s-min-hold check
     bars_seen_today: int = 0
     last_m1_close: Optional[float] = None
+    # v30.3 — partial-close ladder state (None until first entry; reset on close)
+    partial_state: Optional[PartialState] = None
+    # v30.3 — Wilder ATR(14) tracker, owned per-symbol
+    atr_tracker: ATRTracker = field(default_factory=lambda: ATRTracker(window=14))
 
 
 # =====================================================================
@@ -370,6 +377,8 @@ class V30Live:
 
         # Build per-symbol state
         self.states: Dict[str, LiveSymbolState] = {}
+        # v30.3 — single shared partial-close manager (TP1 50% + TP2 25% + 0.8×ATR trail)
+        self.partial_mgr = PartialCloseManager()
         for sym in self.cfg.symbols:
             if sym not in self.specs:
                 raise KeyError(f"no SymbolSpec registered for '{sym}'")
@@ -792,6 +801,12 @@ class V30Live:
                  sym, side, intended_px, fill_px, ticks, dollars)
         return ticks, dollars
 
+    # v30.3 — broker lot-step rounding helper (used by PartialCloseManager)
+    def _round_lots(self, lots: float) -> float:
+        """Round lots down to broker step (default 0.01). Returns 0.0 if too small."""
+        rounded = round(float(lots), 2)
+        return rounded if rounded >= 0.01 else 0.0
+
     # -----------------------------------------------------------------
     # Entry
     # -----------------------------------------------------------------
@@ -803,6 +818,37 @@ class V30Live:
             day_key, bar.time.hour, bar.time.minute, float(bar.high), float(bar.low)
         )
         st.nr_filter.update(day_key, float(bar.high), float(bar.low))
+
+        # v30.3 — feed ATR every closed M1 bar (always, regardless of position state)
+        st.atr_tracker.update(float(bar.high), float(bar.low), float(bar.close))
+
+        # v30.3 — if a position is open, run the partial-close ladder in-bar
+        if st.open_ticket is not None and st.partial_state is not None:
+            res = self.partial_mgr.update(
+                state=st.partial_state,
+                bar_high=float(bar.high),
+                bar_low=float(bar.low),
+                bar_close=float(bar.close),
+                atr_value=st.atr_tracker.value,
+                atr_ready=st.atr_tracker.ready,
+                bridge=self.bridge,
+                round_lots_fn=self._round_lots,
+            )
+            if res.tp1_fired:
+                self._log_event("TP1_PARTIAL", symbol=sym, ticket=st.open_ticket,
+                                lots_closed=round(st.partial_state.original_lots * 0.5, 4))
+                st.open_size_lots = st.partial_state.open_lots
+                st.open_sl = st.partial_state.sl  # SL → BE after TP1
+            if res.tp2_fired:
+                self._log_event("TP2_PARTIAL", symbol=sym, ticket=st.open_ticket,
+                                lots_closed=round(st.partial_state.original_lots * 0.25, 4))
+                st.open_size_lots = st.partial_state.open_lots
+            if res.sl_moved:
+                st.open_sl = st.partial_state.sl
+                self._log_event("TRAIL_SL", symbol=sym, ticket=st.open_ticket,
+                                new_sl=round(st.partial_state.sl, 5))
+            if res.error:
+                log.error("[PARTIAL_MGR] %s: %s", sym, res.error)
 
         # GATE: bot killed?
         if self.account_killed or self.day_halted:
@@ -923,7 +969,7 @@ class V30Live:
             lots=float(round(lots, 4)),
             price=entry_px,
             sl=float(sl),
-            tp=float(tp1),                  # TP1 set at broker; TP2 managed by us
+            tp=0.0,                         # v30.3 — TP managed in-bar by PartialCloseManager (not at broker)
             deviation=20,
             magic=self.cfg.magic,
             comment=self.cfg.comment,
@@ -956,6 +1002,19 @@ class V30Live:
         st.open_tp1 = tp1
         st.open_tp2 = tp2
         st.open_size_lots = lots
+        # v30.3 — seed the partial-close ladder for in-bar TP1/TP2/trail management
+        _entry_for_ladder = float(st.open_entry) if st.open_entry is not None else float(entry_px)
+        st.partial_state = PartialState(
+            side=+1 if side == "LONG" else -1,
+            entry_price=_entry_for_ladder,
+            sl=float(sl),
+            tp1=float(tp1),
+            tp2=float(tp2),
+            original_lots=float(lots),
+            open_lots=float(lots),
+            ticket=int(st.open_ticket) if st.open_ticket is not None else 0,
+            peak_favourable=_entry_for_ladder,
+        )
         st.open_risk_usd = risk_usd
         st.open_at = datetime.now(timezone.utc)   # wall-clock UTC, not bar.time
         self.counters["entries"] += 1
@@ -1196,6 +1255,7 @@ class V30Live:
         st.open_tp2 = None
         st.open_size_lots = None
         st.open_risk_usd = None
+        st.partial_state = None  # v30.3 — clear ladder state on close
         st.open_at = None
 
     # -----------------------------------------------------------------
@@ -1540,6 +1600,8 @@ class V30Live:
                                  float(bar.high), float(bar.low))
             st.nr_filter.update(day_key, float(bar.high), float(bar.low))
             st.last_m1_close = float(bar.close)
+            # v30.3 — feed ATR tracker during warmup so it's ready at first live bar
+            st.atr_tracker.update(float(bar.high), float(bar.low), float(bar.close))
             st.last_bar_time = bar.time
             processed += 1
 
