@@ -39,6 +39,23 @@ if ($LASTEXITCODE -ne 0) {
     exit 2
 }
 
+# ----------------------------------------------------------------------------
+# v30.3 PREFLIGHT GATE — runs the live-engine contract verifier before the
+# bot ever starts. Verifies imports, config defaults, ORB anchors, TP/SL
+# math, partial-ladder simulation, ATR readiness and the 50-test parity net.
+# Aborts the launcher if anything fails. See Scripts\preflight_v30.py.
+# ----------------------------------------------------------------------------
+Write-Host "Running v30.3 preflight (live-engine contract verifier)..." -ForegroundColor Yellow
+$env:PYTHONIOENCODING = "utf-8"
+& python "$PSScriptRoot\Scripts\preflight_v30.py"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "ABORT: preflight failed. Bot was NOT started. See report above." -ForegroundColor Red
+    Write-Host "       Fix the failing checks and re-run .\GO_LIVE_V30.ps1" -ForegroundColor Yellow
+    exit 3
+}
+Write-Host ""
+
 # Broker-name mapping for this 5ers FivePercentOnline-Real server,
 # discovered via Scripts\probe_broker_symbols.py on 2026-04-23.
 # If you move to a different broker, re-run the probe and update this line.
