@@ -1,0 +1,81 @@
+{
+  "ladder": {
+    "n_trades": 149,
+    "net_pnl": 26020.76,
+    "net_pnl_pct": 26.021,
+    "win_rate_pct": 57.72,
+    "profit_factor": 1.823,
+    "avg_win": 670.09,
+    "avg_loss": -501.7,
+    "max_dd_dollars": 4709.59,
+    "max_dd_pct": 4.71,
+    "worst_day_dollars": -2018.11,
+    "worst_day_pct": -2.018,
+    "mean_R": 0.2442,
+    "var_R": 1.5322,
+    "sharpe_approx": 5.04
+  },
+  "tp1_only": {
+    "n_trades": 149,
+    "net_pnl": 22108.31,
+    "net_pnl_pct": 22.108,
+    "win_rate_pct": 57.72,
+    "profit_factor": 1.699,
+    "avg_win": 624.6,
+    "avg_loss": -501.7,
+    "max_dd_dollars": 4338.16,
+    "max_dd_pct": 4.338,
+    "worst_day_dollars": -2018.11,
+    "worst_day_pct": -2.018,
+    "mean_R": 0.2071,
+    "var_R": 1.2697,
+    "sharpe_approx": 4.77
+  },
+  "per_symbol_ladder": {
+    "DE40": {
+      "n": 59,
+      "net_pnl": 8186.67,
+      "win_pct": 59.32
+    },
+    "US30": {
+      "n": 54,
+      "net_pnl": 9273.09,
+      "win_pct": 42.59
+    },
+    "US500": {
+      "n": 21,
+      "net_pnl": 2692.93,
+      "win_pct": 85.71
+    },
+    "XAUUSD": {
+      "n": 15,
+      "net_pnl": 5868.07,
+      "win_pct": 66.67
+    }
+  },
+  "per_symbol_tp1": {
+    "DE40": {
+      "n": 59,
+      "net_pnl": 5591.54,
+      "win_pct": 59.32
+    },
+    "US30": {
+      "n": 54,
+      "net_pnl": 8345.63,
+      "win_pct": 42.59
+    },
+    "US500": {
+      "n": 21,
+      "net_pnl": 2677.02,
+      "win_pct": 85.71
+    },
+    "XAUUSD": {
+      "n": 15,
+      "net_pnl": 5494.12,
+      "win_pct": 66.67
+    }
+  },
+  "n_entries": 149,
+  "entries_with_tp1_or_better": 79,
+  "entries_stopped_before_tp1": 70
+}

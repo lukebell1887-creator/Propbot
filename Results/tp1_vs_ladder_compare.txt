@@ -1,0 +1,46 @@
+==============================================================================
+V30 PARITY GAP ANALYSIS — TP1-only (live) vs Full ladder (backtest)
+==============================================================================
+Partial trade records read : 264
+Distinct entry events       : 149
+Partials per entry          : {1: 70, 2: 43, 3: 36}
+
+==============================================================================
+METRIC                       |   FULL LADDER (BACKTEST) |      TP1-ONLY (LIVE)
+------------------------------------------------------------------------------
+# trades / entries           |                      149 |                  149
+Net P/L ($)                  | $              26,020.76 | $          22,108.31
+Net P/L (% of $100k)         |                  26.021% |              22.108%
+Win rate                     |                   57.72% |               57.72%
+Profit factor                |                    1.823 |                1.699
+Average winner ($)           | $                 670.09 | $             624.60
+Average loser  ($)           | $                -501.70 | $            -501.70
+Max drawdown ($)             | $               4,709.59 | $           4,338.16
+Max drawdown (%)             |                   4.710% |               4.338%
+Worst single day ($)         | $              -2,018.11 | $          -2,018.11
+Worst single day (%)         |                  -2.018% |              -2.018%
+Mean R per trade             |                   0.2442 |               0.2071
+Variance of R                |                   1.5322 |               1.2697
+Sharpe (approx)              |                     5.04 |                 4.77
+==============================================================================
+
+PER-SYMBOL BREAKDOWN
+------------------------------------------------------------------------------
+SYMBOL   | LADDER n    LADDER $ LAD WR% |  TP1 n       TP1 $ TP1 WR% | DELTA$
+DE40     |       59    8,186.67  59.32% |     59    5,591.54  59.32% | -2,595.13
+US30     |       54    9,273.09  42.59% |     54    8,345.63  42.59% | -927.46
+US500    |       21    2,692.93  85.71% |     21    2,677.02  85.71% | -15.91
+XAUUSD   |       15    5,868.07  66.67% |     15    5,494.12  66.67% | -373.95
+
+==============================================================================
+MERTON GZ SIZER IMPACT
+------------------------------------------------------------------------------
+Sizer formula: r* = (mean_R / var_R) / GAMMA, capped at 5x base risk.
+  Backtest seed (full ladder): mean_R=0.2442  var_R=1.5322
+  Live reality (TP1-only):     mean_R=0.2071  var_R=1.2697
+  Implied raw risk fraction (γ=3): ladder=5.3126%   tp1=5.4370%
+  → Sizer seeded with ladder data will under/over-size live trades
+     by approximately 2.3% relative.
+==============================================================================
+
+Wrote C:\Users\lukeb\OneDrive\Desktop\New folder\PropBot\Results\tp1_vs_ladder_compare.json
