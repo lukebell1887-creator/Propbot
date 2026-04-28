@@ -185,39 +185,64 @@ def _check_orb_anchors() -> str:
 # ---------------------------------------------------------------------------
 # 5. Symbol specs load from SMARTBB_UNIVERSE
 # ---------------------------------------------------------------------------
-@check("specs: symbol pip_value loaded from SMARTBB_UNIVERSE")
+@check("specs: pip_value_per_lot == BROKER-TRUTH contract_size × tick_size")
 def _check_specs_universe() -> str:
     """
-    v30.4 invariant (post-2026-04-28 sizing fix):
-        spec.pip_value_per_lot is $/TICK (per 1.0 lot, per spec.tick_size move),
-        and the live sizer divides risk_per_unit by tick_size, so the contract is:
+    v30.3-hotfix-2 invariant (post-2026-04-28):
+        spec.pip_value_per_lot must equal CONTRACT_SIZE × TICK_SIZE.
 
-            spec.pip_value_per_lot == universe.pip_value * spec.tick_size
+    The live sizer formula is:
+        $/lot @ stop = (risk_per_unit / tick_size) × pip_value_per_lot
+    so pip_value_per_lot must be in **$/TICK/LOT** units.  By broker spec,
+    that quantity is exactly contract_size × tick_size.
 
-    Universe.pip_value is the legacy backtest scalar (= $/POINT for indices,
-    = $/$1 for XAUUSD).  Multiplying by tick_size converts it to $/tick, which
-    matches what the live formula `(risk_per_unit / tick_size) * pip_value_per_lot`
-    expects.
+    Pinned broker-truth values (5ers / Eightcap, 2026-04-28 spec sheet):
+        DE40   : 1.0  × 1.00  = $1.00 / point / lot
+        US30   : 1.0  × 1.00  = $1.00 / point / lot
+        US500  : 1.0  × 0.25  = $0.25 / tick  / lot   ($1.00 / point)
+        XAUUSD : 100  × 0.01  = $1.00 / tick  / lot   ($100  / $1 of price)
 
-    Worked examples for v23/v25 universe:
-        DE40   uni=2.5  tick=1.0   ->  spec=2.5     ($2.50 per 1pt, per lot)
-        US30   uni=1.0  tick=1.0   ->  spec=1.0     ($1.00 per 1pt, per lot)
-        XAUUSD uni=1.0  tick=0.01  ->  spec=0.01    ($0.01 per 1¢, per lot)
-        US500  uni=1.0  tick=0.25  ->  spec=0.25    ($0.25 per tick, per lot)
+    History:
+      * Pre-2026-04-28: copied uni.pip_value raw → US500 sized 4× too small.
+      * 2026-04-28 hotfix-1: multiplied by tick_size unconditionally → fixed
+        US500 but broke XAUUSD by 100× (1×0.01=0.01 vs broker truth 1.0).
+      * 2026-04-28 hotfix-2 (current): explicit broker-truth table.
     """
-    from src.live.v30_live import V30_SPECS
-    from src.smartbb_engine import SMARTBB_UNIVERSE
+    from src.live.v30_live import (
+        V30_SPECS,
+        V30_BROKER_CONTRACT_SIZE,
+        V30_BROKER_TICK_SIZE,
+        V30_DOLLARS_PER_TICK_PER_LOT,
+    )
+    pinned = {
+        "DE40":   1.00,
+        "US30":   1.00,
+        "US500":  0.25,
+        "XAUUSD": 1.00,
+    }
     bad = []
     for sym in ("DE40", "US30", "XAUUSD", "US500"):
         spec = V30_SPECS[sym]
-        uni = SMARTBB_UNIVERSE[sym]
-        expected_dollars_per_tick = float(uni.pip_value) * float(spec.tick_size)
-        if abs(spec.pip_value_per_lot - expected_dollars_per_tick) > 1e-9:
+        cs = V30_BROKER_CONTRACT_SIZE[sym]
+        ts = V30_BROKER_TICK_SIZE[sym]
+        derived = cs * ts
+        # 1) derived table self-consistency
+        if abs(V30_DOLLARS_PER_TICK_PER_LOT[sym] - derived) > 1e-9:
+            bad.append(
+                f"{sym}: V30_DOLLARS_PER_TICK_PER_LOT={V30_DOLLARS_PER_TICK_PER_LOT[sym]} "
+                f"!= contract_size×tick_size = {cs}×{ts} = {derived}")
+        # 2) spec uses the broker-truth table
+        if abs(spec.pip_value_per_lot - derived) > 1e-9:
             bad.append(
                 f"{sym}: spec.pip_value_per_lot={spec.pip_value_per_lot} "
-                f"vs expected (uni.pip_value * tick_size)="
-                f"{uni.pip_value} * {spec.tick_size} = {expected_dollars_per_tick}"
-            )
+                f"!= broker-truth ({cs}×{ts}={derived}). "
+                f"BUG REGRESSION — live sizing will be wrong on this symbol.")
+        # 3) pinned broker-statement values (verify against any broker statement)
+        if abs(spec.pip_value_per_lot - pinned[sym]) > 1e-9:
+            bad.append(
+                f"{sym}: pip_value_per_lot={spec.pip_value_per_lot} "
+                f"!= broker-statement-pinned {pinned[sym]}")
+        # 4) sanity on lot constants
         if spec.tick_size <= 0:
             bad.append(f"{sym}: tick_size invalid ({spec.tick_size})")
         if spec.lot_step <= 0 or spec.min_lot <= 0:
@@ -225,9 +250,9 @@ def _check_specs_universe() -> str:
                        f"(min={spec.min_lot}, step={spec.lot_step})")
     assert not bad, "spec drift:\n   " + "\n   ".join(bad)
     pip = ", ".join(
-        f"{s}=${V30_SPECS[s].pip_value_per_lot}" for s in
+        f"{s}=${V30_SPECS[s].pip_value_per_lot}/tick" for s in
         ("DE40", "US30", "XAUUSD", "US500"))
-    return f"pip_value/lot match universe — {pip}"
+    return f"broker-truth match — {pip}"
 
 
 # ---------------------------------------------------------------------------

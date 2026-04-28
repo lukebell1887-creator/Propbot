@@ -150,6 +150,52 @@ V30_BROKER_NAMES: Dict[str, str] = {
     "DE40": "DE40.cash", "US30": "US30.cash", "US500": "US500.cash", "XAUUSD": "XAUUSD",
 }
 
+# =====================================================================
+# 2026-04-28 v30.3-hotfix-2: BROKER CONTRACT SIZES (5ers / Eightcap).
+#
+# Source of truth: 5ers symbol spec sheet supplied by the trader, 2026-04-28.
+#
+#   Indices (DE40, US30, US500):
+#       Contract Size     = 1     (i.e. 1 lot = 1 unit of the index)
+#       Min lot           = 0.1
+#       Lot step          = 0.01 (broker), but we trade in 0.1 steps for safety
+#       Margin Rate       = 4
+#       => $/(price-unit)/lot = 1.0 dollars per index point per lot
+#
+#   Gold (XAUUSD):
+#       Contract Size     = 100   (1 lot = 100 troy ounces)
+#       Min lot           = 0.01  (1 oz minimum)
+#       Lot step          = 0.01
+#       => $/(price-unit)/lot = 100.0 dollars per $1 of gold price per lot
+#
+# The downstream sizer/PnL/slippage formulas in this file all use the
+# convention:
+#       dollars_per_lot_stopout = (distance_in_price / tick_size) * pip_value_per_lot
+# i.e. they want pip_value_per_lot in units of "$ per TICK per LOT".
+#
+# That equals:  contract_size * tick_size  (broker-truth derivation).
+# =====================================================================
+V30_BROKER_CONTRACT_SIZE: Dict[str, float] = {
+    "DE40":   1.0,    # 1 lot = 1 index unit
+    "US30":   1.0,    # 1 lot = 1 index unit
+    "US500":  1.0,    # 1 lot = 1 index unit
+    "XAUUSD": 100.0,  # 1 lot = 100 troy ounces
+}
+
+# Derived: $ P/L per 1 tick per 1.0 lot (broker-truth).
+# We deliberately do NOT consult SMARTBB_UNIVERSE.pip_value here, because
+# that table is internally inconsistent (uses different unit conventions
+# for indices vs metals).  See git log for hotfix history.
+V30_DOLLARS_PER_TICK_PER_LOT: Dict[str, float] = {
+    sym: V30_BROKER_CONTRACT_SIZE[sym] * V30_BROKER_TICK_SIZE[sym]
+    for sym in ("DE40", "US30", "US500", "XAUUSD")
+}
+# Concrete values (verify against broker statement on every restart):
+#   DE40    = 1.0 * 1.0   = $1.00 / point / lot
+#   US30    = 1.0 * 1.0   = $1.00 / point / lot
+#   US500   = 1.0 * 0.25  = $0.25 / tick  / lot   ($1.00 / point)
+#   XAUUSD  = 100 * 0.01  = $1.00 / tick  / lot   ($100  / $1 of price)
+
 
 @dataclass
 class SymbolSpec:
@@ -162,27 +208,47 @@ class SymbolSpec:
 
 
 def _build_default_specs() -> Dict[str, SymbolSpec]:
+    """
+    Build per-symbol sizing specs from BROKER-TRUTH constants.
+
+    History
+    -------
+    * Pre-2026-04-28: copied SMARTBB_UNIVERSE.pip_value raw → US500 sized
+      4× too small (tick=0.25, ignored).  XAUUSD/DE40/US30 happened to be
+      correct purely by numerical coincidence.
+    * 2026-04-28 v30.3-hotfix-1 (commit daaeade): unconditionally
+      multiplied by tick_size.  This fixed US500 but broke XAUUSD
+      (`pip_value_per_lot` collapsed from $1 to $0.01, 100× too small).
+    * 2026-04-28 v30.3-hotfix-2 (this commit): stop trusting the universe
+      entirely, derive `pip_value_per_lot` from `contract_size × tick_size`
+      grounded in the 5ers / Eightcap symbol spec sheet.
+
+    Invariant (verified by `Scripts/preflight_v30.py` check #5):
+        pip_value_per_lot == V30_DOLLARS_PER_TICK_PER_LOT[sym]
+                          == V30_BROKER_CONTRACT_SIZE[sym]
+                             * V30_BROKER_TICK_SIZE[sym]
+    """
     out: Dict[str, SymbolSpec] = {}
     for sym in ("DE40", "US30", "XAUUSD", "US500"):
-        uni = SMARTBB_UNIVERSE.get(sym)
-        if uni is None:
+        # The universe lookup is kept ONLY as a safety check that the
+        # symbol is recognised by the rest of the codebase.  Its
+        # pip_value field is intentionally NOT consulted here — see the
+        # block comment above V30_DOLLARS_PER_TICK_PER_LOT for the
+        # detailed reasoning.
+        if sym not in SMARTBB_UNIVERSE:
             raise RuntimeError(
-                f"Symbol {sym} not in SMARTBB_UNIVERSE — cannot live-size without "
-                "the backtest's pip_value.")
+                f"Symbol {sym} not in SMARTBB_UNIVERSE — refusing to size "
+                "an unknown symbol.")
+        if sym not in V30_DOLLARS_PER_TICK_PER_LOT:
+            raise RuntimeError(
+                f"Symbol {sym} missing from V30_DOLLARS_PER_TICK_PER_LOT — "
+                "add a row to V30_BROKER_CONTRACT_SIZE before live trading.")
         out[sym] = SymbolSpec(
             internal=sym,
             broker=V30_BROKER_NAMES[sym],
             tick_size=V30_BROKER_TICK_SIZE[sym],
-            # BUGFIX 2026-04-28:  SMARTBB_UNIVERSE.pip_value is "$ per POINT
-            # per lot" (see comment in src/smartbb_engine.py).  Every
-            # downstream formula in v30_live (sizing, PnL, slippage $) uses
-            # the convention "(distance / tick_size) * pip_value_per_lot",
-            # which is correct ONLY if pip_value_per_lot is "$ per TICK per
-            # lot".  Multiplying by tick_size here converts the $/POINT
-            # value from the universe into the $/TICK value the rest of
-            # the file expects.  Without this, US500 was sized 4× too
-            # small (tick=0.25), XAUUSD 100× too small (tick=0.01), etc.
-            pip_value_per_lot=float(uni.pip_value) * V30_BROKER_TICK_SIZE[sym],
+            # Broker-truth: $ P/L per 1 tick per 1.0 lot.
+            pip_value_per_lot=V30_DOLLARS_PER_TICK_PER_LOT[sym],
             min_lot=V30_BROKER_MIN_LOT[sym],
             lot_step=V30_BROKER_LOT_STEP[sym],
         )
