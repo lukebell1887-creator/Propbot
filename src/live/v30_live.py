@@ -173,7 +173,16 @@ def _build_default_specs() -> Dict[str, SymbolSpec]:
             internal=sym,
             broker=V30_BROKER_NAMES[sym],
             tick_size=V30_BROKER_TICK_SIZE[sym],
-            pip_value_per_lot=float(uni.pip_value),
+            # BUGFIX 2026-04-28:  SMARTBB_UNIVERSE.pip_value is "$ per POINT
+            # per lot" (see comment in src/smartbb_engine.py).  Every
+            # downstream formula in v30_live (sizing, PnL, slippage $) uses
+            # the convention "(distance / tick_size) * pip_value_per_lot",
+            # which is correct ONLY if pip_value_per_lot is "$ per TICK per
+            # lot".  Multiplying by tick_size here converts the $/POINT
+            # value from the universe into the $/TICK value the rest of
+            # the file expects.  Without this, US500 was sized 4× too
+            # small (tick=0.25), XAUUSD 100× too small (tick=0.01), etc.
+            pip_value_per_lot=float(uni.pip_value) * V30_BROKER_TICK_SIZE[sym],
             min_lot=V30_BROKER_MIN_LOT[sym],
             lot_step=V30_BROKER_LOT_STEP[sym],
         )

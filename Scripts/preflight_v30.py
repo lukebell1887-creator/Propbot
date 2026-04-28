@@ -187,15 +187,37 @@ def _check_orb_anchors() -> str:
 # ---------------------------------------------------------------------------
 @check("specs: symbol pip_value loaded from SMARTBB_UNIVERSE")
 def _check_specs_universe() -> str:
+    """
+    v30.4 invariant (post-2026-04-28 sizing fix):
+        spec.pip_value_per_lot is $/TICK (per 1.0 lot, per spec.tick_size move),
+        and the live sizer divides risk_per_unit by tick_size, so the contract is:
+
+            spec.pip_value_per_lot == universe.pip_value * spec.tick_size
+
+    Universe.pip_value is the legacy backtest scalar (= $/POINT for indices,
+    = $/$1 for XAUUSD).  Multiplying by tick_size converts it to $/tick, which
+    matches what the live formula `(risk_per_unit / tick_size) * pip_value_per_lot`
+    expects.
+
+    Worked examples for v23/v25 universe:
+        DE40   uni=2.5  tick=1.0   ->  spec=2.5     ($2.50 per 1pt, per lot)
+        US30   uni=1.0  tick=1.0   ->  spec=1.0     ($1.00 per 1pt, per lot)
+        XAUUSD uni=1.0  tick=0.01  ->  spec=0.01    ($0.01 per 1¢, per lot)
+        US500  uni=1.0  tick=0.25  ->  spec=0.25    ($0.25 per tick, per lot)
+    """
     from src.live.v30_live import V30_SPECS
     from src.smartbb_engine import SMARTBB_UNIVERSE
     bad = []
     for sym in ("DE40", "US30", "XAUUSD", "US500"):
         spec = V30_SPECS[sym]
         uni = SMARTBB_UNIVERSE[sym]
-        if abs(spec.pip_value_per_lot - float(uni.pip_value)) > 1e-9:
-            bad.append(f"{sym}: spec.pip_value={spec.pip_value_per_lot} "
-                       f"vs universe.pip_value={uni.pip_value}")
+        expected_dollars_per_tick = float(uni.pip_value) * float(spec.tick_size)
+        if abs(spec.pip_value_per_lot - expected_dollars_per_tick) > 1e-9:
+            bad.append(
+                f"{sym}: spec.pip_value_per_lot={spec.pip_value_per_lot} "
+                f"vs expected (uni.pip_value * tick_size)="
+                f"{uni.pip_value} * {spec.tick_size} = {expected_dollars_per_tick}"
+            )
         if spec.tick_size <= 0:
             bad.append(f"{sym}: tick_size invalid ({spec.tick_size})")
         if spec.lot_step <= 0 or spec.min_lot <= 0:
