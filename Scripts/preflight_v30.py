@@ -199,7 +199,7 @@ def _check_specs_universe() -> str:
     Pinned broker-truth values (5ers / Eightcap, 2026-04-28 spec sheet):
         DE40   : 1.0  × 1.00  = $1.00 / point / lot
         US30   : 1.0  × 1.00  = $1.00 / point / lot
-        US500  : 1.0  × 0.25  = $0.25 / tick  / lot   ($1.00 / point)
+        US500  : 1.0  × 1.00  = $1.00 / point / lot    (hotfix-3 2026-04-29; was 0.25)
         XAUUSD : 100  × 0.01  = $1.00 / tick  / lot   ($100  / $1 of price)
 
     History:
@@ -217,7 +217,7 @@ def _check_specs_universe() -> str:
     pinned = {
         "DE40":   1.00,
         "US30":   1.00,
-        "US500":  0.25,
+        "US500":  1.00,   # hotfix-3 2026-04-29: was 0.25 (wrong for 5ers/Eightcap)
         "XAUUSD": 1.00,
     }
     bad = []

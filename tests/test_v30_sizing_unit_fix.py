@@ -118,9 +118,14 @@ def test_pinned_pip_values_per_lot():
     expected = {
         "DE40":   1.0,    # $1 per index point per lot
         "US30":   1.0,    # $1 per index point per lot
-        "US500":  0.25,   # $0.25 per 0.25-pt tick per lot ($1/pt)
+        # 2026-04-29 hotfix-3: US500 tick changed 0.25 → 1.0 to match the
+        # 5ers / Eightcap broker spec (contract_size=1, identical to the
+        # other indices).  Both encodings give $1/pt, but tick=1.0 prevents
+        # downstream sizer code from accidentally applying a 4× factor.
+        "US500":  1.0,    # $1 per index point per lot (was 0.25 pre-hotfix-3)
         "XAUUSD": 1.0,    # $1 per $0.01 of gold price per lot ($100/$ of price)
     }
+
     for sym, want in expected.items():
         got = V30_SPECS[sym].pip_value_per_lot
         assert math.isclose(got, want, rel_tol=1e-12), (
@@ -135,9 +140,10 @@ def test_pinned_pip_values_per_lot():
 @pytest.mark.parametrize("sym, expected_pnl_one_tick", [
     ("DE40",   1.00),     # $1 per 1 index point
     ("US30",   1.00),     # $1 per 1 index point
-    ("US500",  0.25),     # $0.25 per 0.25 tick
+    ("US500",  1.00),     # $1 per 1 index point (post hotfix-3, was 0.25 per 0.25 tick)
     ("XAUUSD", 1.00),     # $1 per $0.01 of gold price
 ])
+
 def test_one_tick_pnl_per_lot(sym: str, expected_pnl_one_tick: float):
     """
     For 1.0 lot, a 1-tick adverse move must equal V30_DOLLARS_PER_TICK_PER_LOT.

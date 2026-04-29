@@ -135,10 +135,17 @@ V30_ORB_CONFIGS: Dict[str, ORBConfig] = {
                         tp2_range_mult=1.0, sl_buffer_range_mult=0.6),
 }
 
-# 5ers MT5-Bridge broker constants (copied verbatim from v23 live).
+# 5ers MT5-Bridge broker constants.
+# 2026-04-29 v30.3-hotfix-3: US500 tick_size changed 0.25 → 1.0 to match
+# the 5ers / Eightcap broker spec sheet, which lists US500 with the same
+# Contract Size (1) as DE40/US30/NAS100 — i.e. the broker treats SP500
+# identically to the other indices ($1 / point / lot, no special 0.25
+# tick CME-futures convention).  Fills are at 0.05 increments, but tick
+# math runs cleanly on 1.0 (any 0.05 multiple is also a 1.0 multiple).
 V30_BROKER_TICK_SIZE: Dict[str, float] = {
-    "DE40": 1.0, "US30": 1.0, "US500": 0.25, "XAUUSD": 0.01,
+    "DE40": 1.0, "US30": 1.0, "US500": 1.0, "XAUUSD": 0.01,
 }
+
 V30_BROKER_LOT_STEP:  Dict[str, float] = {
     "DE40": 0.1, "US30": 0.1, "US500": 0.1, "XAUUSD": 0.01,
 }
@@ -193,8 +200,9 @@ V30_DOLLARS_PER_TICK_PER_LOT: Dict[str, float] = {
 # Concrete values (verify against broker statement on every restart):
 #   DE40    = 1.0 * 1.0   = $1.00 / point / lot
 #   US30    = 1.0 * 1.0   = $1.00 / point / lot
-#   US500   = 1.0 * 0.25  = $0.25 / tick  / lot   ($1.00 / point)
+#   US500   = 1.0 * 1.0   = $1.00 / point / lot   ★ hotfix-3 (was 0.25)
 #   XAUUSD  = 100 * 0.01  = $1.00 / tick  / lot   ($100  / $1 of price)
+
 
 
 @dataclass
