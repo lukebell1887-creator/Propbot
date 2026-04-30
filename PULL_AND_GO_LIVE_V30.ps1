@@ -14,8 +14,13 @@
 # Expected commit after pull: f963e65 (or newer)
 # =============================================================================
 $ErrorActionPreference = "Stop"
-$BOT = "C:\SHF"
+# Auto-detect bot location: prefer C:\PropBot, fall back to C:\SHF, else CWD
+if     (Test-Path "C:\PropBot\GO_LIVE_V30.ps1") { $BOT = "C:\PropBot" }
+elseif (Test-Path "C:\SHF\GO_LIVE_V30.ps1")     { $BOT = "C:\SHF"     }
+else                                             { $BOT = (Get-Location).Path }
+Write-Host ("  Using bot directory: {0}" -f $BOT) -ForegroundColor Magenta
 Set-Location -LiteralPath $BOT
+
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
