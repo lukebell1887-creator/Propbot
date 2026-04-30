@@ -73,7 +73,11 @@ Write-Host "  STEP 4/6  Probing broker for tick_value per symbol" -ForegroundCol
 Write-Host "  (MT5 terminal must be running and logged in)" -ForegroundColor Yellow
 Write-Host "============================================" -ForegroundColor Cyan
 $env:PYTHONIOENCODING = "utf-8"
-python Scripts\probe_broker_pip_values.py
+# Pass the same broker-symbol overrides the live engine uses, otherwise
+# the probe looks up DE40.cash / US500.cash (defaults baked into
+# V30_BROKER_NAMES) instead of the actual 5ers names DAX40 / SP500.
+$ProbeBrokerNames = "DE40=DAX40,US30=US30,US500=SP500,XAUUSD=XAUUSD"
+python Scripts\probe_broker_pip_values.py --broker-names $ProbeBrokerNames
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
     Write-Host "  ABORT: broker probe failed. The engine would fall back to" -ForegroundColor Red

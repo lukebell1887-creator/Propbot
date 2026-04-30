@@ -1883,8 +1883,9 @@ class V30Live:
             fetch_live_pip_values, log_pip_values_banner,
         )
 
-        bot_to_broker = {sym: self.specs[sym].broker for sym in self.specs}
-        pip_values, source = fetch_live_pip_values(bot_to_broker)
+        bot_to_broker  = {sym: self.specs[sym].broker    for sym in self.specs}
+        bot_tick_sizes = {sym: self.specs[sym].tick_size for sym in self.specs}
+        pip_values, source = fetch_live_pip_values(bot_to_broker, bot_tick_sizes)
         self._pip_value_source = source
 
         # Print the loud banner FIRST — operator sees broker numbers before
