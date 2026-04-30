@@ -78,6 +78,18 @@ from src.live.heartbeat import write_heartbeat    # ★ Stage 2 — atomic JSON 
 # v30.3 — TP1+TP2+trail in-bar partial-close ladder (parity with backtest)
 from src.live.atr_tracker import ATRTracker
 from src.live.partial_manager import PartialCloseManager, PartialState
+# v31 — Layer 1 slippage defense (envelope tracker + per-symbol price caps).
+#   * `emergency_sl_offset_for(sym)` → cap × 1.5 = the price-distance past the
+#      original SL at which we set the BROKER-side stop. This is the worst-
+#      possible fill if the bot disconnects mid-trade.
+#   * `Layer1Tracker.update_and_decide(...)` → returns CLOSE_NOW / WAIT /
+#      FALLBACK_CLOSE per the same math the backtest applies.
+#   See Docs/V31_DEFENSE_PROOF_RESULTS.md + src/execution/layer1.py.
+from src.execution.layer1 import (
+    config_summary as layer1_config_summary,
+    emergency_sl_offset_for,
+)
+from src.execution.layer1_tracker import Layer1Tracker
 
 
 log = logging.getLogger("v30.live")
@@ -473,6 +485,11 @@ class V30Live:
         self.states: Dict[str, LiveSymbolState] = {}
         # v30.3 — single shared partial-close manager (TP1 50% + TP2 25% + 0.8×ATR trail)
         self.partial_mgr = PartialCloseManager()
+
+        # v31 — Layer 1 envelope tracker. One instance for the whole engine;
+        # state is keyed by broker ticket, cleared in `_clear_state`. See
+        # `_manage_open` for the per-cycle decide-and-close loop.
+        self.layer1 = Layer1Tracker()
         for sym in self.cfg.symbols:
             if sym not in self.specs:
                 raise KeyError(f"no SymbolSpec registered for '{sym}'")
@@ -1080,12 +1097,23 @@ class V30Live:
             return
 
         # SEND (or simulate)
+        # ------------------------------------------------------------------
+        # v31 LAYER 1 — broker-side SL is WIDENED to original ± cap*1.5 so a
+        # bot disconnect mid-trade still has a safety net at the worst-case
+        # fallback fill. The bot itself watches the price and intercepts at
+        # the ORIGINAL `sl` via `Layer1Tracker.update_and_decide()` inside
+        # `_manage_open()`. Every other downstream calc (R, partial ladder,
+        # trail) keeps using `st.open_sl = sl` (the ORIGINAL), so backtest
+        # parity is preserved bar-for-bar.
+        # ------------------------------------------------------------------
+        emerg_offset = emergency_sl_offset_for(sym)
+        broker_sl = (sl - emerg_offset) if side == "LONG" else (sl + emerg_offset)
         req = OrderRequest(
             symbol=self._symbol_to_broker(sym),
             order_type=OrderType.MARKET_BUY if side == "LONG" else OrderType.MARKET_SELL,
             lots=float(round(lots, 4)),
             price=entry_px,
-            sl=float(sl),
+            sl=float(broker_sl),            # v31 — emergency SL = original ± cap*1.5
             tp=0.0,                         # v30.3 — TP managed in-bar by PartialCloseManager (not at broker)
             deviation=20,
             magic=self.cfg.magic,
@@ -1209,6 +1237,43 @@ class V30Live:
                                 equity=self._current_equity())
                 self.day_halted = True
                 self.counters["halt_day"] += 1
+
+        # ------------------------------------------------------------------
+        # ★ v31 LAYER 1 — slippage-cap intercept (client-side hybrid)
+        # ------------------------------------------------------------------
+        # For every open position, get the current adverse-side price and ask
+        # the tracker if it has breached the ORIGINAL SL trigger.  Outcomes:
+        #   * CLOSE_NOW       → slip is within cap, force market close now
+        #   * FALLBACK_CLOSE  → 60 s envelope expired, force market close
+        #   * WAIT            → either not breached, or in-envelope, do nothing
+        # Both close paths route through `_close_one` which respects dry-run.
+        # ------------------------------------------------------------------
+        now_ts = now_utc.timestamp()
+        for sym, st in self.states.items():
+            if (st.open_ticket is None
+                    or st.open_sl is None
+                    or st.open_side is None):
+                continue
+            broker_sym = self._symbol_to_broker(sym)
+            quote = self.bridge.get_quote(broker_sym)
+            if quote is None:
+                continue
+            # adverse-side price: bid for LONG (price falling), ask for SHORT (price rising)
+            cur_px = float(quote.bid if st.open_side == "LONG" else quote.ask)
+            side_int = +1 if st.open_side == "LONG" else -1
+            decision = self.layer1.update_and_decide(
+                ticket=int(st.open_ticket),
+                symbol=sym,                  # internal symbol — matches LAYER1_CAPS keys
+                side=side_int,
+                sl_trigger_px=float(st.open_sl),
+                current_px=cur_px,
+                now=now_ts,
+            )
+            if decision.action in ("CLOSE_NOW", "FALLBACK_CLOSE"):
+                self._log_event("LAYER1_FIRED", **decision.to_jsonable())
+                self._close_one(sym, f"layer1_{decision.action.lower()}")
+                key = f"exit_layer1_{decision.action.lower()}"
+                self.counters[key] = self.counters.get(key, 0) + 1
 
         # Time-stop: close any position whose ORB trade-window has expired.
         brk_h, brk_m = self._utc_to_broker_hm(now_utc)
@@ -1364,6 +1429,13 @@ class V30Live:
 
     def _clear_state(self, sym: str) -> None:
         st = self.states[sym]
+        # v31 — drop the Layer 1 breach state for this ticket so a future
+        # ticket reused by the broker can't inherit a stale 60 s envelope.
+        if st.open_ticket is not None:
+            try:
+                self.layer1.clear(int(st.open_ticket))
+            except Exception:
+                pass
         st.open_ticket = None
         st.open_side = None
         st.open_entry = None
