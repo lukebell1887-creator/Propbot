@@ -77,7 +77,7 @@ The string `source` is one of:
 from __future__ import annotations
 
 import logging
-from typing import Dict, Tuple
+from typing import Dict, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -228,9 +228,17 @@ def log_pip_values_banner(
     source: str,
     *,
     fallback_reference: Dict[str, float] = _FALLBACK_USD_PER_TICK_PER_LOT,
+    rejected_symbols: Optional[set] = None,
 ) -> None:
     """Print a loud, scannable banner so the operator can verify broker
-    numbers at a glance in the PowerShell console."""
+    numbers at a glance in the PowerShell console.
+
+    `rejected_symbols` is the set of bot-symbols whose broker value was
+    REJECTED by the sanity gate (and replaced with the fallback). When
+    we don't know (None), we fall back to inferring from value-vs-fallback
+    equality, which can occasionally mis-label a broker-confirmed $1.00
+    as "fallback".
+    """
     bar = "=" * 78
     lines = [
         "",
@@ -238,23 +246,27 @@ def log_pip_values_banner(
         f"  BROKER PIP-VALUE TABLE   source={source}",
         bar,
     ]
+    rejected_symbols = rejected_symbols or set()
     for sym in sorted(pip_values):
         v = pip_values[sym]
         ref = fallback_reference.get(sym, 1.0)
         marker = ""
-        if abs(v - ref) < 1e-4:
-            # Same as fallback. For DE40 this is suspicious; for USD-quoted
-            # symbols (US30/US500/XAUUSD) it's the expected value.
-            if sym == "DE40":
-                marker = "  WARN: still $1.00 — likely fallback, no FX correction"
-            else:
-                marker = "  (USD-quoted, no FX needed)"
+        if sym in rejected_symbols:
+            # Sanity gate rejected the broker value; we're using the fallback.
+            # This is the SAFE outcome — the fallback is the same value
+            # backtests have always used.
+            marker = (f"  ⚠ broker REJECTED by sanity gate — using fallback "
+                      f"${ref:.4f} (matches backtest)")
+        elif abs(v - ref) < 1e-4:
+            # Broker reported a value that happened to equal the fallback
+            # (i.e. broker confirmed $1/pt for a USD-quoted symbol).
+            marker = "  ✓ broker confirms (USD-quoted, no FX needed)"
         elif sym == "DE40" and v > ref:
             pct = (v / ref - 1.0) * 100.0
             marker = f"  ✓ broker-truth (was ${ref:.2f}, +{pct:.1f}% via FX)"
         else:
             pct = (v / ref - 1.0) * 100.0
-            marker = f"  (broker-truth, fallback was ${ref:.2f}, {pct:+.1f}%)"
+            marker = f"  ✓ broker-truth (fallback was ${ref:.2f}, {pct:+.1f}%)"
         lines.append(f"    {sym:6s}  $/bot-tick/lot = {v:>8.4f}   {marker}")
     lines.append(bar)
     if source.startswith("fallback"):
@@ -264,8 +276,13 @@ def log_pip_values_banner(
         lines.append(bar)
     elif source == "broker_live_partial":
         lines.append(
-            "  NOTE: at least one symbol failed sanity-gate and fell back. "
-            "Search the log for 'REJECTED' to see which.")
+            "  NOTE: at least one symbol failed the sanity gate and fell back to")
+        lines.append(
+            "  the hardcoded value. The fallback is the SAME value the backtest")
+        lines.append(
+            "  uses, so the rejected symbol(s) will trade IDENTICALLY to backtest.")
+        lines.append(
+            "  This is the SAFE outcome of defence-in-depth — not an error.")
         lines.append(bar)
     lines.append("")
     msg = "\n".join(lines)

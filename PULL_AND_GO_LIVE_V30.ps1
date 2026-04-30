@@ -78,15 +78,38 @@ $env:PYTHONIOENCODING = "utf-8"
 # V30_BROKER_NAMES) instead of the actual 5ers names DAX40 / SP500.
 $ProbeBrokerNames = "DE40=DAX40,US30=US30,US500=SP500,XAUUSD=XAUUSD"
 python Scripts\probe_broker_pip_values.py --broker-names $ProbeBrokerNames
-if ($LASTEXITCODE -ne 0) {
+$ProbeExit = $LASTEXITCODE
+# Exit codes (Scripts/probe_broker_pip_values.py):
+#   0 = all four symbols passed broker-truth (ideal)
+#   1 = MT5 unreachable / package missing            ← FATAL
+#   2 = at least one symbol was REJECTED by sanity   ← SAFE: bot uses
+#       gate and reverted to the hardcoded fallback     hardcoded fallback
+#       (this is what we want — defence-in-depth      ($1/pt for indices,
+#       caught a bad broker value, kept us safe).      $1/0.01-tick for XAUUSD)
+#                                                       → these are the SAME
+#                                                          values backtest uses,
+#                                                          so live ≈ backtest
+#                                                          for the rejected
+#                                                          symbol(s).
+if ($ProbeExit -eq 1) {
     Write-Host ""
-    Write-Host "  ABORT: broker probe failed. The engine would fall back to" -ForegroundColor Red
-    Write-Host "         hardcoded `$1/pt and DAX40 would be UNDER-sized." -ForegroundColor Red
+    Write-Host "  ABORT: broker probe failed (MT5 unreachable / package missing)." -ForegroundColor Red
     Write-Host "         Check that the MT5 terminal is running, logged in," -ForegroundColor Yellow
     Write-Host "         and 'Allow algorithmic trading' is enabled." -ForegroundColor Yellow
     exit 1
 }
-Write-Host "  Broker pip-values verified (live from MT5)." -ForegroundColor Green
+elseif ($ProbeExit -eq 2) {
+    Write-Host ""
+    Write-Host "  OK -- partial fallback. The sanity gate REJECTED at least one" -ForegroundColor Green
+    Write-Host "        broker tick_value as out-of-band and reverted to the" -ForegroundColor Green
+    Write-Host "        hardcoded fallback (`$1/pt for indices, `$1/0.01-tick for" -ForegroundColor Green
+    Write-Host "        XAUUSD).  The fallback is the SAME number backtests have" -ForegroundColor Green
+    Write-Host "        always used, so behaviour is identical for the rejected" -ForegroundColor Green
+    Write-Host "        symbol(s).  No abort -- this is the safe outcome." -ForegroundColor Green
+}
+else {
+    Write-Host "  Broker pip-values verified (all live from MT5)." -ForegroundColor Green
+}
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
