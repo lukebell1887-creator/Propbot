@@ -1,0 +1,182 @@
+[
+  {
+    "uniform_slip": 5.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "none",
+    "total_pnl": 23737.25974990918,
+    "max_dd_pct": 4.152813934925106,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 5.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "layer1",
+    "total_pnl": 23739.4798399743,
+    "max_dd_pct": 4.151094247694412,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 5.0,
+    "risk_pct": 0.2,
+    "defense": "none",
+    "total_pnl": 27926.187941069496,
+    "max_dd_pct": 4.698765198744634,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 5.0,
+    "risk_pct": 0.2,
+    "defense": "layer1",
+    "total_pnl": 27928.799811734338,
+    "max_dd_pct": 4.696819432177938,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 10.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "none",
+    "total_pnl": 22207.996146156438,
+    "max_dd_pct": 4.681964498792347,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 10.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "layer1",
+    "total_pnl": 22882.439120467825,
+    "max_dd_pct": 4.409670539479163,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 10.0,
+    "risk_pct": 0.2,
+    "defense": "none",
+    "total_pnl": 26127.05428959569,
+    "max_dd_pct": 5.302307083706241,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 10.0,
+    "risk_pct": 0.2,
+    "defense": "layer1",
+    "total_pnl": 26920.516612314997,
+    "max_dd_pct": 4.99218401975079,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 15.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "none",
+    "total_pnl": 21031.777685382258,
+    "max_dd_pct": 5.204063588651974,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 15.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "layer1",
+    "total_pnl": 22882.439120467825,
+    "max_dd_pct": 4.409670539479163,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 15.0,
+    "risk_pct": 0.2,
+    "defense": "none",
+    "total_pnl": 24743.267865155518,
+    "max_dd_pct": 5.8968541354975095,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 15.0,
+    "risk_pct": 0.2,
+    "defense": "layer1",
+    "total_pnl": 26920.516612314997,
+    "max_dd_pct": 4.99218401975079,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 20.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "none",
+    "total_pnl": 20038.40100359678,
+    "max_dd_pct": 5.702537175175633,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 20.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "layer1",
+    "total_pnl": 22882.439120467825,
+    "max_dd_pct": 4.409670539479163,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 20.0,
+    "risk_pct": 0.2,
+    "defense": "none",
+    "total_pnl": 23574.589415996088,
+    "max_dd_pct": 6.464245907162463,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 20.0,
+    "risk_pct": 0.2,
+    "defense": "layer1",
+    "total_pnl": 26920.516612314997,
+    "max_dd_pct": 4.99218401975079,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 25.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "none",
+    "total_pnl": 19142.225337768454,
+    "max_dd_pct": 6.157135026273808,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 25.0,
+    "risk_pct": 0.16999999999999998,
+    "defense": "layer1",
+    "total_pnl": 22882.439120467825,
+    "max_dd_pct": 4.409670539479163,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 25.0,
+    "risk_pct": 0.2,
+    "defense": "none",
+    "total_pnl": 22520.26510325694,
+    "max_dd_pct": 6.982051243261724,
+    "breach_5pct": false,
+    "halt_days": 0
+  },
+  {
+    "uniform_slip": 25.0,
+    "risk_pct": 0.2,
+    "defense": "layer1",
+    "total_pnl": 26920.516612314997,
+    "max_dd_pct": 4.99218401975079,
+    "breach_5pct": false,
+    "halt_days": 0
+  }
+]

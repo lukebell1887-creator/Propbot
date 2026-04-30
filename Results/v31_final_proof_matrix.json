@@ -1,0 +1,153 @@
+{
+  "config": {
+    "risk_pct": 0.185,
+    "defense": "layer1",
+    "daily_halt": 4.0,
+    "fivers_rail": 5.0
+  },
+  "uniform_stress": [
+    {
+      "scenario": "Uniform 1pt every index stop",
+      "none_pnl": 27740.18535141999,
+      "none_dd": 3.9608569238023903,
+      "none_halts": 0,
+      "layer1_pnl": 27740.18535141999,
+      "layer1_dd": 3.9608569238023903,
+      "layer1_halts": 0,
+      "delta_pnl": 0.0,
+      "delta_dd": 0.0
+    },
+    {
+      "scenario": "Uniform 2pt every index stop",
+      "none_pnl": 27192.29417192089,
+      "none_dd": 4.080690494239331,
+      "none_halts": 0,
+      "layer1_pnl": 27192.29417192089,
+      "layer1_dd": 4.080690494239331,
+      "layer1_halts": 0,
+      "delta_pnl": 0.0,
+      "delta_dd": 0.0
+    },
+    {
+      "scenario": "Uniform 5pt every index stop",
+      "none_pnl": 25831.723845489367,
+      "none_dd": 4.431112645640352,
+      "none_halts": 0,
+      "layer1_pnl": 25834.13982585435,
+      "layer1_dd": 4.429277714445777,
+      "layer1_halts": 0,
+      "delta_pnl": 2.415980364981806,
+      "delta_dd": -0.0018349311945744518
+    },
+    {
+      "scenario": "Uniform 10pt every index stop",
+      "none_pnl": 24167.525217876115,
+      "none_dd": 4.998043016716185,
+      "none_halts": 0,
+      "layer1_pnl": 24901.47786639149,
+      "layer1_dd": 4.706525333273913,
+      "layer1_halts": 0,
+      "delta_pnl": 733.9526485153765,
+      "delta_dd": -0.29151768344227147
+    },
+    {
+      "scenario": "Uniform 15pt every index stop",
+      "none_pnl": 22887.522775268866,
+      "none_dd": 5.556959885603272,
+      "none_halts": 0,
+      "layer1_pnl": 24901.47786639149,
+      "layer1_dd": 4.706525333273913,
+      "layer1_halts": 0,
+      "delta_pnl": 2013.9550911226252,
+      "delta_dd": -0.8504345523293582
+    },
+    {
+      "scenario": "Uniform 20pt every index stop",
+      "none_pnl": 21806.49520979644,
+      "none_dd": 6.090463909780584,
+      "none_halts": 0,
+      "layer1_pnl": 24901.47786639149,
+      "layer1_dd": 4.706525333273913,
+      "layer1_halts": 0,
+      "delta_pnl": 3094.98265659505,
+      "delta_dd": -1.3839385765066705
+    },
+    {
+      "scenario": "Uniform 25pt every index stop",
+      "none_pnl": 20831.245220512705,
+      "none_dd": 6.577178983751097,
+      "none_halts": 0,
+      "layer1_pnl": 24901.47786639149,
+      "layer1_dd": 4.706525333273913,
+      "layer1_halts": 0,
+      "delta_pnl": 4070.2326458787866,
+      "delta_dd": -1.870653650477184
+    },
+    {
+      "scenario": "Uniform 30pt every index stop",
+      "none_pnl": 19867.6699378943,
+      "none_dd": 7.057620596250593,
+      "none_halts": 0,
+      "layer1_pnl": 24901.47786639149,
+      "layer1_dd": 4.706525333273913,
+      "layer1_halts": 0,
+      "delta_pnl": 5033.80792849719,
+      "delta_dd": -2.3510952629766795
+    }
+  ],
+  "microstructure": [
+    {
+      "scenario": "Bar-micro: optimistic",
+      "none_pnl": 27148.497453856762,
+      "none_dd": 3.9580989555160784,
+      "none_halts": 0,
+      "layer1_pnl": 27393.730759158236,
+      "layer1_dd": 3.9468481425090456,
+      "layer1_halts": 0,
+      "delta_pnl": 245.2333053014736,
+      "delta_dd": -0.01125081300703279
+    },
+    {
+      "scenario": "Bar-micro: realistic",
+      "none_pnl": 26126.031848250626,
+      "none_dd": 4.068326123878991,
+      "none_halts": 0,
+      "layer1_pnl": 26839.003234318778,
+      "layer1_dd": 4.015918311635862,
+      "layer1_halts": 0,
+      "delta_pnl": 712.9713860681513,
+      "delta_dd": -0.05240781224312929
+    },
+    {
+      "scenario": "Bar-micro: pessimistic",
+      "none_pnl": 25249.3073518178,
+      "none_dd": 4.170911448540244,
+      "none_halts": 0,
+      "layer1_pnl": 26526.391711851567,
+      "layer1_dd": 4.0270356277604575,
+      "layer1_halts": 0,
+      "delta_pnl": 1277.0843600337685,
+      "delta_dd": -0.14387582077978678
+    },
+    {
+      "scenario": "Bar-micro: catastrophic",
+      "none_pnl": 24518.32396455847,
+      "none_dd": 4.265388233667741,
+      "none_halts": 0,
+      "layer1_pnl": 26280.79141853559,
+      "layer1_dd": 4.035811018850702,
+      "layer1_halts": 0,
+      "delta_pnl": 1762.4674539771222,
+      "delta_dd": -0.22957721481703874
+    }
+  ],
+  "summary": {
+    "scenarios_tested": 12,
+    "breaches_no_defense": 4,
+    "breaches_layer1": 0,
+    "worst_dd_no_defense": 7.057620596250593,
+    "worst_dd_layer1": 4.706525333273913,
+    "margin_to_rail_layer1_pp": 0.2934746667260866,
+    "avg_pnl_delta_layer1": 1578.9252880295437
+  }
+}

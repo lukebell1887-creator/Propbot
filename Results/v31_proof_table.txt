@@ -1,0 +1,96 @@
+
+==============================================================================
+  DETERMINISTIC SCENARIO SWEEP
+==============================================================================
+  Scenario        Risk% Defense      PnL ($)  MaxDD%  Breach Halts Trades
+  ----------------------------------------------------------------------
+  optimistic     0.100% none     $    14,675   2.41%      no     0    264
+  optimistic     0.100% layer1   $    14,807   2.41%      no     0    264
+  optimistic     0.100% 3layer   $    12,586   2.09%      no     0    264
+  optimistic     0.125% none     $    18,344   2.90%      no     0    264
+  optimistic     0.125% layer1   $    18,509   2.90%      no     0    264
+  optimistic     0.125% 3layer   $    15,733   2.53%      no     0    264
+  optimistic     0.150% none     $    22,012   3.37%      no     0    264
+  optimistic     0.150% layer1   $    22,211   3.36%      no     0    264
+  optimistic     0.150% 3layer   $    18,879   2.95%      no     0    264
+  optimistic     0.170% none     $    24,947   3.71%      no     0    264
+  optimistic     0.170% layer1   $    25,173   3.70%      no     0    264
+  optimistic     0.170% 3layer   $    21,397   3.26%      no     0    264
+  optimistic     0.200% none     $    29,350   4.20%      no     0    264
+  optimistic     0.200% layer1   $    29,615   4.18%      no     0    264
+  optimistic     0.200% 3layer   $    25,173   3.70%      no     0    264
+  realistic      0.100% none     $    14,122   2.47%      no     0    264
+  realistic      0.100% layer1   $    14,508   2.44%      no     0    264
+  realistic      0.100% 3layer   $    12,331   2.12%      no     0    264
+  realistic      0.125% none     $    17,653   2.98%      no     0    264
+  realistic      0.125% layer1   $    18,134   2.95%      no     0    264
+  realistic      0.125% 3layer   $    15,414   2.57%      no     0    264
+  realistic      0.150% none     $    21,183   3.46%      no     0    264
+  realistic      0.150% layer1   $    21,761   3.41%      no     0    264
+  realistic      0.150% 3layer   $    18,497   2.99%      no     0    264
+  realistic      0.170% none     $    24,008   3.81%      no     0    264
+  realistic      0.170% layer1   $    24,663   3.76%      no     0    264
+  realistic      0.170% 3layer   $    20,963   3.31%      no     0    264
+  realistic      0.200% none     $    28,244   4.31%      no     0    264
+  realistic      0.200% layer1   $    29,015   4.26%      no     0    264
+  realistic      0.200% 3layer   $    24,663   3.76%      no     0    264
+  pessimistic    0.100% none     $    13,648   2.53%      no     0    264
+  pessimistic    0.100% layer1   $    14,339   2.45%      no     0    264
+  pessimistic    0.100% 3layer   $    12,188   2.13%      no     0    264
+  pessimistic    0.125% none     $    17,060   3.05%      no     0    264
+  pessimistic    0.125% layer1   $    17,923   2.95%      no     0    264
+  pessimistic    0.125% 3layer   $    15,235   2.58%      no     0    264
+  pessimistic    0.150% none     $    20,472   3.54%      no     0    264
+  pessimistic    0.150% layer1   $    21,508   3.42%      no     0    264
+  pessimistic    0.150% 3layer   $    18,282   3.00%      no     0    264
+  pessimistic    0.170% none     $    23,202   3.91%      no     0    264
+  pessimistic    0.170% layer1   $    24,376   3.77%      no     0    264
+  pessimistic    0.170% 3layer   $    20,719   3.32%      no     0    264
+  pessimistic    0.200% none     $    27,297   4.42%      no     0    264
+  pessimistic    0.200% layer1   $    28,677   4.27%      no     0    264
+  pessimistic    0.200% 3layer   $    24,376   3.77%      no     0    264
+  catastrophic   0.100% none     $    13,253   2.58%      no     0    264
+  catastrophic   0.100% layer1   $    14,206   2.45%      no     0    264
+  catastrophic   0.100% 3layer   $    12,075   2.13%      no     0    264
+  catastrophic   0.125% none     $    16,566   3.12%      no     0    264
+  catastrophic   0.125% layer1   $    17,757   2.96%      no     0    264
+  catastrophic   0.125% 3layer   $    15,094   2.58%      no     0    264
+  catastrophic   0.150% none     $    19,880   3.62%      no     0    264
+  catastrophic   0.150% layer1   $    21,309   3.43%      no     0    264
+  catastrophic   0.150% 3layer   $    18,112   3.01%      no     0    264
+  catastrophic   0.170% none     $    22,530   3.99%      no     0    264
+  catastrophic   0.170% layer1   $    24,150   3.78%      no     0    264
+  catastrophic   0.170% 3layer   $    20,527   3.33%      no     0    264
+  catastrophic   0.200% none     $    26,506   4.53%      no     0    264
+  catastrophic   0.200% layer1   $    28,412   4.28%      no     0    264
+  catastrophic   0.200% 3layer   $    24,150   3.78%      no     0    264
+
+==============================================================================
+  MONTE CARLO  (1000 runs across mixed adversity scenarios)
+==============================================================================
+   Risk% Defense    Median PnL      P5 PnL     P95 PnL  WorstDD%  P(breach)  AvgHalts
+  ----------------------------------------------------------------------
+  0.100% none     $     13,894 $    13,242 $    14,646     2.63%      0.00%      0.00
+  0.100% layer1   $     14,453 $    14,207 $    14,798     2.45%      0.00%      0.00
+  0.100% 3layer   $     12,285 $    12,076 $    12,578     2.13%      0.00%      0.00
+  0.125% none     $     17,367 $    16,552 $    18,308     3.17%      0.00%      0.00
+  0.125% layer1   $     18,066 $    17,759 $    18,498     2.96%      0.00%      0.00
+  0.125% 3layer   $     15,356 $    15,095 $    15,723     2.58%      0.00%      0.00
+  0.150% none     $     20,841 $    19,862 $    21,970     3.69%      0.00%      0.00
+  0.150% layer1   $     21,680 $    21,310 $    22,197     3.43%      0.00%      0.00
+  0.150% 3layer   $     18,428 $    18,114 $    18,868     3.01%      0.00%      0.00
+  0.170% none     $     23,620 $    22,511 $    24,899     4.10%      0.00%      0.00
+  0.170% layer1   $     24,570 $    24,152 $    25,157     3.79%      0.00%      0.00
+  0.170% 3layer   $     20,885 $    20,529 $    21,383     3.33%      0.00%      0.00
+  0.200% none     $     27,788 $    26,483 $    29,293     4.76%      0.00%      0.00
+  0.200% layer1   $     28,906 $    28,414 $    29,596     4.29%      0.00%      0.00
+  0.200% 3layer   $     24,570 $    24,152 $    25,157     3.79%      0.00%      0.00
+
+==============================================================================
+  KEY COMPARISONS
+==============================================================================
+  Risk 0.100%: 3-layer vs none -> PnL delta $-1,609   WorstDD delta +0.49pp   P(breach) delta +0.00pp
+  Risk 0.125%: 3-layer vs none -> PnL delta $-2,011   WorstDD delta +0.59pp   P(breach) delta +0.00pp
+  Risk 0.150%: 3-layer vs none -> PnL delta $-2,413   WorstDD delta +0.68pp   P(breach) delta +0.00pp
+  Risk 0.170%: 3-layer vs none -> PnL delta $-2,735   WorstDD delta +0.77pp   P(breach) delta +0.00pp
+  Risk 0.200%: 3-layer vs none -> PnL delta $-3,218   WorstDD delta +0.97pp   P(breach) delta +0.00pp

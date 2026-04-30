@@ -400,8 +400,8 @@ class V30LiveConfig:
     evidence base.
     """
     symbols: List[str] = field(default_factory=lambda: ["DE40", "US30", "XAUUSD", "US500"])
-    base_risk_pct: float = 0.00170           # ★ V25.1 ship value (was 0.00110)
-    cap_mult: float = 5.0                    # per-trade cap = 0.85 %
+    base_risk_pct: float = 0.00185           # ★ v31 ship value (was 0.00170, then 0.00110)
+    cap_mult: float = 5.0                    # per-trade cap = 0.925 %
     gamma: float = 3.0                       # v24 shootout winner
     ewma_alpha: float = 0.20                 # half-life ≈ 3 trades
     warmup_trades: int = 15                  # no Merton formula until 15 trades seen
