@@ -8,7 +8,7 @@ Defaults to DRY-RUN. Pass --live to place real orders.
     python Scripts\\run_v30_live.py --live            # LIVE
 
 What's new in v30 vs v23 live:
-    * base_risk_pct       0.00170   (★ was 0.00110 in v23)
+    * base_risk_pct       0.00185   (★ v31 ship; was 0.00170 in v25.1, 0.00110 in v23)
     * NOCHASE_COOLDOWN_S  300.0     (★ NEW — cross-symbol queue-release filter)
     * SLIPPAGE TRACKER    every entry's intended_px vs fill_px in TICKS,
                           rolled up per-symbol + portfolio in heartbeat,
@@ -157,8 +157,8 @@ def main() -> int:
                    help='override broker symbol names, e.g. '
                         '"DE40=DAX40,US30=US30,US500=SP500,XAUUSD=XAUUSD"')
     # v30 SHIP DEFAULTS  ★
-    p.add_argument("--risk", type=float, default=0.00170,
-                   help="base risk pct (v30 ship: 0.00170 = 0.170 pct)")
+    p.add_argument("--risk", type=float, default=0.00185,
+                   help="base risk pct (v31 ship: 0.00185 = 0.185 pct; was 0.00170 in v25.1)")
     p.add_argument("--cap-mult", type=float, default=5.0)
     p.add_argument("--nochase-cooldown", type=float, default=300.0,
                    help="cross-symbol no-chase cooldown in seconds (0 to disable; "
@@ -179,7 +179,7 @@ def main() -> int:
     banner(f"V30 LIVE LAUNCHER   {datetime.now(timezone.utc).isoformat(timespec='seconds')}")
     print(f"  mode          : {'LIVE (real orders)' if args.live else 'DRY-RUN (no orders)'}")
     print(f"  symbols       : {args.symbols}")
-    print(f"  base risk     : {args.risk*100:.3f}%   (cap = {args.cap_mult:.1f}x = {args.risk*args.cap_mult*100:.3f}%)   ★ v25.1 ship")
+    print(f"  base risk     : {args.risk*100:.3f}%   (cap = {args.cap_mult:.1f}x = {args.risk*args.cap_mult*100:.3f}%)   ★ v31 ship")
     print(f"  no-chase cd   : {args.nochase_cooldown:.0f} s   ★ v25.1 ship (cross-symbol)")
     # 5ers compliance summary (always printed, two layers of DD protection)
     print( "  --- 5ers DD compliance ---")

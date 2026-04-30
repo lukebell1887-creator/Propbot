@@ -19,7 +19,7 @@ Set-Location -LiteralPath $PSScriptRoot
 
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "  v30 DRY-RUN  (4-pair ORB + Merton-GZ + news + 4pct DD rails)" -ForegroundColor Cyan
-Write-Host "  v25.1 ship config: risk=0.170%  nochase=300s  +slippage tracker" -ForegroundColor Cyan
+Write-Host "  v31 ship config: risk=0.185%  nochase=300s  +slippage tracker" -ForegroundColor Cyan
 Write-Host "  Strategy has ZERO real-order side effects in this mode." -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 
@@ -60,7 +60,7 @@ $BrokerNames = "DE40=DAX40,US30=US30,US500=SP500,XAUUSD=XAUUSD"
 & python "$PSScriptRoot\Scripts\run_v30_live.py" `
     --symbols "DE40,US30,XAUUSD,US500" `
     --broker-names $BrokerNames `
-    --risk 0.00170 `
+    --risk 0.00185 `
     --cap-mult 5.0 `
     --nochase-cooldown 300 `
     --account-kill 0.08 `

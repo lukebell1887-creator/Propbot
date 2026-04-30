@@ -1,7 +1,7 @@
 # GO_LIVE_V30.ps1 - start v30 in LIVE mode (REAL ORDERS).
 #
-# v30 = v25.1 ship config recommended in Docs/V25_1_SHIP_RECOMMENDATION.md
-#   * base_risk      = 0.170 %      (was 0.110 % in v23)   ★
+# v30 = v31 ship config (was v25.1)
+#   * base_risk      = 0.185 %      (v31 ship; was 0.170% in v25.1, 0.110% in v23) ★
 #   * cap_mult       = 5.0          (max 0.85 % per trade)
 #   * nochase cd     = 300 s        (NEW cross-symbol queue-release filter) ★
 #   * DailyHalt      = 4 %          (static, prop-firm style)
@@ -24,7 +24,7 @@ Set-Location -LiteralPath $PSScriptRoot
 
 Write-Host "================================================================" -ForegroundColor Yellow
 Write-Host "  v30 LIVE   (REAL ORDERS)" -ForegroundColor Yellow
-Write-Host "  v25.1 ship config: risk=0.170%  nochase=300s  +slippage tracker" -ForegroundColor Yellow
+Write-Host "  v31 ship config: risk=0.185%  nochase=300s  +slippage tracker" -ForegroundColor Yellow
 Write-Host "================================================================" -ForegroundColor Yellow
 
 # Sanity: require Python on PATH
@@ -65,7 +65,7 @@ $BrokerNames = "DE40=DAX40,US30=US30,US500=SP500,XAUUSD=XAUUSD"
     --live `
     --symbols "DE40,US30,XAUUSD,US500" `
     --broker-names $BrokerNames `
-    --risk 0.00170 `
+    --risk 0.00185 `
     --cap-mult 5.0 `
     --nochase-cooldown 300 `
     --account-kill 0.08 `
