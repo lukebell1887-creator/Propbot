@@ -68,22 +68,16 @@ Write-Host "  All 29 parity tests GREEN." -ForegroundColor Green
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  STEP 5/5  Starting v30 LIVE (real orders)" -ForegroundColor Cyan
+Write-Host "  Output is streamed below AND written to:" -ForegroundColor Cyan
+Write-Host "    $BOT\Results\v30_live_console.out" -ForegroundColor Cyan
+Write-Host "  Press Ctrl+C to stop the bot." -ForegroundColor Yellow
 Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
 
-Start-Process powershell -ArgumentList @(
-    "-NoExit",
-    "-ExecutionPolicy","Bypass",
-    "-File","$BOT\GO_LIVE_V30.ps1"
-) -WorkingDirectory $BOT
+if (-not (Test-Path "$BOT\Results")) { New-Item -ItemType Directory -Path "$BOT\Results" | Out-Null }
 
-Start-Sleep -Seconds 8
-Write-Host ""
-Write-Host "  Bot started in a separate PowerShell window." -ForegroundColor Green
-Write-Host "  Tail the heartbeat with:" -ForegroundColor White
-Write-Host "    Get-Content $BOT\Results\v30_live_console.out -Tail 60 -Wait" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "  Send these THREE outputs back to Cline:" -ForegroundColor White
-Write-Host "    git log -1 --oneline" -ForegroundColor Yellow
-Write-Host "    Get-Content $BOT\Results\v30_live_console.out -Tail 80" -ForegroundColor Yellow
-Write-Host "    Get-Content $BOT\Results\v30_live_console.err -Tail 40" -ForegroundColor Yellow
-Write-Host ""
+# Run GO_LIVE_V30.ps1 in the SAME window (no Start-Process), tee everything to a file.
+# 2>&1 merges stderr into stdout so a single Tee-Object captures the lot.
+& "$BOT\GO_LIVE_V30.ps1" 2>&1 | Tee-Object -FilePath "$BOT\Results\v30_live_console.out"
+
+
