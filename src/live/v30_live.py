@@ -558,6 +558,19 @@ class V30Live:
         # ★ NEW v30.1 — state persistence paths
         self.state_dir = Path(self.cfg.state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
+
+        # ★ NEW v30.4 — broker pip-value override bookkeeping (set on start()).
+        # Pre-fix the engine hardcoded $1/pt for every symbol, which is wrong
+        # for EUR-quoted DAX40 on a USD account (true value ≈ $1.166/pt = €1
+        # × EURUSD).  start() now queries the running MT5 terminal directly
+        # via `src.live.broker_specs.fetch_live_pip_values` and overrides
+        # self.specs[sym].pip_value_per_lot before any sizing call.  These
+        # two fields let the heartbeat / banner / preflight #14 confirm the
+        # override actually came from the broker (not a silent fallback).
+        self._pip_value_source: str = "uninitialised"
+        self._pip_value_overrides: Dict[str, Tuple[float, float]] = {}
+        # {bot_sym: (old_hardcoded, new_broker_truth)}
+
         self.sizer_state_path = self.state_dir / self.cfg.sizer_state_name
         self.breaker_state_path = self.state_dir / self.cfg.breaker_state_name
         # ★ Stage 2 — heartbeat JSON snapshot path + uptime anchor
@@ -1832,8 +1845,85 @@ class V30Live:
         off = self._refresh_broker_offset(force=True)
         log.info("[broker-clock] initial offset = %+d s", int(off.total_seconds()))
 
+        # ----------------------------------------------------------------
+        # ★ NEW v30.4 — BROKER PIP-VALUE OVERRIDE
+        # Replaces hardcoded $1/pt for every symbol with the **broker-truth**
+        # tick_value queried live from the running MT5 terminal.  Necessary
+        # because EUR-quoted DAX40 on a USD account pays €1/pt × EURUSD ≈
+        # $1.166/pt, NOT $1.00/pt.  Without this override the bot under-
+        # reports planned risk_$ on DAX40 by ~14-17 % and consequently
+        # over-sizes lots, which is exactly what produced the −$1,019 actual
+        # loss vs −$853 planned on 2026-04-30.
+        # ----------------------------------------------------------------
+        self._apply_broker_pip_value_overrides()
+
         self._warmup_all()
         return 0
+
+    # -----------------------------------------------------------------
+    # ★ NEW v30.4 — broker pip-value override (FX-aware sizing).
+    # -----------------------------------------------------------------
+    def _apply_broker_pip_value_overrides(self) -> None:
+        """Query MT5 for live tick_value per symbol and overwrite the
+        hardcoded `pip_value_per_lot` in self.specs.
+
+        Failure modes (all non-fatal — bot continues with hardcoded values):
+          * `MetaTrader5` python package not installed on the VPS
+          * `mt5.initialize()` failure (terminal not running / blocked)
+          * a single symbol returning insane / zero tick_value
+
+        The source string is stored in `self._pip_value_source` and surfaced
+        through:
+          * the loud banner printed below (visible in the PowerShell window)
+          * the heartbeat JSON  (heartbeat.py reads `_pip_value_source`)
+          * preflight check #14 (asserts source != "fallback_*")
+          * the WARMUP_RESTORE event log
+        """
+        from src.live.broker_specs import (
+            fetch_live_pip_values, log_pip_values_banner,
+        )
+
+        bot_to_broker = {sym: self.specs[sym].broker for sym in self.specs}
+        pip_values, source = fetch_live_pip_values(bot_to_broker)
+        self._pip_value_source = source
+
+        # Print the loud banner FIRST — operator sees broker numbers before
+        # any "starting equity" or "warmup" lines scroll past.
+        log_pip_values_banner(pip_values, source)
+
+        # Apply overrides + record what changed (for heartbeat / audit log).
+        self._pip_value_overrides = {}
+        for sym, new_val in pip_values.items():
+            spec = self.specs.get(sym)
+            if spec is None:
+                continue
+            old_val = float(spec.pip_value_per_lot)
+            # Only register an "override" if the broker-truth value
+            # materially differs from the hardcoded fallback.
+            if abs(new_val - old_val) > 1e-4:
+                self._pip_value_overrides[sym] = (old_val, float(new_val))
+                spec.pip_value_per_lot = float(new_val)
+                log.info(
+                    "[pip-value] %s  $%.4f → $%.4f /pt/lot   "
+                    "(broker-truth, %+.2f%%)",
+                    sym, old_val, new_val,
+                    (new_val / old_val - 1.0) * 100.0 if old_val > 0 else 0.0,
+                )
+            else:
+                log.info(
+                    "[pip-value] %s  $%.4f /pt/lot  (unchanged)",
+                    sym, old_val,
+                )
+
+        self._log_event(
+            "PIP_VALUE_OVERRIDE",
+            source=source,
+            overrides={sym: {"old": old, "new": new}
+                       for sym, (old, new) in self._pip_value_overrides.items()},
+            current_values={sym: float(self.specs[sym].pip_value_per_lot)
+                            for sym in self.specs},
+        )
+
 
     def stop(self) -> None:
         self._stop = True

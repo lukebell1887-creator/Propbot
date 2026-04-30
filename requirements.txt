@@ -16,3 +16,13 @@ pytest>=7.4.0
 
 # --- optional speed-ups ---
 # pyzmq no longer needed (native TCP sockets used instead)
+
+# --- live trading: broker pip-value query (v30.4) ---
+# MetaTrader5 python package is required for the broker-truth tick_value
+# fetch in `src/live/broker_specs.py`. Without it the engine silently
+# falls back to hardcoded $1/pt, which under-sizes EUR-quoted DAX40 by
+# ~14% on a USD account. Windows-only — `sys_platform == 'win32'` keeps
+# Linux CI from failing on this dependency.
+MetaTrader5>=5.0.45 ; sys_platform == "win32"
+
+
