@@ -68,16 +68,22 @@ Write-Host "  All 29 parity tests GREEN." -ForegroundColor Green
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  STEP 5/5  Starting v30 LIVE (real orders)" -ForegroundColor Cyan
-Write-Host "  Output is streamed below AND written to:" -ForegroundColor Cyan
-Write-Host "    $BOT\Results\v30_live_console.out" -ForegroundColor Cyan
-Write-Host "  Press Ctrl+C to stop the bot." -ForegroundColor Yellow
+Write-Host "  Heartbeats print live below.  Ctrl+C to stop." -ForegroundColor Yellow
+Write-Host "  Bot also writes its own logs to Results\:" -ForegroundColor Cyan
+Write-Host "    v30_live_events.log     - structured events" -ForegroundColor Cyan
+Write-Host "    heartbeat_v30.json      - latest heartbeat" -ForegroundColor Cyan
+Write-Host "    v30_live_trades.jsonl   - one line per trade" -ForegroundColor Cyan
+Write-Host "    v30_live_telemetry.json - latest telemetry" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
-if (-not (Test-Path "$BOT\Results")) { New-Item -ItemType Directory -Path "$BOT\Results" | Out-Null }
+# Make sure the console renders python's UTF-8 (μ̂, σ̂, ✓, ─ etc.) without mojibake.
+chcp 65001 | Out-Null
+$env:PYTHONIOENCODING = "utf-8"
 
-# Run GO_LIVE_V30.ps1 in the SAME window (no Start-Process), tee everything to a file.
-# 2>&1 merges stderr into stdout so a single Tee-Object captures the lot.
-& "$BOT\GO_LIVE_V30.ps1" 2>&1 | Tee-Object -FilePath "$BOT\Results\v30_live_console.out"
+# Run the original GO_LIVE_V30.ps1 directly in the SAME window — no pipe, no tee.
+# That preserves real-time heartbeats and UTF-8 rendering exactly like the old display.
+& "$BOT\GO_LIVE_V30.ps1"
+
 
 
