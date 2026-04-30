@@ -146,11 +146,22 @@ V30_BROKER_TICK_SIZE: Dict[str, float] = {
     "DE40": 1.0, "US30": 1.0, "US500": 1.0, "XAUUSD": 0.01,
 }
 
+# 2026-04-30 PARITY FIX (v30.4):
+#   5ers spec sheet says ALL FOUR symbols have min_lot=0.01 and step=0.01.
+#   Previous values (0.1 for indices) were over-quantising live lots vs the
+#   backtest, which uses SymbolSpec defaults (0.01/0.01).  This caused live
+#   to either OVER-size (small risk → forced to 0.10 lots) or UNDER-size
+#   (rounded down to nearest 0.10).  See Docs/V30_LIVE_BACKTEST_PARITY.md.
+#   Verified against the 5ers Trading Conditions page on 2026-04-30:
+#       DE40   : Min lot 0.01,  Incremental Step 0.01
+#       US30   : Min lot 0.01,  Incremental Step 0.01
+#       SP500  : Min lot 0.01,  Incremental Step 0.01
+#       Gold   : Min lot 0.01,  Incremental Step 0.01
 V30_BROKER_LOT_STEP:  Dict[str, float] = {
-    "DE40": 0.1, "US30": 0.1, "US500": 0.1, "XAUUSD": 0.01,
+    "DE40": 0.01, "US30": 0.01, "US500": 0.01, "XAUUSD": 0.01,
 }
 V30_BROKER_MIN_LOT:   Dict[str, float] = {
-    "DE40": 0.1, "US30": 0.1, "US500": 0.1, "XAUUSD": 0.01,
+    "DE40": 0.01, "US30": 0.01, "US500": 0.01, "XAUUSD": 0.01,
 }
 # Broker-side symbol name mapping (override via --broker-names if broker differs)
 V30_BROKER_NAMES: Dict[str, str] = {
@@ -1005,12 +1016,22 @@ class V30Live:
         or_rng = st.or_tracker.or_range
         if or_rng <= 0:
             return
+        # 2026-04-30 PARITY FIX (v30.4):
+        #   Backtest (orb_engine_v20.py) widens the SL by
+        #     sl_buf = sl_buffer_range_mult * or_range
+        #   so that random retests of the OR boundary don't stop us out.
+        #   Per-symbol values (V30_ORB_CONFIGS):
+        #     DE40 = 0.30   US30 = 0.00   XAUUSD = 0.60   US500 = 0.60
+        #   Live previously used the raw OR_low / OR_high → SL was tighter
+        #   than backtest, more whipsaws, more SL hits, lots inflated.
+        #   See Docs/V30_LIVE_BACKTEST_PARITY.md for derivation.
+        sl_buf = float(st.orb_cfg.sl_buffer_range_mult) * or_rng
         if side == "LONG":
-            sl = float(st.or_tracker.or_low)
+            sl = float(st.or_tracker.or_low) - sl_buf
             tp1 = entry_px + st.orb_cfg.tp1_range_mult * or_rng
             tp2 = entry_px + st.orb_cfg.tp2_range_mult * or_rng
         else:
-            sl = float(st.or_tracker.or_high)
+            sl = float(st.or_tracker.or_high) + sl_buf
             tp1 = entry_px - st.orb_cfg.tp1_range_mult * or_rng
             tp2 = entry_px - st.orb_cfg.tp2_range_mult * or_rng
 

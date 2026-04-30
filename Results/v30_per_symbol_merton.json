@@ -1,0 +1,100 @@
+{
+  "config": {
+    "risk_pct": 0.0017,
+    "cap_mult": 5.0,
+    "gamma": 3.0,
+    "pool_symbols": false,
+    "merton_mode": "PER-SYMBOL (4 independent EWMAs)",
+    "symbols": [
+      "DE40",
+      "US30",
+      "XAUUSD",
+      "US500"
+    ],
+    "balance": 100000.0,
+    "news_rails": true,
+    "data_window": {
+      "first_trade": "1769417400.0",
+      "last_trade": "1774884660.0",
+      "n_calendar_days": 46
+    }
+  },
+  "headline": {
+    "n_trades": 216,
+    "net_pnl": 17656.37,
+    "ret_pct": 17.656,
+    "max_dd_pct": 3.108,
+    "profit_factor": 1.783,
+    "sharpe": 2.773,
+    "win_rate_pct": 69.44,
+    "worst_day_pnl": -1973.64,
+    "worst_day_pct": -1.974,
+    "worst_daily_dd_pct": 1.625,
+    "ruin_3pct": 68.36,
+    "ruin_4pct": 39.28,
+    "ruin_5pct": 20.62,
+    "median_hold_min": 76.5,
+    "p10_hold_min": 13.0,
+    "p90_hold_min": 152.0,
+    "sub60s_trades": 0
+  },
+  "concurrency_pct": {
+    "0": 90.07,
+    "1": 4.85,
+    "2": 2.91,
+    "3": 1.74,
+    "4": 0.2,
+    "5": 0.17,
+    "6": 0.07
+  },
+  "per_symbol": {
+    "DE40": {
+      "n_trades": 89,
+      "net_pnl": 9908.06,
+      "win_rate_pct": 71.91,
+      "profit_factor": 1.881,
+      "max_dd_dollars": 3431.22,
+      "max_dd_pct_of_balance": 3.431,
+      "ewma_mu_R": 0.0068,
+      "ewma_var_R": 0.4448,
+      "kelly_f_star": 0.00513,
+      "merton_mult_vs_base": 3.018
+    },
+    "US30": {
+      "n_trades": 63,
+      "net_pnl": 6668.77,
+      "win_rate_pct": 57.14,
+      "profit_factor": 1.658,
+      "max_dd_dollars": 3681.3,
+      "max_dd_pct_of_balance": 3.681,
+      "ewma_mu_R": 0.1552,
+      "ewma_var_R": 0.6869,
+      "kelly_f_star": 0.07532,
+      "merton_mult_vs_base": 44.307
+    },
+    "US500": {
+      "n_trades": 43,
+      "net_pnl": 98.39,
+      "win_rate_pct": 79.07,
+      "profit_factor": 1.093,
+      "max_dd_dollars": 919.72,
+      "max_dd_pct_of_balance": 0.92,
+      "ewma_mu_R": -0.1145,
+      "ewma_var_R": 0.1749,
+      "kelly_f_star": -0.21828,
+      "merton_mult_vs_base": -128.398
+    },
+    "XAUUSD": {
+      "n_trades": 21,
+      "net_pnl": 981.15,
+      "win_rate_pct": 76.19,
+      "profit_factor": 9.139,
+      "max_dd_dollars": 63.51,
+      "max_dd_pct_of_balance": 0.064,
+      "ewma_mu_R": -0.042,
+      "ewma_var_R": 0.3582,
+      "kelly_f_star": -0.03907,
+      "merton_mult_vs_base": -22.981
+    }
+  }
+}
