@@ -10,8 +10,8 @@ this script. It proves — without ever talking to the broker — that the
 
     1. Module imports                (atr_tracker, partial_manager, …)
     2. LiveSymbolState carries the v30.3 fields (partial_state, atr_tracker)
-    3. Engine config matches v25.1 ship spec
-       (base_risk = 0.170%, cap_mult = 5.0, magic = 30000, nochase = 300s,
+    3. Engine config matches v31 ship spec
+       (base_risk = 0.185%, cap_mult = 5.0, magic = 30000, nochase = 300s,
         max_concurrent = 2, DailyHalt = 4%, DDBreaker = 8%)
     4. ORB anchors match the locked v23/v25 values
     5. Symbol specs load from SMARTBB_UNIVERSE (single source of truth)
@@ -126,14 +126,14 @@ def _check_dataclass_fields() -> str:
 
 
 # ---------------------------------------------------------------------------
-# 3. Engine config matches v25.1 ship spec
+# 3. Engine config matches v31 ship spec
 # ---------------------------------------------------------------------------
-@check("config: V30LiveConfig defaults match v25.1 ship spec")
+@check("config: V30LiveConfig defaults match v31 ship spec")
 def _check_config_defaults() -> str:
     from src.live.v30_live import V30LiveConfig
     cfg = V30LiveConfig()
     expected = {
-        "base_risk_pct":             0.00170,
+        "base_risk_pct":             0.00185,   # v31 ship value (was 0.00170 in v25.1)
         "cap_mult":                  5.0,
         "gamma":                     3.0,
         "ewma_alpha":                0.20,
@@ -152,7 +152,7 @@ def _check_config_defaults() -> str:
         if got != want:
             bad.append(f"{k}: got {got!r}, expected {want!r}")
     assert not bad, "config drift detected:\n   " + "\n   ".join(bad)
-    return ("base_risk=0.170%  cap=5.0×  nochase=300s  magic=30000  "
+    return ("base_risk=0.185%  cap=5.0×  nochase=300s  magic=30000  "
             "max_conc=2  daily_kill=4%  total_kill=8%")
 
 
@@ -329,18 +329,18 @@ def _check_lots_formula() -> str:
         $/lot @ stop = (|entry-SL| / tick_size) × pip_value
         lots         = risk_$ / ($/lot @ stop), then floor to lot_step
 
-    With equity=$100k, risk_pct=0.170% → risk_$ = $170.
+    With equity=$100k, risk_pct=0.185% → risk_$ = $185.
     DE40 entry=18030.5, SL=18000.0, |Δ|=30.5, tick=1.0, pip_value=$1.0
         $/lot @ stop = 30.5 × $1.0   =  $30.50
-        raw lots     = 170 / 30.50   =  5.5737...
-        floored 0.1  =  5.5 lots
+        raw lots     = 185 / 30.50   =  6.0656...
+        floored 0.01 =  6.06 lots
     """
     import math
     from src.live.v30_live import V30_SPECS
     spec = V30_SPECS["DE40"]
     equity   = 100_000.0
-    risk_pct = 0.00170
-    risk_usd = equity * risk_pct                          # 170.00
+    risk_pct = 0.00185
+    risk_usd = equity * risk_pct                          # 185.00
 
     entry, sl   = 18030.5, 18000.0
     risk_per_u  = abs(entry - sl)                         # 30.5
@@ -358,9 +358,9 @@ def _check_lots_formula() -> str:
         f"lots formula drift: got {lots_step}, expected {want}")
     # Sanity-check the magnitude — if anyone ever tries 100× this, we want to scream.
     assert 0.1 <= lots_step <= 10.0, (
-        f"lots {lots_step} outside sane range [0.1, 10.0] for $100k @ 0.170% — "
+        f"lots {lots_step} outside sane range [0.1, 10.0] for $100k @ 0.185% — "
         f"check pip_value/tick_size in V30_SPECS")
-    return (f"DE40 @ $100k risk=0.170%: risk=${risk_usd:.2f}, "
+    return (f"DE40 @ $100k risk=0.185%: risk=${risk_usd:.2f}, "
             f"$/lot=${per_lot_usd:.2f}, lots={lots_step}")
 
 
