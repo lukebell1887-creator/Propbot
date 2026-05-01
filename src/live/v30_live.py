@@ -78,6 +78,44 @@ from src.live.heartbeat import write_heartbeat    # ★ Stage 2 — atomic JSON 
 # v30.3 — TP1+TP2+trail in-bar partial-close ladder (parity with backtest)
 from src.live.atr_tracker import ATRTracker
 from src.live.partial_manager import PartialCloseManager, PartialState
+
+
+# =====================================================================
+#  v31.1 hotfix — DRY-RUN partial-close bridge stub
+# =====================================================================
+#  In dry-run mode the entry path assigns a *fake* ticket
+#  `int(time.time() * 1000) & 0x7FFFFFFF` and never sends an order to MT5.
+#  The PartialCloseManager, however, was originally written to call the
+#  real `MT5Bridge.close_position(ticket, lots=...)` and
+#  `MT5Bridge.modify_position(ticket, sl=...)` for TP1 / TP2 / trail SL.
+#
+#  In a *real* dry-run that path explodes: MT5 returns
+#      "Position <fake_ticket> not found"
+#  → `_safe_close` returns False → PartialCloseManager refuses to flip
+#  `tp1_hit` (per its own contract) → the engine retries every M1 bar,
+#  blocks concurrency, and never realises gains.  The bug was latent
+#  since v30.3 phase 1 (commit 53a9e95) and was tripped on 2026-05-01
+#  when a dry-run TP1 was actually crossed for the first time.
+#
+#  Fix: when dry_run is True, swap in this stub.  It satisfies the
+#  PartialCloseManager `_BridgeLike` Protocol (close_position +
+#  modify_position) and just reports success.  The PartialState is then
+#  advanced as if the broker had honoured the close, exactly mirroring
+#  the backtest's in-bar exit ladder.  In LIVE mode nothing changes —
+#  the real bridge is still wired through.
+# =====================================================================
+class _DryRunBridge:
+    """No-op stand-in for MT5Bridge used by PartialCloseManager when
+    `V30Live.dry_run is True`.  Always reports success so the PartialState
+    ladder advances (TP1 → BE → TP2 → trail) exactly as the backtest does.
+    """
+
+    def close_position(self, ticket, lots=None):  # noqa: D401 – Protocol
+        return True
+
+    def modify_position(self, ticket, sl=None, tp=None):  # noqa: D401 – Protocol
+        return True
+
 # v31 — Layer 1 slippage defense (envelope tracker + per-symbol price caps).
 #   * `emergency_sl_offset_for(sym)` → cap × 1.5 = the price-distance past the
 #      original SL at which we set the BROKER-side stop. This is the worst-
@@ -485,6 +523,13 @@ class V30Live:
         self.states: Dict[str, LiveSymbolState] = {}
         # v30.3 — single shared partial-close manager (TP1 50% + TP2 25% + 0.8×ATR trail)
         self.partial_mgr = PartialCloseManager()
+        # v31.1 hotfix — partial-close ladder bridge.  In LIVE mode this is the
+        # real MT5Bridge; in DRY-RUN it's a no-op stub that simulates close /
+        # modify success so the PartialState can advance through TP1 → BE →
+        # TP2 → trail without trying to talk to MT5 about a fake ticket.
+        # See `_DryRunBridge` block-comment at the top of the module for why.
+        self._partial_bridge = self.bridge if not self.dry_run else _DryRunBridge()
+
 
         # v31 — Layer 1 envelope tracker. One instance for the whole engine;
         # state is keyed by broker ticket, cleared in `_clear_state`. See
@@ -955,9 +1000,10 @@ class V30Live:
                 bar_close=float(bar.close),
                 atr_value=st.atr_tracker.value,
                 atr_ready=st.atr_tracker.ready,
-                bridge=self.bridge,
+                bridge=self._partial_bridge,  # v31.1 — dry-run safe
                 round_lots_fn=self._round_lots,
             )
+
             if res.tp1_fired:
                 self._log_event("TP1_PARTIAL", symbol=sym, ticket=st.open_ticket,
                                 lots_closed=round(st.partial_state.original_lots * 0.5, 4))
@@ -1308,8 +1354,18 @@ class V30Live:
                     self.counters["exit_broker"] += 1
 
     def _flatten_all(self, reason: str) -> None:
-        log.warning("[FLATTEN-ALL] %s", reason)
-        self._log_event("FLATTEN_ALL", reason=reason, equity=self._current_equity())
+        # v31.1 — only log + emit FLATTEN_ALL when there are actually open
+        # positions to flatten.  Previously the news-flatten window (2 min
+        # before every Tier-1 event) would spam this warning every poll
+        # tick (~1 s) for the entire 120 s window even after the for-loop
+        # had already cleared state, drowning the log in noise.
+        n_open = self._count_open_positions()
+        if n_open == 0:
+            log.debug("[FLATTEN-ALL] %s — no open positions, skipping", reason)
+            return
+        log.warning("[FLATTEN-ALL] %s  (closing %d open)", reason, n_open)
+        self._log_event("FLATTEN_ALL", reason=reason,
+                        equity=self._current_equity(), n_open=n_open)
         if not self.dry_run:
             try:
                 self.bridge.close_all_positions()
@@ -1321,6 +1377,7 @@ class V30Live:
                 # also gates further entries for 300 s.
                 self._record_close(sym)
                 self._clear_state(sym)
+
 
     def _close_one(self, sym: str, reason: str) -> None:
         st = self.states[sym]
