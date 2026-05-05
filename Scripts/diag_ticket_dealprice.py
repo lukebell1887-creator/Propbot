@@ -112,6 +112,12 @@ def main() -> int:
                     help="ticket numbers to inspect (omit if using --today)")
     ap.add_argument("--today", action="store_true",
                     help="inspect every ENTRY in v30_live_trades.jsonl from today UTC")
+    ap.add_argument("--all", action="store_true",
+                    help="inspect EVERY ENTRY in v30_live_trades.jsonl (full history)")
+    ap.add_argument("--summary", action="store_true",
+                    help="with --all: print one-line-per-ticket summary table only "
+                         "(no per-ticket deal table); great for spotting the stuck-ladder "
+                         "pattern across many positions")
     ap.add_argument("--root", default="Results",
                     help="directory holding v30_live_*.jsonl (default: Results)")
     args = ap.parse_args()
@@ -120,7 +126,13 @@ def main() -> int:
     logged = _load_logged(root)
 
     # Resolve target ticket list
-    if args.today:
+    if args.all:
+        target = sorted(logged.keys(),
+                        key=lambda tk: (logged[tk].get("ts_utc") or ""))
+        if not target:
+            print(f"[info] no ENTRY rows in {root / 'v30_live_trades.jsonl'}")
+            return 0
+    elif args.today:
         today = datetime.now(timezone.utc).date()
         target = []
         for tk, row in logged.items():
@@ -158,102 +170,159 @@ def main() -> int:
     print()
 
     rc = 0
+    summary_rows: List[dict] = []   # one entry per ticket, for the final table
+
     for tk in target:
-        print("-" * 92)
-        print(f"  TICKET {tk}")
-        print("-" * 92)
+        if not args.summary:
+            print("-" * 92)
+            print(f"  TICKET {tk}")
+            print("-" * 92)
         row = logged.get(tk)
-        if row is not None:
+        if row is not None and not args.summary:
             print(f"  bot logged    : symbol={row.get('symbol')}  side={row.get('side')}  "
                   f"lots={row.get('lots')}")
             print(f"                  entry_px={row.get('fill_px')}  intended={row.get('intended_px')}")
             print(f"                  SL={row.get('sl')}  TP1={row.get('tp1')}  TP2={row.get('tp2')}")
             print(f"                  ts_utc={row.get('ts_utc')}")
-        else:
+        elif row is None and not args.summary:
             print(f"  bot logged    : (no ENTRY row found in trades.jsonl for this ticket)")
 
-        # Pull all deals on this position over a generous window
-        # (broker history_deals_get with position= will scan back through history)
+        # Pull all deals on this position
         deals = mt5.history_deals_get(position=tk)
         if deals is None or len(deals) == 0:
-            err = mt5.last_error()
-            print(f"  mt5 deals     : NONE -- last_error={err}")
-            print(f"                  (try widening the date range; some brokers need from/to args)")
-            # fallback: use a 7-day window
             t_to = datetime.now(timezone.utc)
-            t_from = t_to - timedelta(days=7)
+            t_from = t_to - timedelta(days=14)
             deals = mt5.history_deals_get(t_from, t_to, position=tk)
-            if deals is None or len(deals) == 0:
-                print(f"                  still NONE after 7-day window  -- last_error={mt5.last_error()}")
-                rc = max(rc, 1)
-                continue
-
-        print(f"  mt5 deals     : {len(deals)} found")
-        print(f"  {'#':<2} {'TIME(UTC)':<19} {'TYPE':<10} {'ENTRY':<5} {'PRICE':>12} "
-              f"{'VOL':>8} {'PROFIT':>10} {'COMMENT':<30}")
-        # Sort by time
-        ds = sorted(deals, key=lambda d: int(d.time))
-        for i, d in enumerate(ds):
-            ts = datetime.fromtimestamp(int(d.time), tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-            type_map = {0: "BUY", 1: "SELL", 2: "BAL", 3: "CRD", 4: "CHG", 5: "COR", 6: "BON",
-                        7: "CMS_DLY", 8: "CMS_MNT", 9: "CMS_PER", 10: "CMS_FEE"}
-            tname = type_map.get(int(d.type), str(int(d.type)))
-            entry_map = {0: "IN", 1: "OUT", 2: "INOUT", 3: "OUT_BY"}
-            ename = entry_map.get(int(d.entry), str(int(d.entry)))
-            print(f"  {i:<2} {ts:<19} {tname:<10} {ename:<5} "
-                  f"{float(d.price):>12.5f} {float(d.volume):>8.3f} "
-                  f"{float(d.profit):>10.2f} {str(d.comment)[:30]:<30}")
-
-        # Identify entry / exit deals
-        in_deal = next((d for d in ds if int(d.entry) == 0), None)        # DEAL_ENTRY_IN
-        # OUT (1) covers normal close; OUT_BY (3) covers close-by-opposite; INOUT (2) is partials
-        out_deals = [d for d in ds if int(d.entry) in (1, 3)]
-        partial_deals = [d for d in ds if int(d.entry) == 2]
-        print()
-        if in_deal is None:
-            print(f"  [warn] no DEAL_ENTRY_IN found for ticket {tk}")
-        if not out_deals and not partial_deals:
-            print(f"  [info] position appears still OPEN -- no OUT/OUT_BY/INOUT deals yet")
+        if deals is None or len(deals) == 0:
+            if not args.summary:
+                print(f"  mt5 deals     : NONE  last_error={mt5.last_error()}")
+            summary_rows.append({"ticket": tk, "sym": (row or {}).get("symbol", "?"),
+                                 "side": (row or {}).get("side", "?"), "verdict": "NO_MT5_DEALS",
+                                 "exit_px": None, "held_min": None, "pnl": None, "row": row})
+            rc = max(rc, 1)
             continue
 
-        # Use the LAST out / inout deal as the "final close" price
+        ds = sorted(deals, key=lambda d: int(d.time))
+        if not args.summary:
+            print(f"  mt5 deals     : {len(deals)} found")
+            print(f"  {'#':<2} {'TIME(UTC)':<19} {'TYPE':<10} {'ENTRY':<5} {'PRICE':>12} "
+                  f"{'VOL':>8} {'PROFIT':>10} {'COMMENT':<30}")
+            for i, d in enumerate(ds):
+                ts = datetime.fromtimestamp(int(d.time), tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                type_map = {0: "BUY", 1: "SELL", 2: "BAL", 3: "CRD", 4: "CHG", 5: "COR", 6: "BON"}
+                tname = type_map.get(int(d.type), str(int(d.type)))
+                entry_map = {0: "IN", 1: "OUT", 2: "INOUT", 3: "OUT_BY"}
+                ename = entry_map.get(int(d.entry), str(int(d.entry)))
+                print(f"  {i:<2} {ts:<19} {tname:<10} {ename:<5} "
+                      f"{float(d.price):>12.5f} {float(d.volume):>8.3f} "
+                      f"{float(d.profit):>10.2f} {str(d.comment)[:30]:<30}")
+
+        in_deal = next((d for d in ds if int(d.entry) == 0), None)
+        out_deals = [d for d in ds if int(d.entry) in (1, 3)]
+        partial_deals = [d for d in ds if int(d.entry) == 2]
+        if not out_deals and not partial_deals:
+            if not args.summary:
+                print(f"  [info] position still OPEN -- no closing deals yet")
+            summary_rows.append({"ticket": tk, "sym": (row or {}).get("symbol", "?"),
+                                 "side": (row or {}).get("side", "?"), "verdict": "STILL_OPEN",
+                                 "exit_px": None,
+                                 "held_min": (int(datetime.now(timezone.utc).timestamp()) -
+                                              int(in_deal.time))/60.0 if in_deal else None,
+                                 "pnl": None, "row": row})
+            continue
+
         final_deal = (out_deals or partial_deals)[-1]
         exit_px = float(final_deal.price)
-        side    = (row or {}).get("side")
-        sl      = (row or {}).get("sl")
-        tp1     = (row or {}).get("tp1")
-        tp2     = (row or {}).get("tp2")
+        side = (row or {}).get("side")
+        sl = (row or {}).get("sl")
+        tp1 = (row or {}).get("tp1")
+        tp2 = (row or {}).get("tp2")
         verdict = _classify_exit(side, exit_px, sl, tp1, tp2)
-        held_s  = (int(final_deal.time) - int(in_deal.time)) if in_deal is not None else 0
-
-        # PnL = sum of profit on every deal (commissions/swap come on bal entries)
+        held_s = (int(final_deal.time) - int(in_deal.time)) if in_deal is not None else 0
         total_profit = sum(float(d.profit) for d in ds)
-        total_swap   = sum(float(getattr(d, "swap", 0.0)) for d in ds)
+        total_swap = sum(float(getattr(d, "swap", 0.0)) for d in ds)
         total_commis = sum(float(getattr(d, "commission", 0.0)) for d in ds)
 
-        print(f"  ENTRY price   = {float(in_deal.price):.5f}" if in_deal else "  ENTRY price = ?")
-        print(f"  EXIT  price   = {exit_px:.5f}   (final {len(out_deals)+len(partial_deals)} closing deal[s])")
-        print(f"  held          = {held_s} s ({held_s/60.0:.1f} min)")
-        print(f"  net P/L (gross) = {total_profit:.2f}   swap={total_swap:.2f}   commis={total_commis:.2f}")
-        print(f"  VERDICT       = {verdict}")
-        # Highlight the manual-close reason explicitly
+        if not args.summary:
+            print()
+            print(f"  ENTRY price   = {float(in_deal.price):.5f}" if in_deal else "  ENTRY price = ?")
+            print(f"  EXIT  price   = {exit_px:.5f}   ({len(out_deals)+len(partial_deals)} closing deal[s])")
+            print(f"  held          = {held_s} s ({held_s/60.0:.1f} min)")
+            print(f"  net P/L (gross) = {total_profit:.2f}   swap={total_swap:.2f}   commis={total_commis:.2f}")
+            print(f"  VERDICT       = {verdict}")
+            v = verdict.lower()
+            if "manual" in v or "between tp1" in v:
+                print(f"  >>> CLOSED MANUALLY -- bot did NOT fire its own TP/SL.")
+            elif "tp1" in v or "tp2" in v:
+                print(f"  >>> closed AT THE LADDER LEVEL the bot intended.")
+            elif "sl hit" in v:
+                print(f"  >>> closed AT THE STOP LOSS the bot set.")
+
+        # Bucket the verdict for summary
         v = verdict.lower()
-        if "manual" in v or "between tp1" in v:
-            print(f"  >>> this position was CLOSED MANUALLY (or by an external EA) -- "
-                  f"the bot did NOT fire its own TP/SL on it.")
-        elif "tp1" in v or "tp2" in v:
-            print(f"  >>> this position was closed AT THE LADDER LEVEL the bot intended.")
+        if "tp2 hit" in v:
+            bucket = "TP2"
+        elif "tp1 hit" in v:
+            bucket = "TP1"
         elif "sl hit" in v:
-            print(f"  >>> this position was closed AT THE STOP LOSS the bot set.")
+            bucket = "SL"
+        elif "manual" in v or "between tp1" in v or "inside range" in v or "beyond tp2" in v:
+            bucket = "MANUAL/STUCK"
+        elif "worse than sl" in v:
+            bucket = "GAP_THRU_SL"
+        else:
+            bucket = "?"
+        summary_rows.append({"ticket": tk, "sym": (row or {}).get("symbol", "?"),
+                             "side": (row or {}).get("side", "?"),
+                             "verdict": bucket, "verdict_full": verdict,
+                             "exit_px": exit_px, "held_min": held_s/60.0,
+                             "pnl": total_profit, "row": row,
+                             "entry_ts": (row or {}).get("ts_utc", "?")})
 
     try:
         mt5.shutdown()
     except Exception:
         pass
+
+    # ========== SUMMARY TABLE ==========
     print()
-    print("=" * 92)
+    print("=" * 110)
+    print("  SUMMARY  (one row per ticket -- bucket = how the position actually exited)")
+    print("=" * 110)
+    print(f"  {'TICKET':<11} {'ENTRY_TS(UTC)':<20} {'SYM':<7} {'SIDE':<6} "
+          f"{'BUCKET':<14} {'EXIT_PX':>12} {'HELD_MIN':>9} {'PNL':>10}")
+    print("  " + "-" * 100)
+    counts: Dict[str, int] = {}
+    pnl_by_bucket: Dict[str, float] = {}
+    for s in summary_rows:
+        ts = (s.get("entry_ts") or "?")[:19]
+        ex = f"{s['exit_px']:.5f}" if s.get('exit_px') is not None else "?"
+        hm = f"{s['held_min']:.1f}" if s.get('held_min') is not None else "?"
+        pn = f"{s['pnl']:.2f}" if s.get('pnl') is not None else "?"
+        flag = "  <-- STUCK LADDER" if s["verdict"] == "MANUAL/STUCK" else ""
+        print(f"  {s['ticket']:<11} {ts:<20} {s['sym']:<7} {s['side']:<6} "
+              f"{s['verdict']:<14} {ex:>12} {hm:>9} {pn:>10}{flag}")
+        counts[s["verdict"]] = counts.get(s["verdict"], 0) + 1
+        if s.get("pnl") is not None:
+            pnl_by_bucket[s["verdict"]] = pnl_by_bucket.get(s["verdict"], 0.0) + s["pnl"]
+    print("  " + "-" * 100)
+    print()
+    print("  COUNTS BY BUCKET:")
+    for b in sorted(counts.keys()):
+        pnl = pnl_by_bucket.get(b, 0.0)
+        print(f"    {b:<14} : n={counts[b]:<3}   sum_pnl={pnl:>10.2f}")
+    stuck = counts.get("MANUAL/STUCK", 0)
+    total = sum(counts.values())
+    if stuck > 0:
+        print()
+        print(f"  *** {stuck} of {total} positions ({100*stuck/total:.0f}%) exited as MANUAL/STUCK")
+        print(f"      -- these are positions where the bot did NOT fire its own TP1/TP2/SL")
+        print(f"      -- the close came from somewhere else (you, broker, external EA).")
+        print(f"      -- IF YOU DID NOT MANUALLY CLOSE THESE, this is the partial-ladder bug.")
+    print()
+    print("=" * 110)
     print("  DONE.")
-    print("=" * 92)
+    print("=" * 110)
     return rc
 
 
