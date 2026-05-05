@@ -1,4 +1,4 @@
-"""
+r"""
 Scripts/diag_ticket_dealprice.py
 ================================
 Pulls every MT5 history deal tied to a position ticket and prints them in
