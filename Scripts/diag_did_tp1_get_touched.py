@@ -100,39 +100,89 @@ def _parse_iso_to_epoch(s: str) -> Optional[int]:
         return None
 
 
-def _fetch_position_window_from_mt5(mt5, ticket: int) -> Optional[Tuple[int, int, str, float, str]]:
-    """Return (entry_epoch, exit_epoch, symbol, exit_px, exit_kind) for a ticket.
-    If still open, exit_epoch = now. Returns None if unknown to MT5."""
-    # Try last 14 days of history
+# Cache pulled once per process for symbol resolution
+_BROKER_SYMBOL_CACHE: Dict[str, Optional[str]] = {}
+_ALL_DEALS_CACHE: Optional[list] = None
+
+
+def _resolve_broker_symbol(mt5, bot_symbol: str) -> Optional[str]:
+    """Map the bot's logical symbol (DE40 / US500 / US30 / XAUUSD)
+    to the broker's actual symbol name (DAX40 / SP500 / US30 / XAUUSD etc.)."""
+    if bot_symbol in _BROKER_SYMBOL_CACHE:
+        return _BROKER_SYMBOL_CACHE[bot_symbol]
+    # 1. direct
+    if mt5.symbol_info(bot_symbol) is not None:
+        _BROKER_SYMBOL_CACHE[bot_symbol] = bot_symbol
+        return bot_symbol
+    bot_upper = bot_symbol.upper()
+    aliases = {
+        "DE40":   ["DAX40", "GER40", "DE30", "DE40.cash", "GER40.cash", "DAX"],
+        "US500":  ["SP500", "SPX500", "US500.cash", "SP500.cash", "SPX"],
+        "US30":   ["DJ30", "DJI30", "US30.cash", "DJ30.cash", "DJIA"],
+        "XAUUSD": ["GOLD", "XAUUSD.raw", "XAU/USD"],
+        "NAS100": ["US100", "NAS100.cash", "USTEC", "NDX"],
+    }
+    syms = mt5.symbols_get()
+    if syms is None:
+        _BROKER_SYMBOL_CACHE[bot_symbol] = None
+        return None
+    name_set = {s.name: s.name for s in syms}
+    name_upper = {s.name.upper(): s.name for s in syms}
+    # exact case-insensitive
+    if bot_upper in name_upper:
+        _BROKER_SYMBOL_CACHE[bot_symbol] = name_upper[bot_upper]
+        return name_upper[bot_upper]
+    # alias list
+    for alias in aliases.get(bot_upper, []):
+        if alias.upper() in name_upper:
+            _BROKER_SYMBOL_CACHE[bot_symbol] = name_upper[alias.upper()]
+            return name_upper[alias.upper()]
+    # substring fallback
+    for s_upper, s_real in name_upper.items():
+        if bot_upper in s_upper or s_upper in bot_upper:
+            _BROKER_SYMBOL_CACHE[bot_symbol] = s_real
+            return s_real
+    _BROKER_SYMBOL_CACHE[bot_symbol] = None
+    return None
+
+
+def _all_deals_last_14_days(mt5) -> list:
+    """One bulk pull, cached. Avoids the position= filter bug we hit."""
+    global _ALL_DEALS_CACHE
+    if _ALL_DEALS_CACHE is not None:
+        return _ALL_DEALS_CACHE
     t_to = datetime.now(timezone.utc)
     t_from = t_to - timedelta(days=14)
-    deals = mt5.history_deals_get(t_from, t_to, position=ticket)
-    if deals is None or len(deals) == 0:
-        # Maybe still open
+    deals = mt5.history_deals_get(t_from, t_to)
+    _ALL_DEALS_CACHE = list(deals) if deals is not None else []
+    return _ALL_DEALS_CACHE
+
+
+def _fetch_position_exit(mt5, ticket: int) -> Tuple[Optional[int], float, str]:
+    """Return (exit_epoch_or_None, exit_px, kind) for this position ticket.
+    Filters deals manually by d.position_id == ticket (bypasses broken position= flag)."""
+    all_deals = _all_deals_last_14_days(mt5)
+    matching = [d for d in all_deals if int(getattr(d, "position_id", 0)) == int(ticket)]
+    if not matching:
+        # Still open?
         pos = mt5.positions_get(ticket=ticket)
         if pos and len(pos) > 0:
-            return (int(pos[0].time), int(t_to.timestamp()), pos[0].symbol, 0.0, "STILL_OPEN")
-        return None
-    # Sort by time
-    deals = sorted(deals, key=lambda d: d.time)
-    in_deal = next((d for d in deals if d.entry == 0), None)  # DEAL_ENTRY_IN
-    out_deals = [d for d in deals if d.entry == 1]            # DEAL_ENTRY_OUT
-    if in_deal is None:
-        return None
-    sym = in_deal.symbol
-    entry_ep = int(in_deal.time)
+            return (int(datetime.now(timezone.utc).timestamp()), 0.0, "STILL_OPEN")
+        return (None, 0.0, "NO_MT5_DATA")
+    matching.sort(key=lambda d: d.time)
+    out_deals = [d for d in matching if d.entry == 1]
     if not out_deals:
-        # still open
-        return (entry_ep, int(t_to.timestamp()), sym, 0.0, "STILL_OPEN")
+        return (int(datetime.now(timezone.utc).timestamp()), 0.0, "STILL_OPEN")
     last_out = out_deals[-1]
-    return (entry_ep, int(last_out.time), sym, float(last_out.price), "CLOSED")
+    return (int(last_out.time), float(last_out.price), "CLOSED")
 
 
-def _fetch_m1_bars(mt5, symbol: str, t_from_ep: int, t_to_ep: int) -> list:
+def _fetch_m1_bars(mt5, broker_symbol: str, t_from_ep: int, t_to_ep: int) -> list:
     """Pull recent M1 bars and filter to [t_from_ep, t_to_ep]. Robust to
     broker-timezone quirks because we filter by epoch in Python."""
-    # 14000 M1 bars ~= ~10 days, plenty for any position lifetime
-    rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M1, 0, 14000)
+    if not broker_symbol:
+        return []
+    rates = mt5.copy_rates_from_pos(broker_symbol, mt5.TIMEFRAME_M1, 0, 14000)
     if rates is None or len(rates) == 0:
         return []
     out = []
@@ -208,23 +258,35 @@ def main():
         except Exception:
             tp1 = 0.0
         side = (row.get("side") or "").upper()
+        bot_sym = (row.get("symbol") or "").upper()
         entry_ts = row.get("ts_utc") or ""
         entry_ep_logged = _parse_iso_to_epoch(entry_ts)
-        if entry_ep_logged and entry_ep_logged < cutoff_ep:
+        if entry_ep_logged is None:
+            continue
+        if entry_ep_logged < cutoff_ep:
             continue
 
-        win = _fetch_position_window_from_mt5(mt5, tk)
-        if win is None:
+        # Get exit info from MT5 (manual filter by position_id, bypasses broken position= flag)
+        exit_ep, exit_px, exit_kind = _fetch_position_exit(mt5, tk)
+        if exit_kind == "NO_MT5_DATA":
             counts["NO_MT5_DATA"] += 1
-            print(f"  {tk:<11} ?       ?      {entry_ts[:19]:<20} {tp1:>10.2f} "
-                  f"{'?':<8} {'?':<8} {'NO_MT5_DATA':<22}")
+            print(f"  {tk:<11} {bot_sym:<7} {side:<6} {entry_ts[:19]:<20} {tp1:>10.2f} "
+                  f"{'?':<8} {'?':<8} {'NO_MT5_DATA':<22}  (acct rotated/aged out)")
             continue
-        entry_ep, exit_ep, sym, exit_px, exit_kind = win
-        bars = _fetch_m1_bars(mt5, sym, entry_ep, exit_ep)
+
+        # Resolve broker symbol and pull M1 bars for the CORRECT instrument
+        broker_sym = _resolve_broker_symbol(mt5, bot_sym)
+        if broker_sym is None:
+            counts["NO_M1_BARS"] += 1
+            print(f"  {tk:<11} {bot_sym:<7} {side:<6} {entry_ts[:19]:<20} {tp1:>10.2f} "
+                  f"{'?':<8} {'?':<8} {'NO_BROKER_SYMBOL':<22}  (cannot map {bot_sym})")
+            continue
+
+        bars = _fetch_m1_bars(mt5, broker_sym, entry_ep_logged, exit_ep or entry_ep_logged)
         if not bars:
             counts["NO_M1_BARS"] += 1
-            print(f"  {tk:<11} {sym:<7} {side:<6} {entry_ts[:19]:<20} {tp1:>10.2f} "
-                  f"{'?':<8} {'?':<8} {'NO_M1_BARS':<22}")
+            print(f"  {tk:<11} {bot_sym:<7} {side:<6} {entry_ts[:19]:<20} {tp1:>10.2f} "
+                  f"{'?':<8} {'?':<8} {'NO_M1_BARS':<22}  (broker_sym={broker_sym})")
             continue
 
         if side == "LONG":
@@ -251,7 +313,7 @@ def main():
 
         counts[bucket] = counts.get(bucket, 0) + 1
         marker = "  <-- BUG" if bucket == "STUCK_LADDER_BUG" else ""
-        line = f"  {tk:<11} {sym:<7} {side:<6} {entry_ts[:19]:<20} {tp1:>10.2f} " \
+        line = f"  {tk:<11} {bot_sym:<7} {side:<6} {entry_ts[:19]:<20} {tp1:>10.2f} " \
                f"{('YES' if tp1_touched else 'no'):<8} " \
                f"{('YES' if tp1_evt_logged else 'no'):<8} " \
                f"{bucket:<22}{marker}"
