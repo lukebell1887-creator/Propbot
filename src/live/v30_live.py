@@ -505,7 +505,17 @@ class V30Live:
     Live runner. Thread-safe. Can be stopped with `runner.stop()` or Ctrl-C.
     """
 
+    # v31.2 — entry-grace seconds for the broker reconciliation race.
+    # Within this window after a live entry, a "ticket missing from
+    # the cached broker positions list" is treated as cache-lag noise
+    # rather than a real broker close. After the window expires, the
+    # ticket really is gone from the broker and we treat it as closed.
+    # Tuned conservatively: the EA pushes positions every ~100-500 ms,
+    # so 30 s is a 60-150× safety margin against propagation jitter.
+    RECONCILE_GRACE_S: float = 30.0
+
     def __init__(
+
         self,
         bridge: MT5Bridge,
         cfg: Optional[V30LiveConfig] = None,
@@ -1339,19 +1349,58 @@ class V30Live:
                 self.counters["exit_window"] += 1
 
         # Sync with broker (live mode only — see v23 comments)
+        #
+        # v31.2 (2026-05-05) — POST-ENTRY RECONCILIATION RACE FIX
+        # ---------------------------------------------------------
+        # Root cause of US500 ticket 547550971 phantom-close, 2026-05-05:
+        #   • The MT5 bridge (src/execution/mt5_bridge.py:668) returns
+        #     `self._positions`, which is a CACHED list pushed by the EA
+        #     over ZMQ — not a live MT5 query.
+        #   • Immediately after `order_send` returns success, the cache may
+        #     not yet contain the new ticket (the EA push interval can be
+        #     several hundred ms, and we observed the false close firing
+        #     just 15 ms after the entry was logged).
+        #   • Old logic then wiped state, synthesised a fake close at TP1
+        #     via `snap_tp1`, and ignored the real broker position for the
+        #     next 2 hours until the user manually intervened.
+        #
+        # Fix: an entry-grace window. For RECONCILE_GRACE_S seconds after
+        # `st.open_at`, do NOT trust the cached "ticket missing" signal.
+        # If the bridge cache really hasn't caught up after grace expires,
+        # then – and only then – we treat the ticket as broker-closed.
         if not self.dry_run:
+            now_reco = datetime.now(timezone.utc)
             open_by_broker = {p.ticket: p for p in self._broker_positions()}
             for sym, st in self.states.items():
-                if st.open_ticket is not None and st.open_ticket not in open_by_broker:
-                    self._log_event("POS_CLOSED_BY_BROKER",
-                                    symbol=sym,
-                                    ticket=st.open_ticket,
-                                    side=st.open_side)
-                    self._feed_sizer_on_close(sym, reason="broker_close")
-                    # ★ stamp last-close for cross-symbol cooldown
-                    self._record_close(sym)
-                    self._clear_state(sym)
-                    self.counters["exit_broker"] += 1
+                if st.open_ticket is None or st.open_ticket in open_by_broker:
+                    continue
+                # --- Layer 1: post-entry grace period ----------------------
+                if st.open_at is not None:
+                    age_s = (now_reco - st.open_at).total_seconds()
+                    if age_s < self.RECONCILE_GRACE_S:
+                        # Cache is too fresh to be trusted. Trust our own
+                        # entry confirmation; emit a one-line breadcrumb so
+                        # we can verify the guard is firing in production.
+                        if not getattr(st, "_grace_logged", False):
+                            self._log_event(
+                                "RECONCILE_GRACE_SKIPPED",
+                                symbol=sym,
+                                ticket=st.open_ticket,
+                                age_s=round(age_s, 3),
+                                grace_s=self.RECONCILE_GRACE_S,
+                            )
+                            st._grace_logged = True
+                        continue
+                # --- Grace expired: this is a real broker-side close ----
+                self._log_event("POS_CLOSED_BY_BROKER",
+                                symbol=sym,
+                                ticket=st.open_ticket,
+                                side=st.open_side)
+                self._feed_sizer_on_close(sym, reason="broker_close")
+                # ★ stamp last-close for cross-symbol cooldown
+                self._record_close(sym)
+                self._clear_state(sym)
+                self.counters["exit_broker"] += 1
 
     def _flatten_all(self, reason: str) -> None:
         # v31.1 — only log + emit FLATTEN_ALL when there are actually open
