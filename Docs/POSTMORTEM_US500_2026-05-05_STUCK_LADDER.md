@@ -1,19 +1,32 @@
-# POSTMORTEM — US500 ticket #547550971 stuck-ladder, 2026-05-05
+# POSTMORTEM — partial-close ladder stuck-state bug, 2026-05-05
 
-## TL;DR — read this first
-- **The bot is mostly working.** Out of 9 closed positions in the last 7 days that
-  *looked* like stuck-ladder events in my first audit, 8 were actually the bot's
-  trail-SL working correctly — my diag classifier didn't know about the moving SL,
-  so it false-flagged them. The bot's TP1/TP2/TRAIL_SL ladder has fired on **8
-  separate positions in 7 days** (DE40 ×2, US500 ×3, US30 ×1, XAUUSD ×2).
-- **There is exactly ONE confirmed real bug:** US500 ticket #547550971, opened
-  2026-05-05 14:45:02 UTC, held for 120 minutes, ran past both TP1 and TP2, and
-  the partial-close ladder fired **zero** events. You manually closed it at
-  7245.94 for +$321.23 (~12 points past TP2).
-- **Cost:** vs. the bot's intended ladder, your manual rescue was actually
-  *better* than the design (because price kept running far past TP2 and the bot
-  would have only kept the last 25 % running). But the bug is real and the next
-  time price hits TP2 then reverses, **we lose the entire profit.**
+## TL;DR — definitive numbers from `Scripts/diag_did_tp1_get_touched.py` v2
+
+Cross-referenced **MT5 M1 bar high/lows** against **`TP1_PARTIAL` events in
+`v30_live_events.log`** for every position the bot opened in the last 10 days
+(28 tickets total). The detector physically checks whether bar HIGH (LONG) or
+bar LOW (SHORT) crossed TP1 in MT5's own data.
+
+| bucket                  | n  | meaning                                              |
+|-------------------------|----|-------------------------------------------------------|
+| `CORRECT_TP1_FIRED`     | 8  | TP1 touched in market AND `TP1_PARTIAL` event logged |
+| `CORRECT_NO_TP1`        | 10 | TP1 never reached → SL'd cleanly (no bug)            |
+| **`STUCK_LADDER_BUG`**  | **1** | TP1 touched but ZERO `TP1_PARTIAL` event ★ **THE BUG** ★ |
+| `STILL_OPEN_NO_TP1`     | 1  | today's US500 547550971, was open at script run      |
+| `NO_MT5_DATA`           | 8  | 6 = old-account tickets (rotated, unknowable); 2 = today's closed positions whose deals didn't match `position_id` |
+
+**Confirmed real instance:** DE40 SHORT ticket `543990333`, 2026-04-28 08:31 UTC.
+TP1 = 24014.68. M1 LOW crossed TP1. Bot logged zero `TP1_PARTIAL`.
+
+**Today's US500 547550971 (the trigger event):** still open at script run; needs
+a re-run AFTER the manual close has propagated into MT5 history. Given price
+ran to 7245.94 (above TP2 = 7237.01) before manual close, it almost certainly
+also classifies as `STUCK_LADDER_BUG` — but is not yet definitively confirmed.
+
+**Honest rate:** at minimum 1 in (1+8) = ~11 % of TP1-eligible positions over
+7 days. Could be 2–3 in 11 once today's US500 + the two `NO_MT5_DATA` today-tickets
+are re-checked. Either way: the bug is **real, rare, and bounded**, but it
+silently turns a winning ladder trade into a SL.
 
 ---
 
