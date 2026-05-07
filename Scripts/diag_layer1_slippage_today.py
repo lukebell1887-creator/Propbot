@@ -119,14 +119,17 @@ def main():
         print("    (no rows today)")
     else:
         print(f"    {'time':<19}  {'sym':<7}  {'side':<5}  {'intend':>10}  {'fill':>10}  "
-              f"{'slip_pts':>9}  {'lots':>6}")
+              f"{'slip_t':>9}  {'slip_$':>9}  {'lots':>6}")
         for r in slip_rows:
             ts = _row_time(r)
             sym = str(r.get("symbol", "?"))
             side = str(r.get("side", "?"))
             intent = r.get("intended_px") or r.get("requested_px") or "?"
             fill = r.get("fill_px") or r.get("actual_px") or "?"
-            slip = r.get("slip_pts") or r.get("entry_slip_pts") or "?"
+            slip = (r.get("slip_ticks")
+                    if r.get("slip_ticks") is not None
+                    else r.get("slip_pts", "?"))
+            slip_d = r.get("slip_dollars", "?")
             lots = r.get("lots", "?")
             def f(v):
                 try: return f"{float(v):>10.4f}"
@@ -135,7 +138,7 @@ def main():
                 try: return f"{float(v):>9.3f}"
                 except: return f"{str(v):>9.9}"
             print(f"    {ts:<19}  {sym:<7}  {side:<5}  {f(intent)}  {f(fill)}  "
-                  f"{fs(slip)}  {str(lots):>6}")
+                  f"{fs(slip)}  {str(slip_d):>9}  {str(lots):>6}")
     print()
 
     # Per-LAYER1_FIRED breakdown
@@ -157,13 +160,24 @@ def main():
             reason = ev.get("reason", "")
             side = ev.get("side")
 
-            # Find the matching ENTRY (most recent before this event for this sym)
+            # Find the matching ENTRY for this symbol on this day. NOTE:
+            # ENTRY rows record bar.time (broker tz, e.g. UTC+3) while
+            # LAYER1_FIRED records datetime.now(timezone.utc), so the
+            # textual timestamps are not directly comparable. Take the
+            # latest ENTRY for this symbol whose textual time is BEFORE
+            # the event; if that filter rejects everything, fall back
+            # to the latest ENTRY for that symbol (covers the
+            # broker-tz mismatch).
+            entries_for_sym = entries_by_sym.get(sym, [])
             ent = None
-            for e in entries_by_sym.get(sym, []):
+            for e in entries_for_sym:
                 if _row_time(e) <= ts:
                     ent = e
-            orig_sl = ent.get("SL") if ent else None
-            orig_entry = ent.get("entry") if ent else None
+            if ent is None and entries_for_sym:
+                ent = entries_for_sym[-1]
+            orig_sl = (ent.get("SL") or ent.get("sl")) if ent else None
+            orig_entry = (ent.get("entry") or ent.get("intended_px")
+                          or ent.get("fill_px")) if ent else None
 
             # Find matching SIZER_FEEDBACK after this layer1 fire (same symbol)
             fb = None

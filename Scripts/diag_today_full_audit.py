@@ -237,8 +237,9 @@ def main() -> int:
         per_ticket = events_by_ticket.get(tk, []) if tk is not None else []
         per_symbol = events_by_symbol.get(str(sym), [])
         # entry timestamp lower-bound (broker tz, but events are in UTC -- be permissive
-        # and include any event that's not assigned to a *different* ticket)
-        ticket_ids = {_row_ticket(r) for r in events_by_ticket}
+        # and include any event that's not assigned to a *different* ticket).
+        # NOTE: do NOT iterate `events_by_ticket` (it's a dict; keys are ticket ints,
+        # not rows). The dedup-by-ticket filter below is enough.
         post_events = list(per_ticket)
         seen = {id(e) for e in post_events}
         for ev in per_symbol:
