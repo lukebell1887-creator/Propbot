@@ -117,16 +117,20 @@ def load_entries(target_day: str) -> list[dict]:
     return out
 
 
-def load_events_by_ticket(target_day: str) -> tuple[dict[int, list[dict]], list[dict]]:
-    """All event rows from events.log grouped by ticket; also returns the full list."""
+def load_events_indexed(target_day: str):
+    """All event rows from events.log indexed by ticket AND by symbol."""
     rows = _read_jsonl(EVENTS)
     today_rows = [r for r in rows if _row_date(r) == target_day]
     by_ticket: dict[int, list[dict]] = defaultdict(list)
+    by_symbol: dict[str, list[dict]] = defaultdict(list)
     for r in today_rows:
         tk = _row_ticket(r)
+        sym = r.get("symbol")
         if tk is not None:
             by_ticket[tk].append(r)
-    return by_ticket, today_rows
+        if sym:
+            by_symbol[str(sym)].append(r)
+    return by_ticket, by_symbol, today_rows
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +183,7 @@ def classify(events: list[dict]) -> str:
 def main() -> int:
     day = parse_target_date(sys.argv)
     entries = load_entries(day)
-    events_by_ticket, all_events = load_events_by_ticket(day)
+    events_by_ticket, events_by_symbol, all_events = load_events_indexed(day)
 
     print()
     print("=" * 96)
@@ -227,7 +231,26 @@ def main() -> int:
         tp1_px = ent.get("TP1") or ent.get("tp1") or "?"
         ts = _row_time(ent)
         tk = _row_ticket(ent)
-        post_events = events_by_ticket.get(tk, []) if tk is not None else []
+        # Merge ticket-keyed events with symbol-keyed events that occurred
+        # AFTER this entry (LAYER1_FIRED / SIZER_FEEDBACK lack a ticket
+        # field but include symbol).
+        per_ticket = events_by_ticket.get(tk, []) if tk is not None else []
+        per_symbol = events_by_symbol.get(str(sym), [])
+        # entry timestamp lower-bound (broker tz, but events are in UTC -- be permissive
+        # and include any event that's not assigned to a *different* ticket)
+        ticket_ids = {_row_ticket(r) for r in events_by_ticket}
+        post_events = list(per_ticket)
+        seen = {id(e) for e in post_events}
+        for ev in per_symbol:
+            if id(ev) in seen:
+                continue
+            ev_tk = _row_ticket(ev)
+            if ev_tk is not None and ev_tk != tk:
+                continue   # belongs to a different trade on the same symbol
+            post_events.append(ev)
+            seen.add(id(ev))
+        # sort by ts
+        post_events.sort(key=lambda r: _row_time(r))
 
         tp1_fired = any(str(e.get("kind", "")) == "TP1_PARTIAL" for e in post_events)
         klass = classify(post_events)
