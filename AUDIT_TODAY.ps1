@@ -1,11 +1,12 @@
-# AUDIT_TODAY.ps1 — run on the VPS
-# ----------------------------------
+# AUDIT_TODAY.ps1 -- run on the VPS
+# ---------------------------------
 # Pulls latest, then prints a per-ticket audit of every entry today,
 # every subsequent ladder/Layer1/close event, and a final classification
 # (TP1_HIT / SL_HIT / LAYER1_CLOSE / STILL_OPEN / NO_LADDER_EVENTS).
 #
 # Usage on VPS:
 #     cd C:\PropBot
+#     git pull
 #     .\AUDIT_TODAY.ps1                  # today (UTC)
 #     .\AUDIT_TODAY.ps1 2026-05-07       # explicit date
 #
@@ -21,14 +22,14 @@ Set-Location $root
 
 Write-Host ""
 Write-Host "================================================================================"
-Write-Host "  AUDIT_TODAY — pulling latest, then auditing today's entries"
+Write-Host "  AUDIT_TODAY -- pulling latest, then auditing today's entries"
 Write-Host "================================================================================"
 
 # Pull latest scripts (non-fatal if offline)
 try {
     git pull --ff-only 2>&1 | Out-Host
 } catch {
-    Write-Host "[warn] git pull failed — continuing with local copy"
+    Write-Host "[warn] git pull failed -- continuing with local copy"
 }
 
 # Resolve date
@@ -36,8 +37,11 @@ if ([string]::IsNullOrWhiteSpace($Date)) {
     $Date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
 }
 
-$outFile = Join-Path $root "Results\audit_$Date.txt"
-New-Item -ItemType Directory -Force -Path (Split-Path $outFile) | Out-Null
+$resultsDir = Join-Path $root "Results"
+if (-not (Test-Path $resultsDir)) {
+    New-Item -ItemType Directory -Force -Path $resultsDir | Out-Null
+}
+$outFile = Join-Path $resultsDir ("audit_{0}.txt" -f $Date)
 
 Write-Host ""
 Write-Host "  date: $Date"

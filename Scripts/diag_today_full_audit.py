@@ -35,7 +35,7 @@ def parse_target_date(argv: list[str]) -> str:
 def parse_events(target_day: str) -> tuple[list[dict], dict[int, list[dict]]]:
     """Return (entry_events, per_ticket_events)."""
     if not EVENTS.exists():
-        print(f"[ERR] {EVENTS} not found — run on VPS, not locally.")
+        print(f"[ERR] {EVENTS} not found - run on VPS, not locally.")
         sys.exit(2)
 
     entries: list[dict] = []
@@ -95,7 +95,7 @@ def classify(events: list[dict], trade: dict | None) -> str:
             return "TP1_HIT_then_TRAIL"
         return "TP1_HIT (still open or BE)"
     if any("layer1" in r for r in reasons):
-        # Layer 1 close — was it after SL or before TP1?
+        # Layer 1 close - was it after SL or before TP1?
         return "LAYER1_CLOSE_AT_SL (real loss, not missed TP)"
     if any("CLOSE" in t for t in tags):
         if trade and trade.get("realised_R", 0) < 0:
@@ -111,7 +111,7 @@ def main() -> int:
 
     print()
     print("=" * 96)
-    print(f"  TODAY'S TRADE AUDIT — {day}")
+    print(f"  TODAY'S TRADE AUDIT - {day}")
     print(f"  events: {EVENTS}   trades: {TRADES}")
     print("=" * 96)
     print(f"  total entries today: {len(entries)}")
@@ -158,7 +158,7 @@ def main() -> int:
                       "sl_trigger_px", "raw_slip_pts", "action"):
                 if k in ev:
                     extra += f"  {k}={ev[k]}"
-            print(f"        └ {ts2}  {tag:<26}  {reason}{extra}")
+            print(f"          > {ts2}  {tag:<26}  {reason}{extra}")
         print()
 
     # Summary
@@ -179,11 +179,11 @@ def main() -> int:
                  if not any(e.get("_tag", "").startswith(("TP1", "TP2", "TRAIL", "BE_MOVE",
                                                           "LAYER1", "CLOSE")) for e in v)]
     if no_ladder:
-        print(f"  ⚠  {len(no_ladder)} ticket(s) have ENTRY but NO subsequent ladder/close event:")
-        print(f"     {no_ladder}")
-        print(f"     → these are the ones to investigate (potential stuck/missed TP)")
+        print(f"  [WARN]  {len(no_ladder)} ticket(s) have ENTRY but NO subsequent ladder/close event:")
+        print(f"          {no_ladder}")
+        print(f"          -> these are the ones to investigate (potential stuck/missed TP)")
     else:
-        print("  ✓  Every ticket has at least one ladder/close event.")
+        print("  [OK]    Every ticket has at least one ladder/close event.")
 
     print()
     return 0
