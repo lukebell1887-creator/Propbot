@@ -48,8 +48,17 @@ Write-Host "  date: $Date"
 Write-Host "  saving to: $outFile"
 Write-Host ""
 
-# Run the audit, tee to file
+# Run the per-ticket audit, tee to file
 python "Scripts\diag_today_full_audit.py" $Date | Tee-Object -FilePath $outFile
+
+Write-Host ""
+Write-Host "================================================================================"
+Write-Host "  LAYER 1 / SLIPPAGE breakdown for the same date"
+Write-Host "================================================================================"
+Write-Host ""
+
+# Run the Layer1+slippage diag, append to same file
+python "Scripts\diag_layer1_slippage_today.py" $Date | Tee-Object -FilePath $outFile -Append
 
 Write-Host ""
 Write-Host "  Done. Full output saved to: $outFile"
