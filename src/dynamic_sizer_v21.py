@@ -51,13 +51,24 @@ class MertonGZSizerConfig:
     # === Base sizing ===
     base_risk_pct: float = 0.0010       # 0.10% — the UNIT that Merton scales up
     cap_mult: float = 3.0               # final risk % ≤ 3 × base = 0.30 % max
-    min_risk_pct: float = 0.0           # allow full shutdown (GZ at barrier)
+    # v31.3 — floor at 0.05 % of equity (≈ $50/trade on $100k).  Previously 0.0,
+    # which let the sizer collapse to ~$5 trades during losing streaks.  The
+    # floor caps the smallest sane bet at "still meaningful, still informative
+    # to the EWMA" but never zero.  GZ-at-barrier still overrides this (set
+    # min_risk_pct=0.0 if you actually want a full shutdown at DD cap).
+    min_risk_pct: float = 0.0005        # 0.05% floor (~$50/trade on $100k)
 
     # === Merton parameters ===
     gamma: float = 2.0                  # CRRA risk aversion coefficient
-    ewma_alpha: float = 0.20            # EWMA smoothing (half-life ≈ 3 trades)
+    # v31.3 — slowed from 0.20 → 0.05.  At α=0.20 a 3-loss streak (very common
+    # in a 4-symbol portfolio) was enough to flip μ̂ negative and collapse risk
+    # to ~0.  At α=0.05 the EWMA needs ~15 trades to fully shift, which matches
+    # the 3-month retune cadence and our walk-forward analysis horizon.
+    # Half-life ≈ 13 trades (was ≈ 3).
+    ewma_alpha: float = 0.05            # EWMA smoothing (half-life ≈ 13 trades)
     warmup_trades: int = 5              # per-symbol warm-up before formula kicks in
     history_len: int = 60               # max trades to remember per symbol
+
 
     # === Grossman-Zhou drawdown barrier ===
     dd_cap_pct: float = 0.04            # 4% — hit this → risk goes to zero

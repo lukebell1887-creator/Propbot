@@ -453,9 +453,21 @@ class V30LiveConfig:
     base_risk_pct: float = 0.00185           # ★ v31 ship value (was 0.00170, then 0.00110)
     cap_mult: float = 5.0                    # per-trade cap = 0.925 %
     gamma: float = 3.0                       # v24 shootout winner
-    ewma_alpha: float = 0.20                 # half-life ≈ 3 trades
+    # ★ v31.3 — EWMA slowed 0.20 → 0.05.  At alpha=0.20 a 3-trade losing
+    # streak (very common across 4 symbols) drops μ̂ negative and collapses
+    # risk to the floor.  At 0.05 the half-life is ~13 trades so a few
+    # losers no longer wipe out months of evidence.  Aligns with our
+    # 3-month retune cadence rather than fighting against it.
+    ewma_alpha: float = 0.05                 # half-life ≈ 13 trades (was 3)
     warmup_trades: int = 15                  # no Merton formula until 15 trades seen
     dd_cap_pct: float = 0.04                 # Grossman-Zhou barrier (4 %)
+    # ★ v31.3 — risk floor.  Stops the sizer collapsing to ~$5/trade after
+    # a losing streak.  At 0.05 % on $100k that's ~$50/trade — small enough
+    # to be safe in a losing regime, large enough to actually generate
+    # informative R signal for the EWMA so the bot can climb back out.
+    # GZ-at-DD-cap still overrides this (DD breaker will fire first).
+    min_risk_pct: float = 0.0005             # 0.05 % floor (~$50/trade @ $100k)
+
 
     # Rails
     news_csv: str = "data/news/tier1_2026.csv"
@@ -558,17 +570,22 @@ class V30Live:
                 or_tracker=OpeningRangeTracker(orb_cfg),
             )
 
-        # Sizer — Merton × Grossman-Zhou (v25.1 ship config: base=0.170 %).
+        # Sizer — Merton × Grossman-Zhou (v31.3 ship config: base=0.185 %).
+        # ★ v31.3 — ewma_alpha=0.05 (was 0.20) so a 3-loss streak no longer
+        # collapses risk to zero, AND min_risk_pct=0.05% floor so the sizer
+        # can shrink but never to $5 paper-cut size.  See V31_3 deploy doc.
         self.merton_sizer = MertonGZSizer(MertonGZSizerConfig(
-            base_risk_pct=self.cfg.base_risk_pct,   # 0.170 %  ★
+            base_risk_pct=self.cfg.base_risk_pct,   # 0.185 %  ★
             cap_mult=self.cfg.cap_mult,             # 5.0
             gamma=self.cfg.gamma,                   # 3.0
-            ewma_alpha=self.cfg.ewma_alpha,         # 0.20
+            ewma_alpha=self.cfg.ewma_alpha,         # 0.05 (v31.3, was 0.20)
             warmup_trades=self.cfg.warmup_trades,   # 15
             dd_cap_pct=self.cfg.dd_cap_pct,         # 0.04
+            min_risk_pct=self.cfg.min_risk_pct,     # 0.05% floor ★ v31.3
             pool_symbols=True,                      # one global μ̂/σ̂² pool
             no_edge_multiplier=1.0,                 # don't halve when μ̂≤0
         ))
+
 
         # Calendar (weekend / rollover / holiday). News rails are handled
         # separately so we can apply the -2 min flatten independently.
