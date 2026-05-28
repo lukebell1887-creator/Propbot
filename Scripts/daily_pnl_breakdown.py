@@ -114,7 +114,12 @@ def main() -> int:
         if ev != "ENTRY":
             continue
         ticket = str(t.get("ticket") or t.get("position_id") or "")
-        ent_dt = parse_dt(t.get("ts") or t.get("time") or t.get("open_time"))
+        ent_dt = parse_dt(
+            t.get("ts_utc")     # v30 live writes ts_utc
+            or t.get("ts")
+            or t.get("time")
+            or t.get("open_time")
+        )
         if ent_dt is None:
             continue
 
@@ -140,8 +145,16 @@ def main() -> int:
                 "lots": t.get("lots") or t.get("volume") or 0.0,
                 "risk_usd": t.get("risk_usd") or t.get("risk_dollars") or None,
                 "risk_pct": t.get("risk_pct") or None,
-                "entry_px": t.get("entry") or t.get("entry_price") or None,
+                "entry_px": (
+                    t.get("fill_px")    # v30 live writes fill_px
+                    or t.get("entry")
+                    or t.get("entry_price")
+                ),
                 "sl_px": t.get("sl") or t.get("stop_loss") or None,
+                "tp1_px": t.get("tp1") or None,
+                "tp2_px": t.get("tp2") or None,
+                "equity_at_entry": t.get("equity") or None,
+                "dry_run": t.get("dry_run"),
                 "pnl": pnl,
                 "close_reason": close.get("reason", "OPEN"),
             }
@@ -151,12 +164,80 @@ def main() -> int:
     n_with_pnl = sum(1 for r in rows if r["pnl"] is not None)
     n_no_pnl = sum(1 for r in rows if r["pnl"] is None)
 
+    n_dry = sum(1 for r in rows if r["dry_run"] is True)
+    n_live = sum(1 for r in rows if r["dry_run"] is False)
+    n_unknown_mode = len(rows) - n_dry - n_live
+
     print(f"\nentries in file        : {len(rows)}")
     print(f"entries with close-PnL : {n_with_pnl}")
     print(f"entries still OPEN/?   : {n_no_pnl}")
+    print(f"  dry_run=True         : {n_dry}    <-- SIMULATED, no real broker order")
+    print(f"  dry_run=False        : {n_live}    <-- REAL broker orders")
+    print(f"  dry_run not recorded : {n_unknown_mode}")
     if rows:
         print(f"first entry            : {rows[0]['entry_dt'].isoformat()}")
         print(f"last entry             : {rows[-1]['entry_dt'].isoformat()}")
+
+    # Find the FIRST time the bot flipped from dry_run -> live (if it did)
+    flip_idx = None
+    for i, r in enumerate(rows):
+        if r["dry_run"] is False:
+            flip_idx = i
+            break
+    if flip_idx is None and n_live == 0:
+        print("\n*** ALL 89 ENTRIES ARE dry_run=True (paper trades). ***")
+        print("*** The $4.5k loss on your 5%ers account did NOT come from these. ***")
+        print("*** Check MT5 broker statement -- it came from somewhere else. ***")
+    elif flip_idx is not None:
+        flip = rows[flip_idx]
+        print(f"\nFirst live (dry_run=False) entry: "
+              f"{flip['entry_dt'].isoformat()}  #{flip_idx+1} of {len(rows)}")
+
+    # ------------------------------------------------------------------
+    #  EQUITY WALK  -- the entry rows record `equity` at trade time,
+    #  so we can plot the equity curve WITHOUT needing the close events
+    # ------------------------------------------------------------------
+    print("\n" + "-" * 90)
+    print("  EQUITY WALK FROM ENTRY ROWS (the `equity` field at the moment of each entry)")
+    print("-" * 90)
+    eq_rows = [r for r in rows if r["equity_at_entry"] is not None]
+    if not eq_rows:
+        print("  no equity field on entry rows")
+    else:
+        first_eq = float(eq_rows[0]["equity_at_entry"])
+        last_eq = float(eq_rows[-1]["equity_at_entry"])
+        min_eq = min(float(r["equity_at_entry"]) for r in eq_rows)
+        max_eq = max(float(r["equity_at_entry"]) for r in eq_rows)
+        print(f"  first entry equity : ${first_eq:>11,.2f}  ({eq_rows[0]['entry_dt'].date()})")
+        print(f"  last  entry equity : ${last_eq:>11,.2f}  ({eq_rows[-1]['entry_dt'].date()})")
+        print(f"  peak  entry equity : ${max_eq:>11,.2f}")
+        print(f"  trough entry equity: ${min_eq:>11,.2f}")
+        print(f"  net change         : ${last_eq - first_eq:>+11,.2f}")
+        print(f"  max drawdown seen  : ${min_eq - max_eq:>+11,.2f}  "
+              f"({(min_eq/max_eq - 1)*100:+.2f} %)")
+
+    # Show equity at the start of each new DATE -- this is the daily walk
+    print("\n  Daily snapshot (equity at the FIRST entry of each date):")
+    print(f"  {'date':<11} {'first entry time':<19} {'equity':>12} "
+          f"{'risk$':>9} {'risk%':>8} {'mode':<8}")
+    seen_dates: set[str] = set()
+    for r in rows:
+        if r["date"] in seen_dates:
+            continue
+        seen_dates.add(r["date"])
+        eq_s = (f"${float(r['equity_at_entry']):>10,.2f}"
+                if r["equity_at_entry"] is not None else "         ?")
+        risk_s = (f"${float(r['risk_usd']):>7.2f}"
+                  if r["risk_usd"] is not None else "       ?")
+        risk_pct_s = (f"{float(r['risk_pct'])*100:>6.3f}%"
+                      if r["risk_pct"] is not None else "      ?")
+        mode = ("DRY" if r["dry_run"] is True
+                else "LIVE" if r["dry_run"] is False
+                else "?")
+        tm = r["entry_dt"].strftime("%Y-%m-%d %H:%M:%S")
+        print(f"  {r['date']:<11} {tm:<19} {eq_s:>12} {risk_s:>9} "
+              f"{risk_pct_s:>8} {mode:<8}")
+
 
     # 1. Day-by-day net PnL ---------------------------------------------------
     print("\n" + "-" * 90)
