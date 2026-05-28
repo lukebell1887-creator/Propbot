@@ -1,0 +1,205 @@
+{
+  "schema": 1,
+  "run_at": "2026-05-28T10:56:24.550106+00:00",
+  "config": {
+    "BT_BASE_RISK_PCT": 0.0017,
+    "LIVE_BASE_RISK_PCT": 0.00185,
+    "LIVE_DD_CAP_PCT": 0.04,
+    "BALANCE": 100000.0,
+    "SYMS": [
+      "DE40",
+      "US30",
+      "XAUUSD",
+      "US500"
+    ]
+  },
+  "runs": {
+    "A_baseline": {
+      "n_trades": 264,
+      "net_pnl": 26020.76,
+      "ret_pct": 26.02,
+      "max_dd_pct": 4.71,
+      "max_dd_dollars": 4709.59,
+      "profit_factor": 1.81,
+      "win_rate_pct": 65.5,
+      "worst_day_pnl": -2018.11,
+      "worst_daily_dd_pct": 1.75,
+      "n_calendar_days": 61,
+      "per_symbol": {
+        "DE40": {
+          "n": 108,
+          "net": 8186.67,
+          "wr_pct": 68.5
+        },
+        "US30": {
+          "n": 83,
+          "net": 9273.09,
+          "wr_pct": 53.0
+        },
+        "US500": {
+          "n": 48,
+          "net": 2692.93,
+          "wr_pct": 75.0
+        },
+        "XAUUSD": {
+          "n": 25,
+          "net": 5868.07,
+          "wr_pct": 76.0
+        }
+      }
+    },
+    "B_live_risk": {
+      "n_trades": 65,
+      "net_pnl": 6182.97,
+      "ret_pct": 6.18,
+      "max_dd_pct": 3.62,
+      "max_dd_dollars": 3620.11,
+      "profit_factor": 1.72,
+      "win_rate_pct": 66.2,
+      "worst_day_pnl": -1950.63,
+      "worst_daily_dd_pct": 1.79,
+      "n_calendar_days": 14,
+      "per_symbol": {
+        "DE40": {
+          "n": 27,
+          "net": 812.32,
+          "wr_pct": 70.4
+        },
+        "US30": {
+          "n": 19,
+          "net": 2552.57,
+          "wr_pct": 57.9
+        },
+        "US500": {
+          "n": 9,
+          "net": 358.39,
+          "wr_pct": 66.7
+        },
+        "XAUUSD": {
+          "n": 10,
+          "net": 2459.71,
+          "wr_pct": 70.0
+        }
+      }
+    },
+    "C_layer1_pess": {
+      "n_trades": 264,
+      "net_pnl": 24171.6,
+      "ret_pct": 24.17,
+      "max_dd_pct": 5.15,
+      "max_dd_dollars": 5152.5,
+      "profit_factor": 1.71,
+      "win_rate_pct": 65.5,
+      "worst_day_pnl": -2117.58,
+      "worst_daily_dd_pct": 1.84,
+      "n_calendar_days": 61,
+      "per_symbol": {
+        "DE40": {
+          "n": 108,
+          "net": 7420.19,
+          "wr_pct": 68.5
+        },
+        "US30": {
+          "n": 83,
+          "net": 8399.19,
+          "wr_pct": 53.0
+        },
+        "US500": {
+          "n": 48,
+          "net": 2547.59,
+          "wr_pct": 75.0
+        },
+        "XAUUSD": {
+          "n": 25,
+          "net": 5804.63,
+          "wr_pct": 76.0
+        }
+      }
+    },
+    "D_dd_breaker": {
+      "n_trades": 264,
+      "net_pnl": 22628.21,
+      "ret_pct": 22.63,
+      "max_dd_pct": 3.09,
+      "max_dd_dollars": 3089.48,
+      "profit_factor": 2.0,
+      "win_rate_pct": 65.5,
+      "worst_day_pnl": -1763.58,
+      "worst_daily_dd_pct": 1.4,
+      "n_calendar_days": 61,
+      "per_symbol": {
+        "DE40": {
+          "n": 108,
+          "net": 8583.15,
+          "wr_pct": 68.5
+        },
+        "US30": {
+          "n": 83,
+          "net": 6787.41,
+          "wr_pct": 53.0
+        },
+        "US500": {
+          "n": 48,
+          "net": 2622.3,
+          "wr_pct": 75.0
+        },
+        "XAUUSD": {
+          "n": 25,
+          "net": 4635.34,
+          "wr_pct": 76.0
+        }
+      }
+    },
+    "E_full_live": {
+      "n_trades": 65,
+      "net_pnl": 6129.69,
+      "ret_pct": 6.13,
+      "max_dd_pct": 2.82,
+      "max_dd_dollars": 2817.26,
+      "profit_factor": 1.88,
+      "win_rate_pct": 66.2,
+      "worst_day_pnl": -1313.33,
+      "worst_daily_dd_pct": 1.22,
+      "n_calendar_days": 14,
+      "per_symbol": {
+        "DE40": {
+          "n": 27,
+          "net": 1309.44,
+          "wr_pct": 70.4
+        },
+        "US30": {
+          "n": 19,
+          "net": 2396.18,
+          "wr_pct": 57.9
+        },
+        "US500": {
+          "n": 9,
+          "net": 227.25,
+          "wr_pct": 66.7
+        },
+        "XAUUSD": {
+          "n": 10,
+          "net": 2196.83,
+          "wr_pct": 70.0
+        }
+      }
+    }
+  },
+  "deltas_vs_A": {
+    "B_minus_A": -19837.789999999997,
+    "C_minus_A": -1849.1599999999999,
+    "D_minus_A": -3392.5499999999993,
+    "E_minus_A": -19891.07
+  },
+  "live_journal": {
+    "n_entries": 0,
+    "n_closed_with_pnl": 0,
+    "realised_pnl_from_journal": 0.0,
+    "first_entry_time": null,
+    "last_entry_time": null,
+    "equity_max": null,
+    "equity_min": null,
+    "equity_first": null,
+    "equity_last": null
+  }
+}
