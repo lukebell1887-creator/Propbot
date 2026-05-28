@@ -34,9 +34,13 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import sys
+
 REPO = Path(__file__).resolve().parents[1]
-LIVE_FILE = REPO / "Results" / "v30_live_trades.jsonl"
-BT_FILE   = REPO / "Results" / "v30_fresh_trades.json"
+# Allow override:  python parity_live_vs_backtest_window.py <bt.json> [<live.jsonl>]
+_argv = [a for a in sys.argv[1:] if not a.startswith("-")]
+BT_FILE   = Path(_argv[0]) if len(_argv) >= 1 else REPO / "Results" / "v30_fresh_trades.json"
+LIVE_FILE = Path(_argv[1]) if len(_argv) >= 2 else REPO / "Results" / "v30_live_trades.jsonl"
 MATCH_WINDOW_MIN = 5     # +/- minutes for "same signal"
 
 
