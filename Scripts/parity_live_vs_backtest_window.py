@@ -140,6 +140,35 @@ def load_bt(p: Path) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- #
+def detect_tz_offset(live: list, bt: list) -> float:
+    """Detect the systematic time offset (hours) between live and backtest.
+
+    Live log uses real UTC, but backtest entry_time comes from MT5 bar
+    timestamps which are broker-server-local-time-treated-as-UTC.  Most
+    5%ers/Eightcap-style brokers are EET (UTC+2) or EEST (UTC+3).
+
+    We just look at the FIRST entry on each calendar date for the same
+    symbol+side and compute the median (live - bt) delta.
+    """
+    from collections import defaultdict
+    deltas = []
+    by_day_live = defaultdict(list)
+    by_day_bt   = defaultdict(list)
+    for lv in live:
+        by_day_live[(lv["dt"].date(), lv["symbol"], lv["side"])].append(lv["dt"])
+    for b in bt:
+        by_day_bt[(b["dt"].date(), b["symbol"], b["side"])].append(b["dt"])
+    for k, l_times in by_day_live.items():
+        if k in by_day_bt:
+            l_first = min(l_times)
+            b_first = min(by_day_bt[k])
+            deltas.append((l_first - b_first).total_seconds() / 3600.0)
+    if not deltas:
+        return 0.0
+    deltas.sort()
+    return deltas[len(deltas) // 2]   # median
+
+
 def main() -> int:
     print("=" * 90)
     print("  PARITY: LIVE vs BACKTEST on the SAME date window")
@@ -156,6 +185,18 @@ def main() -> int:
     win_end   = live[-1]["dt"].replace(hour=23, minute=59, second=59, microsecond=0)
     print(f"\nlive window  : {win_start.date()}  .. {win_end.date()}  ({len(live)} entries)")
     print(f"backtest full: {bt[0]['dt'].date()}  .. {bt[-1]['dt'].date()}  ({len(bt)} trades)")
+
+    # ------------------------------------------------------------------
+    #  Detect timezone offset between live and backtest, then SHIFT
+    #  the backtest times so matching can succeed.  MT5 bars are stored
+    #  in broker-server time (EET/EEST = UTC+2 or +3), live uses real UTC.
+    # ------------------------------------------------------------------
+    tz_off = detect_tz_offset(live, bt)
+    print(f"\ndetected live - backtest offset : {tz_off:+.2f} h")
+    if abs(tz_off) > 0.5:
+        print(f"  -> shifting backtest entries by {tz_off:+.2f} h to align with live UTC")
+        for t in bt:
+            t["dt"] = t["dt"] + timedelta(hours=tz_off)
 
     bt_win = [t for t in bt if win_start <= t["dt"] <= win_end]
     print(f"backtest IN window : {len(bt_win)} trades")
