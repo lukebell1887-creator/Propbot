@@ -136,7 +136,8 @@ def _check_config_defaults() -> str:
         "base_risk_pct":             0.00185,   # v31 ship value (was 0.00170 in v25.1)
         "cap_mult":                  5.0,
         "gamma":                     3.0,
-        "ewma_alpha":                0.20,
+        "ewma_alpha":                0.05,      # v31.3 fix: slowed from 0.20 (4x slower decay)
+        "min_risk_pct":              0.0005,    # v31.3 fix: 0.05% floor on r_t (was 0)
         "warmup_trades":             15,
         "dd_cap_pct":                0.04,
         "nochase_cooldown_s":        300.0,
