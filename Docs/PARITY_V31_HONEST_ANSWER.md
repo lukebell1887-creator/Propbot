@@ -2,9 +2,35 @@
 
 **Run**: `python Scripts/parity_v31_full_audit.py`
 **Date**: 2026-05-28
-**Window tested**: Jan 26 → Apr 20 2026 (the same 3 months as the original backtest)
+**Window tested**: Jan 26 → Apr 20 2026 (3 months IS) **+ Apr 21 → May 5 (the 14 LIVE days)**
 
 ---
+
+## 0. The smoking gun (NEW — updated 2026-05-28 11:55 UTC)
+
+The parity script also re-ran the **EXACT live config** on the **EXACT 14-day live window** (`B_live_risk` / `E_full_live` in `Results/parity_v31_audit.json`):
+
+| run                                           | base_risk_pct | period           | n_trades | net PnL    |
+|-----------------------------------------------|---------------|------------------|----------|------------|
+| **B_live_risk** (engine only, live risk %)    | 0.00185       | last 14 days     | **65**   | **+$6,183** |
+| **E_full_live** (live risk + Layer1 + DDB)    | 0.00185       | last 14 days     | **65**   | **+$6,130** |
+| **YOUR ACTUAL LIVE ACCOUNT**                  | 0.00185       | last 14 days     | ?        | **−$4,500** |
+| **GAP**                                       |               |                  |          | **≈ −$10,630** |
+
+That **$10k gap is the real problem**. The risk-bump argument from §2 below explains why the 3-month forward-test would be ~$20k lower than the IS backtest — but the engine *still* says you should be **profitable** on the last 14 days at the live config. You're not. So something is wrong *between* the engine and what the live bot is actually doing.
+
+The candidates (all testable from the live journal on the VPS):
+
+1. **Sizer cold-start bug**: §4 below. If `n_seen=0` in sizer state on every restart, the bot has been sizing at warm-up base for 14 days. But at base risk, lots should still be ~$185/trade — not the **"~$10/trade"** the user is seeing.
+2. **DD breaker silently halted**: if `dd_breaker.json:halted = true`, the Merton sizer returns multiplier 0 on every trade after the first stop, and lots get floored to the broker min (0.01 lot = ~$10 risk on indices).
+3. **Live lots much LARGER than backtest** on a few early trades: would explain the −$4,500. Specifically the DAX EUR-quote conversion: backtest assumes $1/pt, broker pays €1/pt × EURUSD ≈ $1.17/pt. That's a ~17 % over-loss on every DAX losing trade. Look for this in step 6 of the VPS audit.
+4. **Layer 1 firing differently in live than the model**: the simulation says Layer 1 costs ~$1.8k on 264 trades = $7 per trade. If live Layer 1 is firing on 100 % of trades instead of ~20 %, that adds up to thousands.
+5. **Bot missed entries**: 65 trades modelled, fewer than 65 actually fired. The diag script will report the count.
+
+**Action**: run `.\RUN_VPS_FULL_PARITY.ps1` on the VPS. Step 6 (`diag_v31_live_vs_backtest.py`) does the per-trade comparison and tells you which of #1-#5 above is doing the damage.
+
+---
+
 
 ## 1. The bot's strategy is NOT broken
 
