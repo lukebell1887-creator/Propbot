@@ -64,19 +64,23 @@ Real current DD = 5.18 % > 4.00 % cap.
 .\STOP_BOT.ps1
 ```
 
-### 2. Reseed the sizer + clear the DD breaker
+### 2. Reseed the sizer + clear the DD breaker  ( --apply is REQUIRED )
 ```powershell
-python Scripts/reseed_v31_sizer.py
+python Scripts/reseed_v31_sizer.py --apply
 ```
 This is **already on the VPS** (committed earlier). It:
 - Sets `dd_breaker.peak_equity = current equity` (so DD = 0)
 - Loads `Results/v30_fresh_trades.json` (the 158 fresh backtest trades from step 3) and feeds them into the per-symbol Merton learner, so `n_seen >= 15` on every symbol immediately
-- Writes the new state files
+- Writes the new state files (backs up the old ones to *.bak.<ts>)
 
-### 3. Restart the bot
+### 3. Restart the LIVE v30/v31 bot  ( NOT GO_LIVE.ps1 -- that is the OLD v18 launcher )
 ```powershell
-.\GO_LIVE.ps1
+.\PULL_AND_GO_LIVE_V30.ps1
 ```
+This is the correct launcher for your live bot:
+- `Scripts/run_v30_live.py`  magic = 30000  risk = 0.185 %  cap_mult = 5.0
+- Writes the same `Results/v30_live_trades.jsonl` your audit reads
+- `GO_LIVE.ps1` (no suffix) is the legacy v18 launcher — DO NOT use it
 
 ### 4. Verify (one trade in)
 ```powershell
